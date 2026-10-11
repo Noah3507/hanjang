@@ -121,6 +121,26 @@ pytest는 health 응답·CORS 허용/거부·환경 설정·미구현 API를 검
 
 CI는 main 대상 PR과 main/feat/fix/refactor/test/docs/chore 브랜치 push에서 Ubuntu·Python 3.12·Node 24로 backend 검사·frontend 타입/테스트/build·repository-policy(비밀 파일/패턴과 PR 제목)를 실행합니다. 배포·자동 merge·유료 API·모델 다운로드는 없습니다. 실제 원격 결과는 PR Checks에서 확인합니다.
 
+## 실제 브라우저 자동 테스트
+
+Playwright는 현재 구현된 health 연결·대기·실패/재시도·응답 검증·모바일 배치를 검사합니다. 상품 정보 입력부터 광고 결과까지는 미구현이므로 해당 기능의 성공으로 보고하지 않습니다. 오류 시나리오는 브라우저 요청을 테스트 안에서만 모의 처리하며 사용자 개발 서버를 종료하지 않습니다.
+
+```powershell
+# 최초 한 번, 저장소 루트에서
+npm.cmd --prefix frontend exec -- playwright install chromium
+npm.cmd --prefix frontend run test:e2e
+# 설치된 Google Chrome으로 실행할 때
+$env:PLAYWRIGHT_CHANNEL = 'chrome'
+npm.cmd --prefix frontend run test:e2e
+Remove-Item Env:PLAYWRIGHT_CHANNEL
+# 결과 HTML 보고서 (127.0.0.1 전용)
+npm.cmd --prefix frontend run test:e2e:report
+```
+
+기존 8000/5173 서버가 있으면 로컬 테스트는 재사용하며 종료하지 않습니다. 없으면 Playwright가 테스트용 서버를 시작·종료합니다. 사용자 확인을 위해 계속 사용할 서버는 위 개발 실행 명령으로 별도로 실행하세요. Chrome 실행은 독립 테스트 프로필을 사용하며 개인 로그인 프로필을 열지 않습니다.
+
+결과는 Git 제외 artifacts/playwright/에 저장합니다: report/ HTML, results.json, results/ 테스트별 browser.log와 데스크탑/모바일 스크린샷. 실패 시 스크린샷·trace·video·assertion 오류도 남깁니다. CI는 Chromium으로 같은 E2E를 수행하고 실패 진단만 7일 보관합니다. 로컬 서버 로그는 이번 실행의 artifacts/dev-servers/에 있습니다. 결과·로그에는 환경 정보가 있을 수 있으므로 검토 없이 외부에 공유하지 않습니다.
+
 ## 현재 프로젝트 구조
 
 ```text

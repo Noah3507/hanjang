@@ -37,6 +37,8 @@ coverage/
 *~
 /tmp/
 /temp/
+test-results/
+playwright-report/
 
 # Private data, uploads, and model artifacts
 /data/
