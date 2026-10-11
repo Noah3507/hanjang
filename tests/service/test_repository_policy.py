@@ -39,7 +39,7 @@ def test_clean_env_example_and_conventional_title_pass(repository):
     assert check(repository, "--pr-title", "ci(policy): check repository inputs").returncode == 0
 
 
-@pytest.mark.parametrize("name", [".env", "frontend/.env.local", "notes.tmp", "uploads/photo.txt"])
+@pytest.mark.parametrize("name", [".env", "frontend/.env.local", "secrets.env", "notes.tmp", "uploads/photo.txt", "temp/upload.txt"])
 def test_private_or_temporary_staged_files_fail(repository, name):
     stage(repository, name, "not a real secret\n")
     assert check(repository).returncode == 1

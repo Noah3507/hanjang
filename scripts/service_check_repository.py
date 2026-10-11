@@ -25,7 +25,7 @@ def inspect_file(name: str, content: bytes) -> list[str]:
     path = PurePosixPath(name)
     lower = path.name.lower()
     reasons = []
-    if (lower == ".env" or lower.startswith(".env.")) and lower != ".env.example":
+    if (lower == ".env" or lower.startswith(".env.") or lower.endswith(".env")) and lower != ".env.example":
         reasons.append("real environment file")
     if path.suffix.lower() in {".key", ".pem", ".p12", ".pfx"}:
         reasons.append("private credential file")
@@ -33,7 +33,7 @@ def inspect_file(name: str, content: bytes) -> list[str]:
         reasons.append("credential JSON file")
     if path.suffix.lower() in {".tmp", ".temp", ".swp"} or lower.endswith("~"):
         reasons.append("temporary file")
-    if any(part.lower() in {".aws", ".venv", "node_modules", "uploads", "user_uploads", "artifacts", "tmp"} for part in path.parts):
+    if any(part.lower() in {".aws", ".venv", "node_modules", "uploads", "user_uploads", "artifacts", "tmp", "temp"} for part in path.parts):
         reasons.append("local or private runtime directory")
     if SECRET.search(content):
         reasons.append("possible secret pattern")

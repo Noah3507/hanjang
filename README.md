@@ -24,7 +24,38 @@ A는 서비스·통합, B는 모델·데이터·평가를 맡습니다. A는 B �
 
 ## Windows 최초 설치
 
-PowerShell에서 저장소 루트로 이동합니다. 가상환경 activate나 실행 정책 변경 없이 다음을 사용할 수 있습니다.
+### 새 데스크탑·노트북에서 Clone
+
+각 컴퓨터에 Git, Python 3.12, Node.js 24 LTS(npm 포함), GitHub CLI를 먼저 설치합니다. PowerShell을 새로 열어 git --version, python --version, node --version, npm.cmd --version, gh --version으로 확인하세요. 설치 안내는 [Git for Windows](https://git-scm.com/install/windows), [Python Windows](https://www.python.org/downloads/windows/), [Node.js](https://nodejs.org/en/download), [GitHub CLI](https://cli.github.com/)를 참고하세요.
+
+Private 저장소이므로 새 컴퓨터에서도 본인이 GitHub 로그인·권한 승인을 진행해야 합니다. 토큰을 URL이나 문서에 넣지 마세요. 두 컴퓨터는 별도의 로컬 clone을 사용합니다.
+
+```powershell
+gh auth login --hostname github.com --git-protocol https --web
+gh auth setup-git
+# 원하는 부모 폴더에서 실행; 같은 이름의 기존 폴더가 있으면 먼저 확인
+git clone https://github.com/Noah3507/hanjang.git
+cd hanjang
+git status --short --branch
+git remote -v
+git fetch origin
+```
+
+기본 clone은 main을 받습니다. 진행 중인 작업을 이어갈 때는 **같은 작업 브랜치**로 전환합니다. 아래는 현재 브랜치의 예시입니다. 로컬에 없을 때만 첫 번째 switch를 사용하고, 이미 있으면 두 번째를 사용하세요.
+
+```powershell
+# 로컬 브랜치가 없을 때
+git switch --track origin/feat/service-foundation
+# 이미 로컬에 있을 때는 위 명령 대신
+# git switch feat/service-foundation
+git pull --ff-only
+```
+
+아직 main에 병합되지 않은 PR의 파일은 해당 작업 브랜치에서만 확인할 수 있습니다. 다른 기능용 브랜치를 임의로 같은 이름으로 새로 만들지 마세요. git config --local user.name / user.email로 작성자를 확인하고 필요하면 각 clone에 같은 이름과 GitHub 이메일(개인정보 보호 시 GitHub noreply 주소)을 설정합니다. 사용자 이메일을 공유 문서에 저장하지 않습니다.
+
+### 컴퓨터마다 의존성과 환경 다시 구성
+
+PowerShell에서 clone한 저장소 루트로 이동합니다. 아래 cd 경로는 현재 데스크탑 예시이므로 노트북에서는 실제 clone 경로를 사용하세요. 가상환경 activate나 실행 정책 변경 없이 다음을 사용할 수 있습니다.
 
 ```powershell
 cd C:\Users\siho\Desktop\hanjang
@@ -38,6 +69,8 @@ if (!(Test-Path frontend/.env)) { Copy-Item frontend/.env.example frontend/.env 
 기존 .env를 덮어쓰지 말고 필요한 값만 추가하세요. 루트 .env는 **서버 전용**, frontend/.env는 Vite 전용입니다. 서버 설정 HANJANG_CORS_ORIGINS는 JSON 배열이며 기본 허용 origin은 http://localhost:5173과 http://127.0.0.1:5173입니다. wildcard·credentials를 허용하지 않습니다.
 
 frontend의 VITE_API_BASE_URL은 브라우저에 공개되는 값이므로 비밀키를 넣지 마세요. 기본 /api/v1은 Vite proxy를 사용합니다. DEV_BACKEND_URL은 개발 proxy의 서버 주소(기본 http://127.0.0.1:8000)이며 browser bundle에 넣지 않습니다. 환경변수 변경 후 서버를 재시작하세요. 현재 LLM·DB·스토리지 key는 필요하지 않습니다.
+
+.venv와 node_modules를 두 컴퓨터 사이에 복사하지 않습니다. 위 설치 명령으로 컴퓨터마다 재생성하고 requirements.txt/package-lock.json은 Git으로 공유합니다. .env·API 키·원본/업로드·결과 파일은 Git으로 전달되지 않습니다. 현재는 .env.example만으로 health 실행이 가능하고 키가 필요 없습니다. 향후 필요한 키는 각 컴퓨터에서 직접 설정하거나 신뢰하는 비밀 관리 도구로 별도 전달합니다. 실제 .env를 Issue·PR·채팅·스크린샷에 붙이지 않습니다. 저장소 폴더를 OneDrive 등의 파일 동기화와 Git으로 동시에 공유하지 않는 것을 권장합니다.
 
 ## 개발 서버 실행
 
@@ -54,6 +87,8 @@ npm.cmd --prefix frontend run dev
 ```
 
 브라우저에서 http://127.0.0.1:5173을 열고 Hanjang과 '백엔드 연결됨'을 확인합니다. API 문서는 http://127.0.0.1:8000/docs입니다. Ctrl+C로 각각 종료합니다. Vite는 5173 사용 중이면 자동으로 포트를 바꾸지 않고 오류를 반환합니다.
+
+frontend dev(5173)·preview(4173)는 설정에서 127.0.0.1에 바인딩합니다. backend도 위 명령의 --host 127.0.0.1로 실행합니다. localhost/127.0.0.1은 **현재 컴퓨터만** 의미하므로 노트북에서 데스크탑 서버를 공유하는 방식이 아닙니다. 공용 Wi-Fi 접근을 위해 --host 0.0.0.0/--host 플래그, 포트 포워딩, 공개 tunnel을 추가하지 않습니다. CORS는 서버 접속 제한을 대신하지 않습니다.
 
 GET /health와 문서의 versioned GET /api/v1/health는 모두 다음을 반환합니다. health는 광고·모델 readiness 검사가 아닙니다.
 
@@ -108,6 +143,48 @@ docs/                      # 공용 설계·계약
 향후 backend/app/services, backend/app/ml_adapter, templates는 A, ml/data·features·training·evaluation·inference는 B 영역입니다. 이번에 생성하지 않았습니다. raw /data/와 코드 ml/data/의 ignore 범위를 분리했으며 B 코드는 수정하지 않았습니다.
 
 ## 문서와 협업
+
+### 두 컴퓨터 사이의 작업 인계
+
+한 작업 브랜치는 한 번에 한 컴퓨터에서만 수정하는 것을 기본으로 합니다. GitHub는 저장된 commit을 전달하며 에디터 버퍼·미커밋 변경·stash·ignored 파일은 전달하지 않습니다.
+
+**현재 컴퓨터에서 끝낼 때:** 저장→관련 테스트→파일별 stage→비밀 검사→영어 Conventional Commit→push→원격 일치 확인 순서입니다. main에서는 이 절차로 commit/push하지 않습니다.
+
+```powershell
+git status --short --branch
+git branch --show-current
+# 변경한 소스 파일만 git add <file>로 선택
+git diff --cached --check
+git diff --cached
+.\.venv\Scripts\python.exe scripts/service_check_repository.py
+# 관련 검사가 통과하고 stage에 변경이 있을 때만 실행
+git commit -m "docs: document workstation handoff"
+git push -u origin HEAD
+git fetch origin
+git status --short --branch
+git rev-parse HEAD
+git rev-parse '@{upstream}'
+```
+
+마지막 두 hash가 같고 공유할 소스 변경이 남아 있지 않은지 확인합니다. references처럼 의도적으로 미추적 상태인 개인 자료는 commit하지 않고 별도로 관리합니다. 미완성 작업은 로컬 stash만 한 뒤 다른 컴퓨터에서 이어갈 수 없습니다. 검증된 작은 단위로 commit하거나, 아직 공유할 수 없다면 현재 컴퓨터에 보존하고 전환을 미루세요. 완료 작업에는 기존 PR을 갱신하거나 main 대상 PR을 생성하고 승인 전 merge하지 않습니다.
+
+**다른 컴퓨터에서 시작할 때:** 변경이 남아 있다면 먼저 확인·보존하고 아래 pull을 진행합니다. 원격에 push된 동일 작업 브랜치를 사용합니다.
+
+```powershell
+git status --short --branch
+git fetch origin
+git switch feat/service-foundation
+git pull --ff-only
+# 새 clone에서 로컬 브랜치가 없으면 위 switch 대신 --track origin/... 사용
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+npm.cmd --prefix frontend ci
+```
+
+의존성 변경 후에는 서버를 종료한 상태에서 설치하고 필요한 .env 변수명은 .env.example과 비교해 각 PC에서 추가합니다. 실제 .env는 pull로 갱신되지 않습니다. 이후 테스트·health 확인 후 개발을 시작합니다.
+
+**pull 실패·push 거부·충돌 시:** 강제 push, reset --hard, clean -fd로 해결하지 않습니다. 먼저 git status, git diff, git log --oneline --graph --decorate --all -15로 양쪽 작업을 확인합니다. 로컬 소스 변경은 안전하게 commit하거나 로컬 임시 보관하고, fetch 후 작업 브랜치에서 git merge '@{upstream}'로 정상 병합합니다. 충돌 표시를 파일별로 검토하고 상대 변경을 보존하며 테스트 후 해결 commit·push합니다. 혼자 해결하기 어렵다면 그대로 멈추고 충돌 파일·상태를 공유합니다. 공유한 commit은 amend/rebase로 다시 쓰지 않습니다. 병합 취소도 보관 상태를 먼저 확인하고 수행합니다.
+
+잘못된 변경이 이미 push됐다면 추가 수정 commit(또는 검토된 revert)으로 정정합니다. 두 PC의 폴더를 덮어써서 맞추지 않습니다. 상세 리뷰·병합 과정은 [CONTRIBUTING](CONTRIBUTING.md)을 따릅니다.
 
 | 문서 | 내용 |
 | --- | --- |

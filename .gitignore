@@ -1,6 +1,7 @@
 # Local configuration and secrets
 .env
 .env.*
+*.env
 !.env.example
 *.pem
 *.key
@@ -35,6 +36,7 @@ coverage/
 *.swp
 *~
 /tmp/
+/temp/
 
 # Private data, uploads, and model artifacts
 /data/
