@@ -1,6 +1,7 @@
 # Local configuration and secrets
 .env
 .env.*
+*.env
 !.env.example
 *.pem
 *.key
@@ -30,6 +31,12 @@ dist/
 build/
 coverage/
 *.log
+*.tmp
+*.temp
+*.swp
+*~
+/tmp/
+/temp/
 
 # Private data, uploads, and model artifacts
 /data/
