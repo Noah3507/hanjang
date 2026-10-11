@@ -121,3 +121,5 @@ docs/                      # 공용 설계·계약
 | [REQUIREMENTS_REVIEW](docs/REQUIREMENTS_REVIEW.md) | 근거·확정/미확정 결정 |
 
 main은 PR로만 변경하고 force push·기록 변경·저장소 삭제를 금지합니다. 현재 Private 브랜치 보호는 요금제 제한으로 미적용입니다. B 초대는 추후 진행합니다. 실제 .env·키·데이터·가중치·joblib·uploads·artifacts·.venv·node_modules를 commit하지 않습니다. Git 상태와 stage diff를 검사하고 파일을 명시하여 stage합니다.
+
+작업 전 현재 브랜치와 Git 상태·기존 PR을 확인하고 기존 작업 브랜치를 이어서 사용합니다. 기능·수정은 main 외 feature/fix 브랜치에서 작은 단위로 구현·테스트·commit하며 완료 후 push와 main 대상 PR 생성(또는 기존 PR 갱신)을 진행합니다. PR에는 구현 내용·변경 파일·테스트 결과·확인 사항을 정리합니다. 자동 merge는 하지 않고 사용자 검토·명시적 병합 승인을 기다립니다. 다른 사람의 변경을 덮어쓰거나 민감 정보·임시 파일을 commit하지 않습니다. 자세한 기준은 [AGENTS](AGENTS.md)에 있습니다.
