@@ -1,0 +1,61 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+.aws/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node and generated output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.log
+
+# Private data, uploads, and model artifacts
+data/
+datasets/
+uploads/
+user_uploads/
+storage/
+models/
+weights/
+checkpoints/
+artifacts/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.parquet
+*.arrow
+*.zip
+*.tar
+*.gz
+
+# OS and editor local state
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
