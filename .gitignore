@@ -30,6 +30,11 @@ dist/
 build/
 coverage/
 *.log
+*.tmp
+*.temp
+*.swp
+*~
+/tmp/
 
 # Private data, uploads, and model artifacts
 /data/

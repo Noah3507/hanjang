@@ -3,13 +3,32 @@ name: Service foundation CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
-    branches: [main, feat/service-foundation]
+    branches: [main, 'feat/**', 'fix/**', 'refactor/**', 'test/**', 'docs/**', 'chore/**']
 
 permissions:
   contents: read
 
 jobs:
+  repository-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check indexed files and PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            python scripts/service_check_repository.py --pr-title "$PR_TITLE"
+          else
+            python scripts/service_check_repository.py
+          fi
+
   backend:
     runs-on: ubuntu-latest
     steps:
