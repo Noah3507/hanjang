@@ -84,7 +84,7 @@ npm.cmd --prefix frontend test
 
 pytest는 health 응답·CORS 허용/거부·환경 설정·미구현 API를 검사합니다. Vitest는 연결 확인·성공·실패·재시도·잘못된 응답을 검사하고 외부 API를 호출하지 않습니다. Starlette TestClient에서 AnyIO BlockingPortal alias 폐기 예정 경고 1건이 발생하지만 테스트 실패는 아닙니다. 추후 호환성 갱신 대상입니다.
 
-CI는 main 대상 PR과 main/feat/service-foundation push에서 Ubuntu·Python 3.12·Node 24로 backend 검사와 frontend 타입·테스트·빌드를 실행합니다. 배포·자동 merge·유료 API·모델 다운로드는 없습니다. 실제 원격 결과는 PR Checks에서 확인합니다.
+CI는 main 대상 PR과 main/feat/fix/refactor/test/docs/chore 브랜치 push에서 Ubuntu·Python 3.12·Node 24로 backend 검사·frontend 타입/테스트/build·repository-policy(비밀 파일/패턴과 PR 제목)를 실행합니다. 배포·자동 merge·유료 API·모델 다운로드는 없습니다. 실제 원격 결과는 PR Checks에서 확인합니다.
 
 ## 현재 프로젝트 구조
 
@@ -112,6 +112,7 @@ docs/                      # 공용 설계·계약
 | 문서 | 내용 |
 | --- | --- |
 | [AGENTS](AGENTS.md) | Codex 수정 범위·테스트·Git 규칙 |
+| [CONTRIBUTING](CONTRIBUTING.md) | GitHub Flow·영어 Conventional Commits·PR/Issue·리뷰·병합 절차 |
 | [PRODUCT_SPEC](docs/PRODUCT_SPEC.md) | 사용자 흐름·기능·예외 |
 | [TECH_SPEC](docs/TECH_SPEC.md) | 파이프라인·운영 경계 |
 | [API_CONTRACT](docs/API_CONTRACT.md) | 구현한 health와 후속 계약 |
@@ -122,4 +123,4 @@ docs/                      # 공용 설계·계약
 
 main은 PR로만 변경하고 force push·기록 변경·저장소 삭제를 금지합니다. 현재 Private 브랜치 보호는 요금제 제한으로 미적용입니다. B 초대는 추후 진행합니다. 실제 .env·키·데이터·가중치·joblib·uploads·artifacts·.venv·node_modules를 commit하지 않습니다. Git 상태와 stage diff를 검사하고 파일을 명시하여 stage합니다.
 
-작업 전 현재 브랜치와 Git 상태·기존 PR을 확인하고 기존 작업 브랜치를 이어서 사용합니다. 기능·수정은 main 외 feature/fix 브랜치에서 작은 단위로 구현·테스트·commit하며 완료 후 push와 main 대상 PR 생성(또는 기존 PR 갱신)을 진행합니다. PR에는 구현 내용·변경 파일·테스트 결과·확인 사항을 정리합니다. 자동 merge는 하지 않고 사용자 검토·명시적 병합 승인을 기다립니다. 다른 사람의 변경을 덮어쓰거나 민감 정보·임시 파일을 commit하지 않습니다. 자세한 기준은 [AGENTS](AGENTS.md)에 있습니다.
+GitHub Flow와 feat/fix/refactor/test/docs/chore 브랜치 이름, 영어 Conventional Commits를 사용합니다. 현재 작업과 기존 커밋·브랜치를 보존하고 develop은 만들지 않습니다. 작은 단위 검증·commit 후 push와 main 대상 PR을 진행합니다. 기존 PR은 재사용하고 제목·본문을 템플릿에 맞춰 갱신합니다. 자동 merge는 하지 않고 사용자 검토·명시적 승인을 기다립니다. 다른 사람의 변경·민감 정보·임시 파일을 보호합니다. [CONTRIBUTING](CONTRIBUTING.md)에 초보자 명령과 보호 설정 승인 절차를 정리했습니다.

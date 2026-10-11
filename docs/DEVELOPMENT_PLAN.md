@@ -86,13 +86,13 @@ flowchart LR
 
 ## 각 작업 단위의 Git 절차
 
-1. 현재 브랜치·Git 상태·원격·기존 PR을 확인하고 기존 작업 브랜치에서 이어서 진행합니다. 없을 때만 main이 아닌 feat/feature 또는 fix 브랜치를 생성합니다.
+1. GitHub Flow로 main을 안정적인 통합 브랜치로 유지합니다. 현재 브랜치·Git 상태·원격·기존 PR을 확인하고 같은 작업 브랜치를 이어서 사용합니다. 새 기능 브랜치는 feat/, fix/, refactor/, test/, docs/, chore/로 구분합니다. develop은 만들지 않고 현재 feat/service-foundation을 보존합니다.
 2. 의미 있는 작은 단위로 구현하고 관련 테스트를 통과한 뒤 메시지를 붙여 commit합니다. 실패한 단위는 수정·재검증하고, 문서 단위는 링크·일관성·공백을 검사합니다.
 3. 기능 작업 완료 후 현재 브랜치를 push하고 main 대상 PR을 생성합니다. 같은 작업의 PR이 있으면 갱신하며 완료 작업을 중복 실행하지 않습니다.
-4. PR에 구현 내용·변경 파일·테스트 결과·실행 명령·확인 필요 사항을 기록합니다. 사용자 검토와 명시적 승인 전 merge하지 않습니다.
+4. 영어 Conventional Commits 메시지로 commit하며 PR 제목도 Conventional Commits로 작성합니다. PR 템플릿에 목적·구현·변경 파일·테스트·Issue·화면 변경 스크린샷·확인 사항을 기록합니다. 사용자 검토와 명시적 승인 전 merge하지 않습니다.
 5. main 직접 commit/push, force push, 다른 사람의 변경 덮어쓰기를 금지합니다. API 키·실제 .env·임시 파일·개인정보는 commit하지 않습니다.
 
-사용자의 지속적인 Git 지시에 따라 이 절차를 자동 수행하되 새로운 외부 계정 연결·권한 승인은 별도로 확인합니다. 상세 규칙은 [AGENTS.md](../AGENTS.md)를 따릅니다.
+사용자의 지속적인 Git 지시에 따라 이 절차를 수행하되 새로운 계정 권한·main 보호 적용·기존 브랜치 삭제는 사전 승인을 받습니다. 기존 커밋을 다시 쓰지 않습니다. CI에 repository-policy 검사도 포함합니다. 상세 절차는 [CONTRIBUTING.md](../CONTRIBUTING.md), Codex 규칙은 [AGENTS.md](../AGENTS.md)를 따릅니다.
 
 ## 단계별 공통 완료 기준
 

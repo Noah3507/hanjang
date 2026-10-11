@@ -53,6 +53,6 @@ A는 MockRanker로 B를 기다리지 않고, B는 sample ad folder로 renderer�
 
 ## 공통 Git 책임
 
-A/B 모두 작업 전 현재 브랜치·변경·원격·PR을 확인하고 기존 작업 브랜치를 이어서 사용합니다. 기능/수정은 main 외 feature/fix 브랜치에서 작은 단위로 구현·테스트·commit합니다. 완료 후 해당 브랜치를 push하고 main 대상 PR을 생성하거나 기존 PR을 갱신합니다. PR에는 구현 내용·변경 파일·테스트 결과·확인 사항을 남깁니다.
+A/B 모두 GitHub Flow를 따르고 작업 전 브랜치·변경·원격·PR을 확인합니다. 같은 작업 브랜치를 이어서 쓰고 새 기능은 feat/, fix/, refactor/, test/, docs/, chore/ 브랜치에서 작은 단위로 구현·테스트·영어 Conventional Commits로 commit합니다. develop은 만들지 않습니다. 완료 후 push·main 대상 PR 생성 또는 기존 PR 갱신을 수행합니다. PR 제목도 Conventional Commits이며 템플릿의 목적·구현·파일·테스트·Issue·화면 스크린샷·확인 사항을 기록합니다.
 
-main 직접 commit/push, 자동 merge, force push, 타인의 변경 덮어쓰기를 금지합니다. 사용자의 검토와 명시적 병합 승인까지 기다립니다. API 키·실제 .env·임시 파일·개인정보는 commit하지 않습니다. 이미 완료한 Git 작업은 반복하지 않으며 상세 기준은 [AGENTS.md](../AGENTS.md)를 따릅니다.
+main 직접 commit/push, 자동 merge, force push, 타인의 변경 덮어쓰기를 금지합니다. 기존 기록을 다시 쓰지 않고 브랜치를 승인 없이 삭제하지 않습니다. 사용자의 검토와 명시적 병합 승인까지 기다립니다. API 키·실제 .env·임시 파일·개인정보는 commit하지 않습니다. main 보호는 적용 전 사용자 승인 사항입니다. 이미 완료한 Git 작업은 반복하지 않으며 [CONTRIBUTING.md](../CONTRIBUTING.md)와 [AGENTS.md](../AGENTS.md)를 따릅니다. A/B 소유권과 모델 API 계약은 변경하지 않습니다.

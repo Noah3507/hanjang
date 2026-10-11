@@ -93,4 +93,6 @@ A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합�
 
 ## 공식 기술 문서 확인
 
+저장소 협업은 [CONTRIBUTING.md](../CONTRIBUTING.md)의 GitHub Flow·Conventional Commits를 따릅니다. CI의 repository-policy는 stage/index 파일·흔한 비밀 패턴·PR 제목을 검증하고 기존 backend/frontend 검사와 함께 실행합니다. 이는 모델 API 계약·A/B 소유권·제품 범위를 바꾸지 않습니다. main 보호 적용·새 권한·브랜치 삭제는 사용자 사전 승인 대상이며 자동 merge·force push는 수행하지 않습니다.
+
 파일 upload를 JSON job 요청과 별도 endpoint로 나눈 것은 [FastAPI 파일 요청 문서](https://fastapi.tiangolo.com/tutorial/request-files/)의 multipart/JSON 구분에 맞춘 설계 제안입니다. HTML escaping은 [Jinja API 문서](https://jinja.palletsprojects.com/en/stable/api/)의 autoescape 설정을 명시적으로 활성화해야 합니다. rembg는 [공식 저장소](https://github.com/danielgatis/rembg)의 배경 제거 도구이며 이미지 생성 도구로 사용하지 않습니다. PNG·PDF 렌더링은 [Playwright Python Page 문서](https://playwright.dev/python/docs/api/class-page)의 screenshot/pdf 기능을 기준으로 구현합니다. 이 확인은 원본 요구사항이나 라이브러리 호환성 smoke test를 대신하지 않습니다.
