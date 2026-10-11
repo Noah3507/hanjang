@@ -109,6 +109,10 @@ gh pr list --head feat/product-upload --state open
 
 ## 6 CI와 리뷰
 
+모든 기능·버그 수정은 [AGENTS의 상시 검증 및 사용자 확인 규칙](AGENTS.md#개발과-검증)을 적용합니다. 관련 단위/통합·frontend 타입/build/테스트·backend pytest/API를 실행하고, 화면·흐름 변경은 실제 Playwright로 정상/예외·Console을 검증합니다. 실패 진단은 artifacts/에 저장하며 Mock과 실제 API 결과를 구분합니다. 비용이 드는 외부 시험은 사전 확인합니다. 단순 문서는 링크·일관성·공백 검사로 검증하고 불필요한 로컬 브라우저 실행을 강제하지 않습니다.
+
+완료 시 필요한 localhost 서버를 유지·정상 응답 확인하고 URL/Swagger/PNG와 직접 확인 방법을 안내합니다. 결과를 한국어 일곱 항목(구현, 자동 테스트, Playwright, URL/경로, 직접 확인법, 알려진 문제/미구현, Git 상태)으로 보고합니다. 사용자 승인 전 merge하지 않으며 수정은 동일 진행 브랜치·PR에서 이어갑니다.
+
 main 대상 PR과 여섯 종류 작업 브랜치 push에서 CI가 실행됩니다. backend는 pip check·pytest, frontend는 타입·Vitest·build, repository-policy는 비밀 파일/패턴·PR 제목 형식을 검사합니다. PR 제목 수정도 제목 검사를 갱신합니다. 읽기 전용 token이며 자동 배포·자동 merge를 수행하지 않습니다.
 
 CI 실패 시 Checks 로그를 확인하고 원인 단위를 수정·테스트·추가 commit·push합니다. PR 제목 오류는 제목을 수정하며 과거 commit을 다시 쓰지 않습니다. CI가 통과해도 사용자 검토·병합 승인을 대신하지 않습니다.
