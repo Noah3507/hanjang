@@ -1,0 +1,28 @@
+:root {
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  color: #20251f;
+  background: #f6f3e9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.foundation { max-width: 720px; margin: 0 auto; padding: 88px 24px 48px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; color: #5a624f; }
+h1 { font-size: clamp(44px, 10vw, 72px); letter-spacing: -.05em; margin: 12px 0; }
+.intro { font-size: 20px; line-height: 1.6; }
+.connection { margin-top: 40px; padding: 28px; background: #fff; border: 1px solid #d9ddcc; border-radius: 20px; }
+h2 { margin: 0 0 22px; font-size: 18px; }
+.status { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #747865; flex-shrink: 0; }
+.connected .dot { background: #31714d; }
+.unavailable .dot { background: #a64230; }
+.help, .notice { color: #555c50; font-size: 14px; line-height: 1.8; }
+button { min-height: 44px; padding: 10px 18px; margin-top: 12px; border: none; border-radius: 9px; background: #283f2d; color: white; font: inherit; cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+button:focus-visible { outline: 3px solid #987400; outline-offset: 4px; }
+.notice { margin-top: 24px; }
+@media (max-width: 480px) {
+  .foundation { padding-top: 48px; }
+  .connection { padding: 22px; }
+}
