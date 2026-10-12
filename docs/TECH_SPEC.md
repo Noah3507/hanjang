@@ -1,10 +1,14 @@
 # Hanjang 기술 설계 초안
 
-기술 선택의 근거는 P11·12·16, R3·4·5·8입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다. 자료 충돌 시 최종 발표본을 우선합니다. 단일 서버·비공개 임시 저장·24시간 자동 삭제·Job Polling과 사진 처리 경계는 사용자 확정 사항입니다. timeout·cache·세부 경로는 제안이며 기능 코드는 없습니다.
+기술 선택의 근거는 P11·12·16, R3·4·5·8입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다. 자료 충돌 시 최종 발표본을 우선합니다. 현재 health·입력·업로드·draft 조회·원본 정리 코드만 구현했고 광고 파이프라인은 후속입니다. 단일 서버·비공개 임시 저장·24시간 삭제·Job Polling과 사진 처리 경계는 사용자 확정이며 timeout·cache는 제안입니다.
 
 ## 연결 구조
 
-현재 구현 경로는 React → Vite /api proxy → FastAPI health입니다. 서버 환경은 루트 .env의 HANJANG_CORS_ORIGINS(JSON 배열), frontend 공개 설정은 frontend/.env의 VITE_API_BASE_URL, 개발 proxy 설정은 DEV_BACKEND_URL로 분리했습니다. 아래 광고 파이프라인은 후속 설계이며 미구현입니다.
+현재 구현 경로는 React → Vite /api proxy → FastAPI health 및 세션/원본 업로드/draft 입력/재조회입니다. PrivateUploadStore는 메모리 메타데이터와 uploads/originals/의 원본 byte를 연결합니다. middleware는 인증·요청 크기를 multipart 파싱 전에 확인하고 Pillow는 decode 검증만 수행합니다. 입력은 PUT/GET draft API로 저장·조회하며 POST /jobs는 미구현입니다. 아래 광고 파이프라인은 후속 설계입니다.
+
+세션 token hash와 생성 asset/job UUID로 소유권을 검사합니다. 저장 파일은 서버 이름·검증된 root 하위이며 client 파일명/path를 쓰지 않습니다. 원본은 재인코딩하지 않고 SHA-256을 기록합니다. upload_root는 서버 전용 HANJANG_UPLOAD_ROOT로 변경 가능하며 전용 비공개·Git 제외 경로만 사용해야 합니다. 기본은 uploads/originals/입니다.
+
+lifespan의 시작 정리·60초 sweep은 만료 원본과 draft metadata를 제거합니다. 조회·입력 수정은 업로드 TTL을 연장하지 않습니다. 서버 재시작 후 memory 세션/draft는 유실될 수 있고 disk orphan은 24시간 후 시작/sweep에서 정리됩니다. CORS에는 POST/PUT 및 X-Hanjang-Session을 추가하되 명시 origin·credentials=false·loopback 바인딩을 유지합니다. 루트 .env/프론트 공개 환경의 분리는 그대로입니다.
 
 ```mermaid
 flowchart TD

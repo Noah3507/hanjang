@@ -22,6 +22,7 @@ class Settings(BaseSettings):
             AnyHttpUrl("http://127.0.0.1:5173"),
         ]
     )
+    upload_root: Path = PROJECT_ROOT / "uploads" / "originals"
 
     @field_validator("cors_origins")
     @classmethod

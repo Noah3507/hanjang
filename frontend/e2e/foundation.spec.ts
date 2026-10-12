@@ -1,30 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
-import { test as base, expect } from '@playwright/test'
-
-const test = base.extend<{ diagnostics: void }>({
-  diagnostics: [async ({ page }, use, testInfo) => {
-    const logs: string[] = []
-    const pageErrors: string[] = []
-    page.on('console', (message) => logs.push(`[console:${message.type()}] ${message.text()}`))
-    page.on('pageerror', (error) => {
-      pageErrors.push(error.message)
-      logs.push(`[pageerror] ${error.stack || error.message}`)
-    })
-    page.on('requestfailed', (request) => logs.push(
-      `[requestfailed] ${request.method()} ${request.url()} ${request.failure()?.errorText}`,
-    ))
-    try {
-      await use()
-      expect(pageErrors, 'Uncaught browser JavaScript errors').toEqual([])
-    } finally {
-      logs.push(...testInfo.errors.map((error) => `[assertion] ${error.stack || error.message}`))
-      await mkdir(testInfo.outputDir, { recursive: true })
-      const path = testInfo.outputPath('browser.log')
-      await writeFile(path, logs.join('\n'), 'utf8')
-      await testInfo.attach('browser diagnostics', { path, contentType: 'text/plain' })
-    }
-  }, { auto: true }],
-})
+import { test, expect } from './fixtures'
 
 test('desktop: actual API connection and explicit unimplemented feature notice', async ({ page, request }, testInfo) => {
   await test.step('FastAPI and Vite proxy return the health contract', async () => {
@@ -41,9 +15,9 @@ test('desktop: actual API connection and explicit unimplemented feature notice',
     await expect(page.getByRole('button', { name: '연결 다시 확인' })).toBeEnabled()
   })
   await test.step('do not represent product input or generated ads as implemented', async () => {
-    await expect(page.getByText('기본 개발 환경 단계입니다. 업로드·광고 생성·선호 순위·편집·다운로드는 아직 구현되지 않았습니다.')).toBeVisible()
-    await expect(page.getByRole('textbox')).toHaveCount(0)
-    await expect(page.locator('input[type="file"]')).toHaveCount(0)
+    await expect(page.getByText('상품 정보 입력·원본 사진 업로드만 구현됐습니다. 광고 생성·선호 순위·문구 편집·다운로드는 아직 구현되지 않았습니다.')).toBeVisible()
+    await expect(page.getByLabel('상품명', { exact: true })).toBeVisible()
+    await expect(page.locator('input[type="file"]')).toHaveCount(1)
   })
   const path = testInfo.outputPath('desktop.png')
   await page.screenshot({ path, fullPage: true })

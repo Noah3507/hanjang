@@ -1,10 +1,10 @@
 # API와 Ranking 계약 초안
 
-계약 version 제안: v1-draft. R5의 접점은 candidate ID·image path/url·score/rank/model version입니다. 자료 충돌 시 최종 발표본을 우선합니다. Job Polling·비공개 임시 저장·24시간 삭제와 상태 네 값은 사용자 확정이며 endpoint·수치 제한·revision·session 상세는 설계 제안입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다. 아직 구현된 API는 없습니다.
+계약 version: v1-draft. R5의 접점은 candidate ID·image path/url·score/rank/model version입니다. 자료 충돌 시 최종 발표본을 우선합니다. 사용자 승인에 따라 입력·업로드 API 및 아래 draft 계약을 구현했습니다. 나머지 광고 API는 설계 단계입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다.
 
 ## 공통 규약
 
-현재 구현은 health만입니다. 문서의 GET /api/v1/health를 유지하고 사용자 요청의 GET /health를 동일 schema의 별칭으로 추가했습니다. 응답은 status=ok, api_version=v1-draft이며 schema 변경이 아닙니다. 세션·upload·job·ranking·편집 계약은 설계이며 아직 구현되지 않았습니다. health는 미래 기능의 준비 상태를 보장하지 않습니다.
+현재 구현: health, POST /sessions, POST /uploads, PUT·GET /jobs/{job_id}/input, GET /assets/{asset_id}. GET /health는 기존 별칭을 유지합니다. POST /jobs, GET /jobs/{job_id}, 결과·ranking·편집 API는 미구현입니다. health는 광고 기능의 준비 상태를 보장하지 않습니다.
 
 - Base /api/v1, JSON UTF-8. 이미지 upload만 multipart.
 - Strategy = emotional | price | visual | brand. Mood = warm | minimal | vivid | premium은 제안.
@@ -12,6 +12,24 @@
 - facts는 수락 문자열 그대로. 가격 float·자동 단위·trim·번역 금지.
 - datetime은 UTC ISO 8601, score는 finite float이며 0–1 제한 없음, rank는 유일한 1–4.
 - unknown field 거부. optional 입력은 생략 가능, 응답에서는 null. breaking change는 version 갱신과 공동 승인.
+
+## 승인된 입력 draft 계약
+
+POST /jobs는 광고 처리 시작이므로 이번 입력 저장 기능에서 구현하거나 재사용하지 않았습니다. 사용자가 PUT /jobs/{job_id}/input 추가와 기존 제안 검증값 적용을 승인했습니다. 기존 GET /jobs/{job_id}의 JobStatus에는 facts/mood가 없어서 조회는 **GET /jobs/{job_id}/input**으로 별도 추가했습니다. 이는 기존 작업 상태 응답이나 B ranking 계약을 변경하지 않는 additive 계약입니다.
+
+PUT 요청은 InputDraft = {facts: Facts, mood: Mood}. GET/PUT 응답은 DraftResponse = {job_id:string, status:"pending", facts:Facts, mood:Mood, expires_at:UTC datetime}. 저장은 광고 처리를 시작하지 않고 TTL을 연장하지 않습니다. 미저장 draft 조회는 409 INPUT_NOT_SAVED입니다. 입력 갱신은 전체 대체·last-write-wins이며 revision/자동 광고 재생성은 이번 범위에 없습니다.
+
+```json
+{"facts":{"store_name":"  테스트 가게  ","product_name":"한글 메뉴","price_text":" 10,500 원 ","address":null,"instagram_handle":null},"mood":"warm"}
+```
+
+공백·쉼표·통화 단위·한글·emoji는 입력 그대로 보존합니다. 공백만인 값·제어 문자·숫자형 가격·길이 초과·unknown field는 422이며 자동 교정/trim/절단하지 않습니다. 선택 문자열은 생략/null 가능, 빈 문자열은 화면에서 null로 전송합니다. mood는 warm/minimal/vivid/premium입니다.
+
+사진은 JPEG/PNG 실제 형식·decode·10 MiB·24MP·가로/세로 각각 256px 이상을 확인합니다. Multipart에는 photo 1개만 허용하며 사용자 파일명·경로는 저장에 사용하지 않습니다. 파싱 전 전체 요청은 10 MiB+64KiB, draft JSON은 16KiB로 제한합니다. 원본 byte·해시를 보존하며 Pillow는 검증만 담당합니다.
+
+세션 token은 POST /sessions에서 발급하며 X-Hanjang-Session header로만 전송합니다. UI는 tab sessionStorage에 token과 업로드 ID/metadata만 보관하고 사실 정보는 서버 GET으로 읽습니다. 다른 세션의 asset/draft는 404, 누락/만료 세션은 401입니다. 원본 GET은 인증된 bytes 응답이며 공개 정적 디렉터리가 없습니다. 실제 token·사진·개인 입력을 로그에 출력하지 않습니다.
+
+원본·draft는 업로드 created_at부터 24시간입니다. 시작 시와 60초 간격 sweep에서 만료 원본·metadata를 삭제하고 만료 접근은 즉시 거부합니다. 삭제 전 자기 만료 작업은 410, 삭제/재시작 후 미존재는 404일 수 있습니다. 세션 자체도 발급 후 24시간으로 만료합니다. 서버 중단 중 삭제는 실행할 수 없고 재시작 시 파일 mtime으로 24시간 지난 orphan을 정리합니다. 메타데이터는 메모리이므로 재시작/배포 후 유실될 수 있으며 새 업로드가 필요합니다. 이번에는 중간/광고 결과 파일을 생성하지 않습니다.
 
 ## 타입 정의
 
@@ -40,7 +58,9 @@ X-Hanjang-Session을 health/session 생성 외 endpoint에 요구하는 제안�
 | --- | --- | --- |
 | GET /health | 없음 | 200 {status:"ok",api_version:"v1-draft"} |
 | POST /sessions | 빈 JSON | 201 {session_token,expires_at}, Cache-Control:no-store |
-| POST /uploads | multipart photo | 201 Upload와 고유 pending job 생성. JPG/PNG, 10MiB/24MP/최소256px 등 D09 제안 |
+| POST /uploads | multipart photo | 201 Upload와 고유 pending job 생성. 승인된 JPG/PNG·10MiB·24MP·가로/세로 최소256px 검증 |
+| PUT /jobs/{job_id}/input | {facts,mood} | 200 DraftResponse, 입력만 저장·pending 유지 |
+| GET /jobs/{job_id}/input | 없음 | 200 DraftResponse, 미저장 409 |
 | POST /jobs | {job_id,photo_asset_id,facts,mood} | 202 JobStatus. 자기 pending upload job을 처리 시작, strategy 선택 없음, 반드시 네 종류 |
 | GET /jobs/{job_id} | 없음 | 200 JobStatus |
 | GET /jobs/{job_id}/result | 없음 | 200 GenerationResult, 미완성/실패 409 |

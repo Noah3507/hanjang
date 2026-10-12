@@ -42,7 +42,7 @@
 | --- | --- | --- | --- |
 | D07 | 생성·상태·저장 방식 | **확정:** 단일 서버·비공개 임시 저장·Job Polling, pending/processing/completed/failed, 고유 작업 ID·경로 비노출. 재시작/배포 유실 가능, 클라우드/복잡한 큐 제외 | 사용자 승인 완료. A가 파일 검증·접근 보호와 확장 인터페이스 설계 |
 | D08 | 보관·접근 | **확정:** 원본·중간 파일·결과물 24시간 자동 삭제, 임의 외부 접근 차단. 세부 제안: session token, job 생성 기준 TTL·편집 연장 없음·시작 시 orphan 정리 | 사용자 승인 완료. 원본 학습 재사용 안 함, 수치/정리 상세는 S2 계약 리뷰 |
-| D09 | 입력·파일 제한 | JPG/PNG, 10 MiB, decoded 24MP, 256px 이상; 이름 80자·가격 40자 | A/B, S2 계약 검증. 초과 거부, 절단 금지 |
+| D09 | 입력·파일 제한 | **사용자 승인·구현:** JPG/PNG, 10 MiB, decoded 24MP, 가로/세로 각각 256px 이상; 이름 80자·가격 40자 | 초과 거부, 절단·자동 변경 금지. decode 검증은 원본 재생성을 뜻하지 않음 |
 | D10 | LLM 공급자·예산 | provider interface, structured JSON, 최초+재시도 1회 | 사용자/A, 유료 호출·외부 전송 전에 승인 |
 | D11 | PNG·mood·geometry | 1080×1350, warm/minimal/vivid/premium, 전략별 layout | 사용자/A/B, S5 리뷰. P14는 예시, 정확한 규격 없음 |
 | D12 | 가격 단위 | 완성된 `price_text` 입력, 원·쉼표 자동 추가 금지 | 사용자/A, P14 별도 원 suffix와 입력 보존 원칙 조정 |
