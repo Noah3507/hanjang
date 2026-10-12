@@ -58,7 +58,7 @@ X-Hanjang-Session을 health/session 생성 외 endpoint에 요구하는 제안�
 | --- | --- | --- |
 | GET /health | 없음 | 200 {status:"ok",api_version:"v1-draft"} |
 | POST /sessions | 빈 JSON | 201 {session_token,expires_at}, Cache-Control:no-store |
-| POST /uploads | multipart photo | 201 Upload와 고유 pending job 생성. JPG/PNG, 10MiB/24MP/최소256px 등 D09 제안 |
+| POST /uploads | multipart photo | 201 Upload와 고유 pending job 생성. 승인된 JPG/PNG·10MiB·24MP·가로/세로 최소256px 검증 |
 | PUT /jobs/{job_id}/input | {facts,mood} | 200 DraftResponse, 입력만 저장·pending 유지 |
 | GET /jobs/{job_id}/input | 없음 | 200 DraftResponse, 미저장 409 |
 | POST /jobs | {job_id,photo_asset_id,facts,mood} | 202 JobStatus. 자기 pending upload job을 처리 시작, strategy 선택 없음, 반드시 네 종류 |
