@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getHealth } from './api/health'
+import ProductInput from './components/ProductInput'
 
 type Connection = 'checking' | 'connected' | 'unavailable'
 
@@ -36,7 +37,7 @@ export default function App() {
       <p className="intro">사진 한 장에서 시작하는 우리 가게 광고.</p>
       <section className="connection" aria-labelledby="connection-title">
         <h2 id="connection-title">개발 환경 연결 상태</h2>
-        <p role="status" className={`status ${connection}`}>
+        <p role="status" aria-label="백엔드 연결 상태" className={`status ${connection}`}>
           <span className="dot" aria-hidden="true" />{labels[connection]}
         </p>
         <p className="help">
@@ -50,7 +51,8 @@ export default function App() {
           연결 다시 확인
         </button>
       </section>
-      <p className="notice">기본 개발 환경 단계입니다. 업로드·광고 생성·선호 순위·편집·다운로드는 아직 구현되지 않았습니다.</p>
+      <ProductInput />
+      <p className="notice">상품 정보 입력·원본 사진 업로드만 구현됐습니다. 광고 생성·선호 순위·문구 편집·다운로드는 아직 구현되지 않았습니다.</p>
     </main>
   )
 }

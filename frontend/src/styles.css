@@ -22,6 +22,21 @@ button { min-height: 44px; padding: 10px 18px; margin-top: 12px; border: none; b
 button:disabled { opacity: .55; cursor: wait; }
 button:focus-visible { outline: 3px solid #987400; outline-offset: 4px; }
 .notice { margin-top: 24px; }
+.product-input { margin-top: 32px; padding: 28px; background: white; border: 1px solid #d9ddcc; border-radius: 20px; }
+fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+label { display: block; font-weight: 600; margin: 18px 0 8px; }
+input, select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #999f90; border-radius: 8px; font: inherit; background: white; color: inherit; }
+input:focus-visible, select:focus-visible { outline: 3px solid #987400; outline-offset: 2px; }
+input[aria-invalid=true], select[aria-invalid=true] { border-color: #a64230; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+.photo-preview { display: block; width: 100%; max-height: 320px; object-fit: contain; margin-top: 16px; }
+.field-error, [role=alert] { color: #a64230; font-size: 14px; }
+.secondary { margin-left: 10px; color: #283f2d; background: #eef1e7; }
+.saved-input { padding: 18px; margin-top: 20px; background: #f6f3e9; border-radius: 12px; }
+dt { font-size: 13px; color: #555c50; }
+dd { margin: 4px 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+small { display: block; margin-top: 8px; color: #555c50; }
+@media (max-width: 480px) { .product-input { padding: 22px; } .fields { grid-template-columns: 1fr; } .secondary { margin-left: 0; display: block; } }
 @media (max-width: 480px) {
   .foundation { padding-top: 48px; }
   .connection { padding: 22px; }

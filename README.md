@@ -4,11 +4,11 @@
 
 ## 현재 구현 범위
 
-2026-10-12 현재 **서비스 기본 뼈대**입니다. React 화면에서 실제 FastAPI health 연결 상태와 재시도를 확인할 수 있습니다. pytest·Vitest·CI를 구성했습니다. 업로드·광고 생성·ranking·편집·다운로드·24시간 파일 관리는 아직 구현하지 않았고 화면에도 이를 표시합니다. LLM·이미지 처리·학습·MockRanker 의존성을 설치하지 않았습니다.
+2026-10-12 현재 기본 뼈대와 **상품 정보 입력·원본 이미지 업로드·draft 저장/재조회**를 구현했습니다. 원본 byte와 입력 문자열을 보존하고 비공개 세션으로 접근을 제한하며 24시간 만료·정리를 수행합니다. 광고 생성·ranking·문구 편집·결과 다운로드는 미구현입니다. Pillow는 파일 검증만 담당하며 원본을 변환하지 않습니다. LLM·rembg·학습·MockRanker는 추가하지 않았습니다.
 
 승인된 제품 우선순위는 **업로드 → AI 광고 4종 생성 → 선호 순위 → 문구 수정 → PNG 다운로드**입니다. A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합니다. 원본 보존·배경 제거·비율 유지 resize만 허용하고 상품 색상/채도/명도 보정은 보류합니다. 처리 실패·품질 저하 시 원본 사용 경로를 제공합니다.
 
-초기 운영 정책은 단일 서버·비공개 임시 저장·24시간 원본/중간/결과물 자동 삭제·Job Polling, pending/processing/completed/failed 상태입니다. 서버 재시작·배포 시 유실 가능성을 인정하며 클라우드 스토리지·복잡한 큐는 도입하지 않습니다. 이 정책 구현은 후속 단계입니다.
+초기 운영 정책은 단일 서버·비공개 임시 저장·24시간 자동 삭제, pending/processing/completed/failed 상태입니다. 이번에는 원본·입력만 저장하고 pending을 유지합니다. 광고 processing·Job Polling은 후속 단계입니다. 세션/draft 메타데이터는 메모리라 재시작·배포 후 유실될 수 있으며 다시 업로드해야 합니다. 남은 원본은 시작 시와 60초 sweep에서 24시간 만료 파일을 정리합니다. 클라우드 스토리지·복잡한 큐는 도입하지 않습니다.
 
 ## 기준 자료와 역할
 
@@ -45,9 +45,9 @@ git fetch origin
 
 ```powershell
 # 로컬 브랜치가 없을 때
-git switch --track origin/feat/service-foundation
+git switch --track origin/feat/service-upload
 # 이미 로컬에 있을 때는 위 명령 대신
-# git switch feat/service-foundation
+# git switch feat/service-upload
 git pull --ff-only
 ```
 
@@ -88,6 +88,18 @@ npm.cmd --prefix frontend run dev
 
 브라우저에서 http://127.0.0.1:5173을 열고 Hanjang과 '백엔드 연결됨'을 확인합니다. API 문서는 http://127.0.0.1:8000/docs입니다. Ctrl+C로 각각 종료합니다. Vite는 5173 사용 중이면 자동으로 포트를 바꾸지 않고 오류를 반환합니다.
 
+### 상품 입력·업로드 직접 확인 체크리스트
+
+1. JPG/PNG 사진(최대 10 MiB, 24MP 이하, 가로/세로 각각 256px 이상)을 선택해 원본 미리보기를 확인합니다.
+2. 가게명·상품명·가격을 입력하고 분위기를 선택합니다. 예: 테스트 가게 / 한글 메뉴 / 10,500원 / 따뜻한 감성. 주소·Instagram은 선택입니다.
+3. '상품 정보와 사진 저장'을 누릅니다. 서버에 저장된 입력·pending·만료 시각이 표시되고 광고 생성이 시작되지 않았다는 안내를 확인합니다.
+4. 입력창의 상품명을 임시로 바꾼 뒤 '저장 정보 다시 조회'를 누릅니다. 서버에 저장한 원래 문자열과 원본 사진으로 돌아옵니다. 같은 탭을 새로고침한 뒤에도 이 버튼으로 읽을 수 있습니다.
+5. 필수 값 누락, 80자 초과 이름/40자 초과 가격, SVG, 256px 미만 사진을 시험합니다. 명확한 오류와 기존 입력 유지, 거짓 성공 표시 없음 확인.
+
+서버는 가격의 쉼표·단위·공백을 변경하지 않습니다. 저장 버튼을 다시 누르면 같은 사진 작업의 입력만 교체하고 만료 시각은 연장하지 않습니다. 새 사진은 새 작업입니다. .env/API 키는 필요하지 않으며 사진·입력·세션 token은 Git에 저장하지 않습니다. tab sessionStorage에는 token과 asset/job metadata만 보관합니다. 기본 저장 폴더 uploads/originals/는 비공개·Git 제외이며 GET /api/v1/assets/{asset_id}에도 X-Hanjang-Session 인증이 필요합니다. 저장 root를 바꾸면 전용 비공개·Git 제외 경로를 사용하세요.
+
+Swagger 확인 순서: POST /api/v1/sessions → 반환 token을 X-Hanjang-Session에 입력해 POST /uploads → job_id로 PUT /jobs/{job_id}/input → GET 동일 경로. 토큰·개인 입력·사진을 공유 로그에 복사하지 마세요. [API 계약](docs/API_CONTRACT.md)에 요청·응답을 정리했습니다. 광고 POST /jobs는 아직 없습니다.
+
 frontend dev(5173)·preview(4173)는 설정에서 127.0.0.1에 바인딩합니다. backend도 위 명령의 --host 127.0.0.1로 실행합니다. localhost/127.0.0.1은 **현재 컴퓨터만** 의미하므로 노트북에서 데스크탑 서버를 공유하는 방식이 아닙니다. 공용 Wi-Fi 접근을 위해 --host 0.0.0.0/--host 플래그, 포트 포워딩, 공개 tunnel을 추가하지 않습니다. CORS는 서버 접속 제한을 대신하지 않습니다.
 
 GET /health와 문서의 versioned GET /api/v1/health는 모두 다음을 반환합니다. health는 광고·모델 readiness 검사가 아닙니다.
@@ -123,7 +135,7 @@ CI는 main 대상 PR과 main/feat/fix/refactor/test/docs/chore 브랜치 push에
 
 ## 실제 브라우저 자동 테스트
 
-Playwright는 현재 구현된 health 연결·대기·실패/재시도·응답 검증·모바일 배치를 검사합니다. 상품 정보 입력부터 광고 결과까지는 미구현이므로 해당 기능의 성공으로 보고하지 않습니다. 오류 시나리오는 브라우저 요청을 테스트 안에서만 모의 처리하며 사용자 개발 서버를 종료하지 않습니다.
+Playwright는 health와 PNG/JPEG 실제 업로드·입력 저장·서버 재조회·새로고침·원본 byte 비교·검증 오류·모바일 화면을 검사합니다. 업로드 시험 이미지는 테스트용 단색 fixture입니다. 장애 일부는 명시적으로 모의하고 복구는 실제 API로 확인합니다. 광고 결과는 미구현이므로 생성 성공으로 보고하지 않습니다. 사용자 서버를 종료하지 않습니다.
 
 ```powershell
 # 최초 한 번, 저장소 루트에서
@@ -193,7 +205,7 @@ git rev-parse '@{upstream}'
 ```powershell
 git status --short --branch
 git fetch origin
-git switch feat/service-foundation
+git switch feat/service-upload
 git pull --ff-only
 # 새 clone에서 로컬 브랜치가 없으면 위 switch 대신 --track origin/... 사용
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
