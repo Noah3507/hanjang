@@ -235,3 +235,7 @@ main은 PR로만 변경하고 force push·기록 변경·저장소 삭제를 금
 GitHub Flow와 feat/fix/refactor/test/docs/chore 브랜치 이름, 영어 Conventional Commits를 사용합니다. 현재 작업과 기존 커밋·브랜치를 보존하고 develop은 만들지 않습니다. 작은 단위 검증·commit 후 push와 main 대상 PR을 진행합니다. 기존 PR은 재사용하고 제목·본문을 템플릿에 맞춰 갱신합니다. 자동 merge는 하지 않고 사용자 검토·명시적 승인을 기다립니다. 다른 사람의 변경·민감 정보·임시 파일을 보호합니다. [CONTRIBUTING](CONTRIBUTING.md)에 초보자 명령과 보호 설정 승인 절차를 정리했습니다.
 
 팀원 B의 모델 개발 시작 절차는 [MODEL_DEVELOPMENT](docs/MODEL_DEVELOPMENT.md)를 따릅니다.
+
+## S3 사진 전처리 구현
+
+배경 제거, 비율 유지 축소, 원본/처리본 비교와 사진 선택 API를 추가했습니다. 실행 설정과 계약은 [IMAGE_PROCESSING](docs/IMAGE_PROCESSING.md)를 따릅니다. 모델이 없으면 자동 다운로드 없이 원본 fallback을 사용합니다. 광고 재생성 및 후속 분석/LLM/ranking은 미구현이며 S3의 향후 네 후보 재렌더링까지 완료했다고 보고하지 않습니다.

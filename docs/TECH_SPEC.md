@@ -1,6 +1,6 @@
 # Hanjang 기술 설계 초안
 
-기술 선택의 근거는 P11·12·16, R3·4·5·8입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다. 자료 충돌 시 최종 발표본을 우선합니다. 현재 health·입력·업로드·draft 조회·원본 정리 코드만 구현했고 광고 파이프라인은 후속입니다. 단일 서버·비공개 임시 저장·24시간 삭제·Job Polling과 사진 처리 경계는 사용자 확정이며 timeout·cache는 제안입니다.
+기술 선택의 근거는 P11·12·16, R3·4·5·8입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다. 자료 충돌 시 최종 발표본을 우선합니다. 현재 health·입력·업로드·draft·사진 전처리/선택과 임시 파일 정리를 구현했고 광고 파이프라인은 후속입니다. 단일 서버·비공개 임시 저장·24시간 삭제·Job Polling과 사진 처리 경계는 사용자 확정이며 timeout·cache는 제안입니다.
 
 ## 연결 구조
 
@@ -100,3 +100,7 @@ A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합�
 저장소 협업은 [CONTRIBUTING.md](../CONTRIBUTING.md)의 GitHub Flow·Conventional Commits를 따릅니다. CI의 repository-policy는 stage/index 파일·흔한 비밀 패턴·PR 제목을 검증하고 기존 backend/frontend 검사와 함께 실행합니다. 이는 모델 API 계약·A/B 소유권·제품 범위를 바꾸지 않습니다. main 보호 적용·새 권한·브랜치 삭제는 사용자 사전 승인 대상이며 자동 merge·force push는 수행하지 않습니다.
 
 파일 upload를 JSON job 요청과 별도 endpoint로 나눈 것은 [FastAPI 파일 요청 문서](https://fastapi.tiangolo.com/tutorial/request-files/)의 multipart/JSON 구분에 맞춘 설계 제안입니다. HTML escaping은 [Jinja API 문서](https://jinja.palletsprojects.com/en/stable/api/)의 autoescape 설정을 명시적으로 활성화해야 합니다. rembg는 [공식 저장소](https://github.com/danielgatis/rembg)의 배경 제거 도구이며 이미지 생성 도구로 사용하지 않습니다. PNG·PDF 렌더링은 [Playwright Python Page 문서](https://playwright.dev/python/docs/api/class-page)의 screenshot/pdf 기능을 기준으로 구현합니다. 이 확인은 원본 요구사항이나 라이브러리 호환성 smoke test를 대신하지 않습니다.
+
+## S3 사진 전처리 구현
+
+배경 제거, 비율 유지 축소, 원본/처리본 비교와 사진 선택 API를 추가했습니다. 실행 설정과 계약은 [IMAGE_PROCESSING](IMAGE_PROCESSING.md)를 따릅니다. 모델이 없으면 자동 다운로드 없이 원본 fallback을 사용합니다. 광고 재생성 및 후속 분석/LLM/ranking은 미구현이며 S3의 향후 네 후보 재렌더링까지 완료했다고 보고하지 않습니다.
