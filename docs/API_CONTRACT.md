@@ -152,6 +152,8 @@ Candidate 전체 field 예입니다. geometry·측정값은 fixture용 인공 �
 
 ## B ranking adapter 계약
 
+현재 추론·MockRanker 구현은 없으며 아래 함수 signature는 B 승인 전 초안입니다. 전처리·artifact 전달·오류·공동 합의 항목과 병렬 개발 게이트는 [MODEL_HANDOFF](MODEL_HANDOFF.md)에 정리합니다. 이번 점검은 HTTP/API schema를 변경하지 않습니다.
+
 R4 공개 surface는 load_model(), extract_features(), score_ad(), rank_ads()입니다. 아래 signature는 B 승인 전 제안입니다. A는 rank_ads() 경계를 사용하고 B feature extraction을 복제하지 않습니다.
 
 ```python

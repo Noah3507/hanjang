@@ -46,6 +46,8 @@ Designer agreement는 자료에서 계산 가능한 범위의 reference이며 �
 
 ## 의존관계와 통합 게이트
 
+A/B 병렬 개발과 S5c mock→S6 서비스 흐름→B6/S8 실제 모델 연결의 상세 점검은 [MODEL_HANDOFF](MODEL_HANDOFF.md)를 따릅니다. 현재 mock/전체 흐름은 미구현입니다. S9의 S8 의존과 말미의 모델 unavailable 시 서비스 완료 표현 사이 완료 경계는 공동 리뷰 사항으로 남기며 이번에는 계획을 변경하지 않습니다.
+
 ```mermaid
 flowchart LR
   S0 --> S1 --> S2 --> S3 --> S4
