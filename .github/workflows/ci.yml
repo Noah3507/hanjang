@@ -78,6 +78,14 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Retain synthetic upload screenshots for review
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-ui-screenshots
+          path: artifacts/playwright/results/**/upload-*.png
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Retain failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

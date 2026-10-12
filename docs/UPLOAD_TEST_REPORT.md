@@ -19,7 +19,7 @@ POST /sessions, POST /uploads, GET /assets/{asset_id}, 승인된 PUT /jobs/{job_
 
 http://127.0.0.1:5173에서 사진과 가게/상품/가격/분위기를 입력해 저장한 뒤 '저장 정보 다시 조회'로 원래 문자열·원본을 확인합니다. http://127.0.0.1:8000/docs에서 같은 API를 확인할 수 있습니다. [README 체크리스트](../README.md#상품-입력업로드-직접-확인-체크리스트)를 따릅니다. 이번 서버는 loopback에서 유지했습니다.
 
-실제 screenshot과 Console/실패 로그는 Git 제외 artifacts/playwright/에 있습니다. 실패 시 screenshot/trace/video를 보관하도록 구성했으며 이번 최종 실행에는 테스트 실패가 없었습니다. desktop/mobile 업로드 화면을 직접 확인했습니다. 실제 사용자 사진·token·.env는 commit하지 않습니다.
+실제 screenshot과 Console/실패 로그는 Git 제외 artifacts/playwright/에 있습니다. 실패 시 screenshot/trace/video를 보관하도록 구성했으며 이번 최종 실행에는 테스트 실패가 없었습니다. desktop/mobile 업로드 화면을 직접 확인했습니다. CI는 개인정보 없는 단색 fixture 업로드 screenshot만 upload-ui-screenshots artifact로 7일 보관해 PR에서 검토할 수 있게 합니다. 실제 사용자 사진·token·.env는 commit하지 않습니다.
 
 ## 한계
 
