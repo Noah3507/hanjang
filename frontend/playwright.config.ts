@@ -3,7 +3,9 @@ import { defineConfig, devices } from '@playwright/test'
 
 const frontend = fileURLToPath(new URL('.', import.meta.url))
 const root = fileURLToPath(new URL('..', import.meta.url))
-const python = process.platform === 'win32' ? '".venv/Scripts/python.exe"' : 'python'
+const python = process.env.PLAYWRIGHT_PYTHON ? `"${process.env.PLAYWRIGHT_PYTHON}"` : process.platform === 'win32' ? '".venv/Scripts/python.exe"' : 'python'
+const frontendPort = process.env.PLAYWRIGHT_FRONTEND_PORT || '5173'
+const backendPort = process.env.PLAYWRIGHT_BACKEND_PORT || '8000'
 
 export default defineConfig({
   testDir: './e2e',
@@ -19,7 +21,7 @@ export default defineConfig({
     ['json', { outputFile: '../artifacts/playwright/results.json' }],
   ],
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: `http://127.0.0.1:${frontendPort}`,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
@@ -33,16 +35,16 @@ export default defineConfig({
   }],
   webServer: [
     {
-      command: `${python} -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000`,
+      command: `${python} -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port ${backendPort}`,
       cwd: root,
-      url: 'http://127.0.0.1:8000/health',
+      url: `http://127.0.0.1:${backendPort}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },
     {
-      command: process.platform === 'win32' ? 'npm.cmd run dev' : 'npm run dev',
+      command: `${process.platform === 'win32' ? 'npm.cmd' : 'npm'} run dev -- --port ${frontendPort}`,
       cwd: frontend,
-      url: 'http://127.0.0.1:5173',
+      url: `http://127.0.0.1:${frontendPort}`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

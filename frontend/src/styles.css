@@ -41,3 +41,10 @@ small { display: block; margin-top: 8px; color: #555c50; }
   .foundation { padding-top: 48px; }
   .connection { padding: 22px; }
 }
+:root { --photo-preview-max: 360px; }
+.photo-processing { margin-top: 1.5rem; padding: 1rem; border: 1px solid #d5d5d5; border-radius: 12px; }
+.photo-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.photo-comparison img { display: block; width: 100%; height: var(--photo-preview-max); object-fit: contain; background: repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 0 0 / 20px 20px; }
+.photo-comparison button { margin-top: .5rem; }
+.photo-processing button[aria-pressed="true"] { outline: 3px solid #267456; outline-offset: 2px; }
+@media (max-width: 600px) { .photo-comparison { grid-template-columns: 1fr; } }

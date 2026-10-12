@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import PhotoProcessing from './PhotoProcessing'
 import { ApiError, getInput, getOriginal, saveInput, uploadPhoto, type Draft, type Facts, type Mood, type UploadHandle } from '../api/uploads'
 
 const empty: Facts = { store_name: '', product_name: '', price_text: '', address: null, instagram_handle: null }
@@ -119,6 +120,7 @@ export default function ProductInput() {
       <p>작업 상태: {draft.status} · 분위기: {draft.mood}</p>
       <p>만료: {new Date(draft.expires_at).toLocaleString('ko-KR')} · 사진/입력은 24시간 임시 저장됩니다.</p>
     </section>}
+    {draft && handle && <PhotoProcessing key={handle.upload.job_id} handle={handle} />}
     <p className="help">이 탭의 세션으로 다시 조회할 수 있습니다. 서버 재시작·배포 시 작업 정보가 유실될 수 있습니다. 새 사진은 새 작업으로 저장되며 이전 사진도 만료 시 정리됩니다.</p>
   </section>
 }
