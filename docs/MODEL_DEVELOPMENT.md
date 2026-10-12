@@ -20,7 +20,7 @@ git pull --ff-only origin main
 git switch -c feat/ml-environment
 ```
 
-이미 같은 작업 브랜치가 있다면 새로 생성하지 않고 `git switch <기존 브랜치>` 후 `git pull --ff-only`합니다. A의 `feat/service-upload`는 별도 진행 중이며 PR #8이 병합되기 전에는 main Clone에 업로드 기능이 없습니다. 필요한 서비스 계약 변경은 A와 먼저 합의합니다.
+이미 같은 작업 브랜치가 있다면 새로 생성하지 않고 `git switch <기존 브랜치>` 후 `git pull --ff-only`합니다. PR #8과 #9는 병합 완료됐으며 최신 main에는 업로드와 협업 안내가 포함됩니다. 필요한 서비스 계약 변경은 A와 먼저 합의합니다.
 
 ## B가 첫 PR에서 준비할 영역
 
@@ -63,6 +63,8 @@ py -3.12 -m venv .venv-ml
 - 모델 부재/실패 시 전체 MockRanker fallback과 mock 표시가 서비스 설계에 포함됩니다. **현재 실제 MockRanker·모델 adapter·광고 생성은 구현되지 않았습니다.**
 
 첫 공동 리뷰에서 입력 이미지 조건, 함수 signature, version/exception, timeout, 동점 규칙, artifact 위치와 독립 smoke fixture를 합의한 뒤 계약·소비자를 함께 수정합니다. 사용자 업로드 대신 권한 확인된 fixture로 테스트합니다.
+
+상세 전달 체크리스트와 확정/제안 구분은 [MODEL_HANDOFF](MODEL_HANDOFF.md)를 따릅니다. B는 서비스가 없어도 sample 광고 PNG로 데이터·feature·학습·평가·추론을 진행할 수 있습니다. A는 S5c MockRanker와 S6 서비스 흐름을 개발하고, 실제 모델 연결은 B6 이후 S8 별도 PR로 유지합니다. 현재 전체 광고 흐름은 미구현입니다.
 
 ## PR와 완료 기준
 

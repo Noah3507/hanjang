@@ -31,6 +31,8 @@
 
 ## 접점 제공과 고정 시점
 
+함수별 입력·출력·전처리·artifact·오류 합의와 A/B 수정 경계는 [MODEL_HANDOFF](MODEL_HANDOFF.md)에 정리합니다. 기존 소유권은 유지하며 B 승인 전 signature를 확정하지 않습니다.
+
 | 시점 | A가 제공 | B가 제공 | 공동 게이트 |
 | --- | --- | --- | --- |
 | Week 5 | candidate/HTTP 초안, MockRanker 계약 | 필요 feature와 sample 입력 조건 | ID·이미지·ranking input 합의 |
