@@ -1,5 +1,7 @@
 # API와 Ranking 계약 초안
 
+S3 사용자 승인 additive 사진 전처리 POST/GET 및 사진 선택 PUT 계약은 [IMAGE_PROCESSING](IMAGE_PROCESSING.md)에 정의합니다. 기존 광고 재생성 PATCH와 InputDraft/B ranking 계약은 변경하지 않습니다.
+
 계약 version: v1-draft. R5의 접점은 candidate ID·image path/url·score/rank/model version입니다. 자료 충돌 시 최종 발표본을 우선합니다. 사용자 승인에 따라 입력·업로드 API 및 아래 draft 계약을 구현했습니다. 나머지 광고 API는 설계 단계입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다.
 
 ## 공통 규약

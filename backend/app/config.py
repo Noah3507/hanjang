@@ -23,6 +23,9 @@ class Settings(BaseSettings):
         ]
     )
     upload_root: Path = PROJECT_ROOT / "uploads" / "originals"
+    photo_model_path: Path = PROJECT_ROOT / "artifacts" / "models" / "rembg" / "u2netp.onnx"
+    photo_timeout_seconds: float = Field(default=90, gt=0, le=120)
+    photo_max_side: int = Field(default=1600, ge=256, le=4096)
 
     @field_validator("cors_origins")
     @classmethod

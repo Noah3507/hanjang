@@ -110,3 +110,7 @@ B 테스트는 제공된 절차로 실행할 수 있지만 실패를 고치려�
 ## 2인 모델 개발 시작 안내
 
 B의 환경 준비는 docs/MODEL_DEVELOPMENT.md를 따릅니다. 모델 의존성, 하드웨어, 데이터와 함수 계약은 B와 합의하기 전 확정하지 않습니다. 서비스 CI 통과를 모델 평가 검증으로 보고하지 않습니다. A/B 소유권을 유지하고 모델 환경 .venv-ml을 서비스 환경과 격리합니다. 권한 및 main 보호 변경은 사용자 승인 후 수행합니다.
+
+## 현재 승인된 S3 범위
+
+feat/service-image-processing은 rembg/Pillow/OpenCV 전처리, 비교/선택 UI, additive 사진 처리 POST/GET과 사진 선택 PUT을 구현합니다. 원본/facts 보존 및 실패/품질 경고 시 원본 선택을 유지합니다. 광고 재생성 PATCH, 생성/분석/LLM/ranking과 B 코드는 포함하지 않습니다. 모델은 명시적 다운로드만 허용하며 자동 다운로드는 금지합니다. docs/IMAGE_PROCESSING.md의 계약과 검증을 따릅니다.
