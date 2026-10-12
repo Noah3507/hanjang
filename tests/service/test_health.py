@@ -6,8 +6,8 @@ from app.main import create_app
 
 
 @pytest.fixture
-def client():
-    settings = Settings(_env_file=None)
+def client(tmp_path):
+    settings = Settings(_env_file=None, upload_root=tmp_path / "uploads")
     with TestClient(create_app(settings)) as test_client:
         yield test_client
 
@@ -42,9 +42,9 @@ def test_unknown_origin_is_not_allowed(client):
     assert "access-control-allow-origin" not in response.headers
 
 
-def test_cors_can_be_configured_without_reading_local_env(monkeypatch):
+def test_cors_can_be_configured_without_reading_local_env(monkeypatch, tmp_path):
     monkeypatch.setenv("HANJANG_CORS_ORIGINS", '["http://localhost:6000"]')
-    settings = Settings(_env_file=None)
+    settings = Settings(_env_file=None, upload_root=tmp_path / "uploads")
     with TestClient(create_app(settings)) as client:
         response = client.get("/health", headers={"Origin": "http://localhost:6000"})
         assert response.headers["access-control-allow-origin"] == "http://localhost:6000"
