@@ -1,6 +1,6 @@
 # A와 B 역할 및 파일 소유권 초안
 
-근거: R1–5·7–11, P19. A는 Service & Integration Engineer, B는 Preference Model & Evaluation Engineer입니다. 현재 개발자 A 작업이며 B 계정 초대는 추후 진행합니다. CODEOWNERS 같은 강제 설정은 아직 없습니다.
+근거: R1–5·7–11, P19. A는 Service & Integration Engineer, B는 Preference Model & Evaluation Engineer입니다. 2026-10-12 기준 B(parkyeonwooo)는 write 권한 초대 수락 대기입니다. CODEOWNERS 같은 강제 설정은 아직 없습니다.
 
 자료 충돌 시 최종 발표본을 우선합니다. 사용자 확정 우선순위는 업로드→AI 광고 4종→선호 순위→문구 수정→PNG입니다. A4는 이후 OPTIONAL이며 A/B 최종 필수 완료 조건에서 제외합니다. 원본 보존·색 보정 보류·원본 fallback, 단일 서버·비공개 24시간 저장·Job Polling은 A의 서비스 책임입니다.
 
@@ -45,7 +45,7 @@ A는 MockRanker로 B를 기다리지 않고, B는 sample ad folder로 renderer�
 - API/schema 변경·version·breaking change·fallback 표시를 합의합니다.
 - 네 전략 geometry가 충분히 다른지 함께 리뷰합니다.
 - preference 표시를 구매율·매출·CTR 예측으로 쓰지 않습니다.
-- D01 A4 선택·필수 제외, D04 원본/사진 처리 경계, D07–08 초기 운영은 사용자 승인 완료입니다. D09 입력 제한·D10 외부 API 비용 등 남은 제안만 구현 전 합의합니다.
+- D01 A4 선택·필수 제외, D04 원본/사진 처리 경계, D07–08 초기 운영은 사용자 승인 완료입니다. D09 기본 업로드 제한은 사용자 승인 후 PR #8에 반영됐습니다. 외부 API 비용과 모델 계약 등 남은 제안은 구현 전 합의합니다.
 - 5–10명 owner interview와 Week 9 user test, 선택 food test의 동의·설문·검수·최종 E2E/데모 리허설은 공동입니다.
 - B는 학습·평가 절차와 validation 근거로 Logistic/MLP를 선택합니다. A가 원하는 demo 점수에 맞춰 split·metric을 바꾸지 않습니다.
 
@@ -56,3 +56,7 @@ A는 MockRanker로 B를 기다리지 않고, B는 sample ad folder로 renderer�
 A/B 모두 GitHub Flow를 따르고 작업 전 브랜치·변경·원격·PR을 확인합니다. 같은 작업 브랜치를 이어서 쓰고 새 기능은 feat/, fix/, refactor/, test/, docs/, chore/ 브랜치에서 작은 단위로 구현·테스트·영어 Conventional Commits로 commit합니다. develop은 만들지 않습니다. 완료 후 push·main 대상 PR 생성 또는 기존 PR 갱신을 수행합니다. PR 제목도 Conventional Commits이며 템플릿의 목적·구현·파일·테스트·Issue·화면 스크린샷·확인 사항을 기록합니다.
 
 main 직접 commit/push, 자동 merge, force push, 타인의 변경 덮어쓰기를 금지합니다. 기존 기록을 다시 쓰지 않고 브랜치를 승인 없이 삭제하지 않습니다. 사용자의 검토와 명시적 병합 승인까지 기다립니다. API 키·실제 .env·임시 파일·개인정보는 commit하지 않습니다. main 보호는 적용 전 사용자 승인 사항입니다. 이미 완료한 Git 작업은 반복하지 않으며 [CONTRIBUTING.md](../CONTRIBUTING.md)와 [AGENTS.md](../AGENTS.md)를 따릅니다. A/B 소유권과 모델 API 계약은 변경하지 않습니다.
+
+## B 환경 준비 현황
+
+ml/, tests/ml/, 모델 의존성과 추론 코드는 아직 없습니다. [MODEL_DEVELOPMENT](MODEL_DEVELOPMENT.md)의 첫 환경 PR 절차를 따릅니다. A가 B 소유 코드를 생성하거나 수정하지 않습니다.
