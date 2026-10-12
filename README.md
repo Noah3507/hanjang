@@ -218,6 +218,8 @@ npm.cmd --prefix frontend ci
 | [DESIGN_SPEC](docs/DESIGN_SPEC.md) | 전략별 layout·반응형 |
 | [REQUIREMENTS_REVIEW](docs/REQUIREMENTS_REVIEW.md) | 근거·확정/미확정 결정 |
 
-main은 PR로만 변경하고 force push·기록 변경·저장소 삭제를 금지합니다. 현재 Private 브랜치 보호는 요금제 제한으로 미적용입니다. B 초대는 추후 진행합니다. 실제 .env·키·데이터·가중치·joblib·uploads·artifacts·.venv·node_modules를 commit하지 않습니다. Git 상태와 stage diff를 검사하고 파일을 명시하여 stage합니다.
+main은 PR로만 변경하고 force push·기록 변경·저장소 삭제를 금지합니다. 현재 Private 브랜치 보호는 요금제 제한으로 미적용입니다. B(parkyeonwooo)는 write 권한 초대 수락 대기입니다. 실제 .env·키·데이터·가중치·joblib·uploads·artifacts·.venv·node_modules를 commit하지 않습니다. Git 상태와 stage diff를 검사하고 파일을 명시하여 stage합니다.
 
 GitHub Flow와 feat/fix/refactor/test/docs/chore 브랜치 이름, 영어 Conventional Commits를 사용합니다. 현재 작업과 기존 커밋·브랜치를 보존하고 develop은 만들지 않습니다. 작은 단위 검증·commit 후 push와 main 대상 PR을 진행합니다. 기존 PR은 재사용하고 제목·본문을 템플릿에 맞춰 갱신합니다. 자동 merge는 하지 않고 사용자 검토·명시적 승인을 기다립니다. 다른 사람의 변경·민감 정보·임시 파일을 보호합니다. [CONTRIBUTING](CONTRIBUTING.md)에 초보자 명령과 보호 설정 승인 절차를 정리했습니다.
+
+팀원 B의 모델 개발 시작 절차는 [MODEL_DEVELOPMENT](docs/MODEL_DEVELOPMENT.md)를 따릅니다.

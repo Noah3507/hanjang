@@ -2,7 +2,7 @@
 
 ## 기본 원칙
 
-[GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)를 사용합니다. main은 검증된 변경을 모으는 안정적인 통합 브랜치이며 작업은 기능별 브랜치와 PR에서 진행합니다. develop 브랜치는 만들지 않습니다. 현재 feat/service-foundation과 기존 커밋·PR #2는 유지합니다.
+[GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)를 사용합니다. main은 검증된 변경을 모으는 안정적인 통합 브랜치이며 작업은 기능별 브랜치와 PR에서 진행합니다. develop 브랜치는 만들지 않습니다. 기존 브랜치와 커밋은 보존합니다. 현재 업로드 작업은 feat/service-upload와 PR #8에서 진행 중입니다.
 
 A는 서비스·통합, B는 모델·데이터·평가를 담당합니다. A는 B의 학습·평가 코드를 수정하지 않습니다. 모델 연결은 [API_CONTRACT](docs/API_CONTRACT.md)와 공동 합의된 인터페이스를 따릅니다. [AGENTS](AGENTS.md)의 사진·사실 보존 규칙도 적용합니다.
 
@@ -22,7 +22,7 @@ git fetch origin
 
 현재 브랜치가 같은 작업의 진행 중인 브랜치이면 그대로 사용합니다. 새 브랜치·PR을 중복 생성하지 않습니다. 미커밋 변경을 먼저 읽고 타인의 파일을 덮어쓰거나 reset으로 없애지 않습니다. 서로 다른 기능은 기존 작업을 완료·보존한 다음 분리합니다.
 
-기존 작업과 무관한 **새 기능**을 시작하고 작업 폴더가 깨끗할 때만 다음을 사용합니다. 현재 foundation 작업 중에는 실행하지 않습니다.
+기존 작업과 무관한 **새 기능**을 시작하고 작업 폴더가 깨끗할 때만 다음을 사용합니다. 진행 중인 기존 작업에서는 실행하지 않습니다.
 
 ```powershell
 git switch main
@@ -113,7 +113,7 @@ gh pr list --head feat/product-upload --state open
 
 완료 시 필요한 localhost 서버를 유지·정상 응답 확인하고 URL/Swagger/PNG와 직접 확인 방법을 안내합니다. 결과를 한국어 일곱 항목(구현, 자동 테스트, Playwright, URL/경로, 직접 확인법, 알려진 문제/미구현, Git 상태)으로 보고합니다. 사용자 승인 전 merge하지 않으며 수정은 동일 진행 브랜치·PR에서 이어갑니다.
 
-main 대상 PR과 여섯 종류 작업 브랜치 push에서 CI가 실행됩니다. backend는 pip check·pytest, frontend는 타입·Vitest·build, repository-policy는 비밀 파일/패턴·PR 제목 형식을 검사합니다. PR 제목 수정도 제목 검사를 갱신합니다. 읽기 전용 token이며 자동 배포·자동 merge를 수행하지 않습니다.
+main 대상 PR과 여섯 종류 작업 브랜치 push에서 CI가 실행됩니다. backend는 pip check·pytest, frontend는 타입·Vitest·build, repository-policy는 비밀 파일/패턴·PR 제목 형식을 검사합니다. browser-e2e는 Playwright로 실제 연결과 장애 모의를 검증합니다. ML 전용 CI는 아직 없습니다. PR 제목 수정도 제목 검사를 갱신합니다. 읽기 전용 token이며 자동 배포·자동 merge를 수행하지 않습니다.
 
 CI 실패 시 Checks 로그를 확인하고 원인 단위를 수정·테스트·추가 commit·push합니다. PR 제목 오류는 제목을 수정하며 과거 commit을 다시 쓰지 않습니다. CI가 통과해도 사용자 검토·병합 승인을 대신하지 않습니다.
 
@@ -127,6 +127,10 @@ CI 실패 시 Checks 로그를 확인하고 원인 단위를 수정·테스트·
 
 - main에 PR 요구, CI backend/frontend/repository-policy 필수, 대화 해결 요구
 - force push·삭제 허용 안 함, 승인된 설정 범위에서 관리자 우회 제한 검토
-- B 참여 후 다른 사람 리뷰 1건 요구 검토. 현재 혼자서는 자기 PR 승인이 불가능하므로 자동으로 1건을 강제하지 않음
+- B 초대 수락 후 상대방 리뷰 1건 요구 검토. 현재는 수락 대기이며 보호 설정은 자동 변경하지 않음
 
 현재는 팀 규칙과 CI 검증으로 운영하며 서버 측 강제가 적용됐다고 보고하지 않습니다.
+
+## 팀원 B 첫 개발 안내
+
+[MODEL_DEVELOPMENT](docs/MODEL_DEVELOPMENT.md)에 초대 수락, Clone, 모델 환경, 소유 폴더, 계약 합의와 첫 PR 완료 기준을 정리했습니다. 모델 코드와 의존성은 아직 없으며 B가 별도 브랜치에서 준비합니다.
