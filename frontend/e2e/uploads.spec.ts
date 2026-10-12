@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { test, expect } from './fixtures'
 
 const root = fileURLToPath(new URL('../..', import.meta.url))
-const python = process.platform === 'win32' ? `${root}/.venv/Scripts/python.exe` : 'python'
+const python = process.env.PLAYWRIGHT_PYTHON || (process.platform === 'win32' ? `${root}/.venv/Scripts/python.exe` : 'python')
 function png(side = 300, fmt = 'PNG') {
   return execFileSync(python, ['-c', `import io,sys; from PIL import Image; b=io.BytesIO(); Image.new('RGB',(${side},${side}),'#a87840').save(b,format='${fmt}'); sys.stdout.buffer.write(b.getvalue())`], { cwd: root })
 }
