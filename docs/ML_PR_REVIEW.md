@@ -83,3 +83,5 @@ ml-smoke:
 Windows Python 3.12.10 서비스 venv에서 pytest 75개(기존 service 37 + integration 38)가 통과했습니다. 계약 검사만 실행하면 38개가 약 0.3초에 통과했습니다. PyTorch/ML 패키지 설치·모델/데이터 다운로드·B 테스트는 수행하지 않았습니다. PNG 4장 합계 약 120KB와 JSON Schema/semantic 검증만 사용합니다. 기존 AnyIO alias deprecation 경고가 남아 있습니다.
 
 fixture 재생성 후 schema drift 검사도 통과했습니다. 화면·실행 서비스 변경이 없어 로컬 frontend/Playwright를 반복 실행하지 않고 PR의 기존 전체 CI와 구분합니다. 개발 서버와 개인 브라우저는 변경하지 않습니다. 합성 이미지 fixture는 테스트 목적의 승인된 소형 자료이며 사용자 업로드나 generated 서비스 결과물을 Git에 추가한 것이 아닙니다.
+
+최종 로컬 재실행 중 Windows 기본 pytest 임시 폴더 권한 오류로 service fixture setup이 실패했습니다. 계약 검사 자체와 별개인 실행 환경 문제로 확인했고, Git 제외 artifacts/contract-tests/ 아래 새 임시 경로를 지정해 75 passed(2.92초)를 재확인했습니다. 코드나 B 환경을 변경해 우회하지 않았습니다. 테스트 종료 후 서버 정리도 수행하지 않았습니다.
