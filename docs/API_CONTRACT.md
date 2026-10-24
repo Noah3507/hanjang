@@ -1,10 +1,13 @@
 # API와 Ranking 계약 초안
 
+S3 사용자 승인 additive 사진 전처리 POST/GET 및 사진 선택 PUT 계약은 [IMAGE_PROCESSING](IMAGE_PROCESSING.md)에 정의합니다. 기존 광고 재생성 PATCH와 InputDraft/B ranking 계약은 변경하지 않습니다.
+
+
 계약 version: v1.1-contract (문서·fixture 승인 기준; 현재 서비스 HTTP 구현 범위는 유지). R5의 접점은 candidate ID·image path/url·score/rank/model version입니다. 자료 충돌 시 최종 발표본을 우선합니다. 사용자 승인에 따라 입력·업로드 API 및 아래 draft 계약을 구현했습니다. 나머지 광고 API는 설계 단계입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다.
 
 ## 공통 규약
 
-현재 구현: health, POST /sessions, POST /uploads, PUT·GET /jobs/{job_id}/input, GET /assets/{asset_id}. GET /health는 기존 별칭을 유지합니다. POST /jobs, GET /jobs/{job_id}, 결과·ranking·편집 API는 미구현입니다. health는 광고 기능의 준비 상태를 보장하지 않습니다.
+현재 구현: health, POST /sessions, POST /uploads, PUT·GET /jobs/{job_id}/input, GET /assets/{asset_id}, POST·GET /jobs/{job_id}/photo-processing, PUT /jobs/{job_id}/photo-source. GET /health는 기존 별칭을 유지합니다. POST /jobs, GET /jobs/{job_id}, 결과·ranking·편집 API는 미구현입니다. health는 광고 기능의 준비 상태를 보장하지 않습니다.
 
 - Base /api/v1, JSON UTF-8. 이미지 upload만 multipart.
 - Strategy = emotional | price | visual | brand. Mood = warm | minimal | vivid | premium은 제안.
@@ -153,9 +156,9 @@ Candidate 전체 field 예입니다. geometry·측정값은 fixture용 인공 �
 
 ## B ranking adapter 계약
 
-현재 추론·MockRanker 구현은 없으며 아래 함수 signature는 B 승인 전 초안입니다. 전처리·artifact 전달·오류·공동 합의 항목과 병렬 개발 게이트는 [MODEL_HANDOFF](MODEL_HANDOFF.md)에 정리합니다. 이번 점검은 HTTP/API schema를 변경하지 않습니다.
+현재 추론·MockRanker 구현은 없습니다. v1.1의 논리 입출력·batch·선택적 pairwise는 승인된 문서/fixture 계약이며 구체 Python 타입·모듈·bundle loader는 B와 합의합니다. 현재 서비스의 광고/ranking endpoint는 구현하지 않습니다. 세부사항은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)과 [MODEL_HANDOFF](MODEL_HANDOFF.md)를 따릅니다.
 
-R4 공개 surface는 load_model(), extract_features(), score_ad(), rank_ads()입니다. 아래 signature는 B 승인 전 제안입니다. A는 rank_ads() 경계를 사용하고 B feature extraction을 복제하지 않습니다.
+R4 공개 surface는 load_model(), extract_features(), score_ad(), rank_ads()입니다. 아래는 v1.1 논리 계약 표기이며 실제 Python 전달 타입과 import 경로는 B와 합의합니다. A는 rank_ads() 경계를 사용하고 B feature extraction을 복제하지 않습니다.
 
 ```python
 # Interface specification only; not implementation.
@@ -164,7 +167,8 @@ extract_features(image_path: Path, model: ModelHandle) -> FeatureVector
 score_ad(image_path: Path, model: ModelHandle) -> float
 rank_ads(items: list[RankInput], model: ModelHandle) -> RankOutput
 # RankInput = {candidate_id: str, rendered_image_path: Path}
-# RankOutput = {model_version: str, feature_version: str, items: list[RankingItem]}
+# RankOutput = {model_version: str, feature_version: str, items: list[RankingItem], pairwise?: Pairwise | None}
+# B items preserve input order; HTTP Ranking items are sorted by rank.
 ```
 
 서비스 metadata의 strategy는 B feature로 전달하지 않습니다. B 입력은 candidate ID와 **최종 PNG 경로**입니다. 서버 관리 하위의 절대 경로만 허용하며 B가 remote URL을 가져오지 않습니다. R5의 path/url 중 로컬 package+path를 채택하는 제안입니다. B는 서비스 없이 sample 이미지 폴더로 테스트할 수 있습니다.
@@ -187,7 +191,7 @@ rank_ads(items: list[RankInput], model: ModelHandle) -> RankOutput
 
 1. 네 후보를 같은 loaded model·feature version으로 평가하고 candidate ID로 결합합니다. 배열 위치로 결합하지 않습니다.
 2. ID 누락·중복·추가, NaN/Infinity, version 불일치, rank 불일치는 A adapter가 거부합니다.
-3. score 내림차순, 동점은 candidate_id 사전순으로 유일 rank 1–4를 부여하는 제안입니다. 동점 처리에 선호 차이가 있다고 설명하지 않습니다.
+3. v1.1은 score 내림차순, 동점은 candidate_id 사전순으로 유일 rank 1–4를 부여합니다. 동점 처리에 선호 차이가 있다고 설명하지 않습니다.
 4. B는 model+scaler/config, feature 순서·전처리·의존성 spec, checksum, model card, sample smoke 절차를 제공합니다. A는 label/split/metric을 변경하지 않습니다.
 5. B 예외 제안: ModelNotAvailable, ArtifactMismatch, InvalidImage, InferenceFailure. A는 안전한 code로 변환하고 stack/path를 client에 노출하지 않습니다.
 6. 실패·timeout 시 **전체 mock**: source=fallback_mock, model_version=mock-v1, feature_version=null, warning=RANKER_FALLBACK. 정상 mock은 source=mock, 정상 B는 source=model.
@@ -217,6 +221,10 @@ job 오류: COPY_SCHEMA_INVALID, COPY_PROVIDER_TIMEOUT, RENDER_FAILED, FACTS_MIS
 ## 계약 테스트와 고정 시점
 
 공동 fixture로 네 strategy·ID 완전 일치, 사실 문자열 동일, finite score·동점·wrong version·path, mock/real 동일 schema, edit revision을 검증합니다. 원본 일정은 Week 5 input, Week 6 output, Week 7 artifact/failure 고정입니다. OpenAPI→frontend 타입 생성은 S1 제안이며 이 문서는 구현된 schema가 아닙니다.
+
+## 2026-10-24 모델 저장 및 데이터 후보 협의
+
+기본 모델/학습 산출물 root는 artifacts/models/이며 신규 backend/models/ 저장은 사용하지 않습니다. RANKING_MODEL_PATH는 선택적 모델 파일 설정입니다. Evan12/CreativeRanking은 후보이며 원본 동일성/라이선스/이용 권한은 미검증입니다. 배치 방법과 loader 경계 차이는 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)를 따릅니다. 이번 변경은 실제 ranking을 구현하지 않습니다.
 
 ## v1.1 확정 모델 접점
 

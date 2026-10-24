@@ -71,7 +71,7 @@ HTTP schema의 additive pairwise 확장은 이번 사용자 승인에 따른 문
 
 ## 모델 파일과 loader의 호환 방안
 
-RANKING_MODEL_PATH는 PR #14의 **파일** 의미를 유지합니다. 이를 directory로 조용히 바꾸지 않습니다. 제안 배치:
+RANKING_MODEL_PATH는 main에 병합된 PR #14의 **파일** 의미를 유지합니다. 이를 directory로 조용히 바꾸지 않습니다. 실제 config는 main을 그대로 상속하며 이번 계약에서 별도 loader를 구현하지 않습니다. 제안 배치:
 
 ```text
 artifacts/models/ranking/<version>/

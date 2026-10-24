@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from io import BytesIO
@@ -13,6 +13,7 @@ import warnings
 from PIL import Image, UnidentifiedImageError
 
 from app.schemas.upload import DraftResponse, InputDraft, UploadResponse
+from app.schemas.photo import PhotoAsset, PhotoResponse
 
 MAX_BYTES = 10 * 1024 * 1024
 MAX_PIXELS = 24_000_000
@@ -62,6 +63,8 @@ class Record:
     upload: UploadResponse
     path: Path
     draft: InputDraft | None = None
+    photo: PhotoResponse | None = None
+    derived: dict[str, Path] = field(default_factory=dict)
 
 
 class PrivateUploadStore:
@@ -144,10 +147,88 @@ class PrivateUploadStore:
         with self.lock:
             record = self.get(owner, self.assets.get(asset, ""))
             try:
-                data = self.safe_path(record.path.name).read_bytes()
+                path = record.path if asset == record.upload.asset_id else record.derived.get(asset)
+                if path is None:
+                    raise UploadError(404, "RESOURCE_NOT_FOUND", "사진을 찾을 수 없습니다.")
+                data = self.safe_path(path.name).read_bytes()
             except OSError:
                 raise UploadError(404, "RESOURCE_NOT_FOUND", "원본 사진을 찾을 수 없습니다.") from None
-            return data, record.upload.mime_type
+            return data, record.upload.mime_type if asset == record.upload.asset_id else "image/png"
+
+    def photo_state(self, owner: str, job: str) -> PhotoResponse:
+        with self.lock:
+            record = self.get(owner, job)
+            if record.photo is None:
+                record.photo = PhotoResponse(job_id=job, status="pending", expires_at=record.upload.expires_at,
+                    original=PhotoAsset(**record.upload.model_dump()))
+            return record.photo.model_copy(deep=True)
+
+    def start_photo(self, owner: str, job: str) -> tuple[PhotoResponse, bool]:
+        with self.lock:
+            state = self.photo_state(owner, job)
+            if state.status == "processing":
+                raise UploadError(409, "PHOTO_PROCESSING_BUSY", "사진을 처리 중입니다. 완료 후 확인해 주세요.")
+            if state.status == "completed":
+                return state, False
+            if any(r.photo and r.photo.status == "processing" for r in self.records.values()):
+                raise UploadError(503, "PHOTO_PROCESSING_BUSY", "다른 사진을 처리 중입니다. 잠시 후 다시 시도해 주세요.")
+            record = self.get(owner, job)
+            record.photo.status = "processing"
+            record.photo.warnings = []
+            record.photo.photo_source = "original"
+            return record.photo.model_copy(deep=True), True
+
+    def finish_photo(self, owner: str, job: str, processor) -> None:
+        written = []
+        try:
+            record = self.get(owner, job)
+            data, _ = self.read_asset(owner, record.upload.asset_id)
+            result = processor(data)
+            with self.lock:
+                record = self.get(owner, job)  # TTL may have elapsed during inference.
+                processed = None
+                if result.png:
+                    for content in [result.png, result.mask_png]:
+                        if content is None:
+                            continue
+                        asset = uuid.uuid4().hex
+                        path = self.safe_path(asset + ".png")
+                        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                        written.append((asset, path))
+                        with os.fdopen(descriptor, "wb") as output:
+                            output.write(content)
+                        # Orphans after restart retain the upload's 24h clock.
+                        timestamp = record.upload.created_at.timestamp()
+                        os.utime(path, (timestamp, timestamp))
+                    asset = written[0][0]
+                    processed = PhotoAsset(asset_id=asset, width=result.width, height=result.height,
+                                           mime_type="image/png", sha256=sha256(result.png).hexdigest())
+                record.derived.update(dict(written))
+                for asset, _ in written:
+                    self.assets[asset] = job
+                record.photo.processed = processed
+                record.photo.status = "completed" if processed else "failed"
+                record.photo.warnings = result.warnings
+                record.photo.photo_source = "processed" if processed and not result.warnings else "original"
+        except Exception:
+            for _, path in written:
+                path.unlink(missing_ok=True)
+            with self.lock:
+                record = self.records.get(job)
+                if record and record.owner == owner:
+                    record.photo.status = "failed"
+                    record.photo.photo_source = "original"
+                    record.photo.warnings = ["PHOTO_PROCESSING_FAILED"]
+
+    def select_photo(self, owner: str, job: str, source: str) -> PhotoResponse:
+        with self.lock:
+            state = self.photo_state(owner, job)
+            if state.status == "processing":
+                raise UploadError(409, "PHOTO_PROCESSING_BUSY", "처리 완료 후 사진을 선택해 주세요.")
+            if source == "processed" and state.processed is None:
+                raise UploadError(409, "PHOTO_NOT_READY", "사용할 처리본이 없습니다. 원본을 사용해 주세요.")
+            self.get(owner, job).photo.photo_source = source
+            return self.photo_state(owner, job)
 
     def cleanup(self) -> None:
         with self.lock:
@@ -155,6 +236,9 @@ class PrivateUploadStore:
             for job, record in list(self.records.items()):
                 if record.upload.expires_at <= current:
                     self.safe_path(record.path.name).unlink(missing_ok=True)
+                    for asset, path in record.derived.items():
+                        self.safe_path(path.name).unlink(missing_ok=True)
+                        self.assets.pop(asset, None)
                     self.assets.pop(record.upload.asset_id, None)
                     del self.records[job]
             self.sessions = {key: value for key, value in self.sessions.items() if value > current}

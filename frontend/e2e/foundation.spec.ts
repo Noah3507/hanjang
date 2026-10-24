@@ -2,7 +2,7 @@ import { test, expect } from './fixtures'
 
 test('desktop: actual API connection and explicit unimplemented feature notice', async ({ page, request }, testInfo) => {
   await test.step('FastAPI and Vite proxy return the health contract', async () => {
-    for (const url of ['http://127.0.0.1:8000/health', '/api/v1/health']) {
+    for (const url of [`http://127.0.0.1:${process.env.PLAYWRIGHT_BACKEND_PORT || '8000'}/health`, '/api/v1/health']) {
       const response = await request.get(url)
       expect(response.ok()).toBeTruthy()
       expect(await response.json()).toEqual({ status: 'ok', api_version: 'v1-draft' })
@@ -14,8 +14,8 @@ test('desktop: actual API connection and explicit unimplemented feature notice',
     await expect(page.getByRole('status')).toHaveText('백엔드 연결됨')
     await expect(page.getByRole('button', { name: '연결 다시 확인' })).toBeEnabled()
   })
-  await test.step('do not represent product input or generated ads as implemented', async () => {
-    await expect(page.getByText('상품 정보 입력·원본 사진 업로드만 구현됐습니다. 광고 생성·선호 순위·문구 편집·다운로드는 아직 구현되지 않았습니다.')).toBeVisible()
+  await test.step('show implemented photo tools and distinguish unimplemented ads', async () => {
+    await expect(page.getByText('상품 입력·원본 업로드·배경 제거와 사진 선택을 제공합니다. 광고 생성·선호 순위·문구 편집·다운로드는 아직 구현되지 않았습니다.')).toBeVisible()
     await expect(page.getByLabel('상품명', { exact: true })).toBeVisible()
     await expect(page.locator('input[type="file"]')).toHaveCount(1)
   })

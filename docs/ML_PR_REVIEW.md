@@ -6,11 +6,11 @@
 
 | PR | 상태/CI/개별 병합 | 변경 범위 |
 | --- | --- | --- |
-| [#11 이미지 전처리](https://github.com/Noah3507/hanjang/pull/11) | OPEN, 네 service check 성공, MERGEABLE/CLEAN | 33파일: backend photo API/schema/processor/worker/storage/config, frontend 비교 UI·API·E2E, Pillow/rembg/CPU 의존성, env/docs/CI synthetic artifact |
+| [#11 이미지 전처리](https://github.com/Noah3507/hanjang/pull/11) | MERGED (#11), 네 service check 성공 | 34파일: backend photo API/schema/processor/worker/storage/config, frontend 비교 UI·API·E2E, Pillow/rembg/CPU 의존성, env/docs/CI synthetic artifact |
 | [#13 B 환경](https://github.com/Noah3507/hanjang/pull/13) | OPEN, 기존 service CI 성공, MERGEABLE/CLEAN | 6파일: ml/__init__.py, device.py, README.md, requirements.in/txt, tests/ml/test_ml_smoke.py |
-| [#14 저장 정책](https://github.com/Noah3507/hanjang/pull/14) | OPEN, 네 service check 성공, MERGEABLE/CLEAN | 12파일: backend config, env, ranking settings test, README 및 정책/계약 관련 docs |
+| [#14 저장 정책](https://github.com/Noah3507/hanjang/pull/14) | MERGED (#14), 네 service check 성공 | 13파일: backend config, env, ranking settings test, README 및 정책/계약 관련 docs |
 
-검토 대상 head: #11=5e4e1e6, #13=edd2d2c, #14=9760fc9. 개별 CI 통과는 세 PR을 함께 적용한 통합 테스트가 아닙니다. 세 PR의 전체 변경 파일 목록은 GitHub Files changed에서 확인합니다.
+초기 점검 head: #11=5e4e1e6, #13=edd2d2c, #14=9760fc9. 이후 사용자 병합 승인으로 #11(e4f53fb)과 #14(aa37b7e)는 병합 완료됐습니다. 최신 main은 21ea54e입니다. 개별 CI 통과는 세 PR을 함께 적용한 통합 테스트가 아닙니다. 세 PR의 전체 변경 파일 목록은 GitHub Files changed에서 확인합니다.
 
 Git `merge-tree --write-tree --name-only`로 #11과 #14를 시뮬레이션한 결과 아래 5파일에서 실제 content conflict를 확인했습니다. 작업 파일·브랜치에는 merge하지 않았습니다.
 
@@ -85,3 +85,7 @@ Windows Python 3.12.10 서비스 venv에서 pytest 75개(기존 service 37 + int
 fixture 재생성 후 schema drift 검사도 통과했습니다. 화면·실행 서비스 변경이 없어 로컬 frontend/Playwright를 반복 실행하지 않고 PR의 기존 전체 CI와 구분합니다. 개발 서버와 개인 브라우저는 변경하지 않습니다. 합성 이미지 fixture는 테스트 목적의 승인된 소형 자료이며 사용자 업로드나 generated 서비스 결과물을 Git에 추가한 것이 아닙니다.
 
 최종 로컬 재실행 중 Windows 기본 pytest 임시 폴더 권한 오류로 service fixture setup이 실패했습니다. 계약 검사 자체와 별개인 실행 환경 문제로 확인했고, Git 제외 artifacts/contract-tests/ 아래 새 임시 경로를 지정해 75 passed(2.92초)를 재확인했습니다. 코드나 B 환경을 변경해 우회하지 않았습니다. 테스트 종료 후 서버 정리도 수행하지 않았습니다.
+
+## PR #15 최신 main 통합 후 상태
+
+사용자가 #11과 #14를 이미 병합했습니다. 위 권장 순서는 초기 검토 기록이며 이제 남은 순서는 이번 #15 계약 PR 검토와 B 수정 후 #13 검토입니다. 이번에는 #13을 수정하거나 병합하지 않습니다. README/API_CONTRACT/DEVELOPMENT_PLAN/MODEL_DEVELOPMENT/MODEL_HANDOFF/REQUIREMENTS_REVIEW/ROLE_SPLIT/TECH_SPEC의 8개 문서 충돌(9개 block)을 해결해 사진 기능, 모델 저장·권리 미확인 정책, v1.1 계약을 모두 보존했습니다. 6단계 이미지 분석은 시작하지 않습니다.
