@@ -4,11 +4,11 @@
 
 ## 현재 구현 범위
 
-2026-10-12 현재 기본 뼈대와 **상품 정보 입력·원본 이미지 업로드·draft 저장/재조회**를 구현했습니다. 원본 byte와 입력 문자열을 보존하고 비공개 세션으로 접근을 제한하며 24시간 만료·정리를 수행합니다. 광고 생성·ranking·문구 편집·결과 다운로드는 미구현입니다. Pillow는 파일 검증만 담당하며 원본을 변환하지 않습니다. LLM·rembg·학습·MockRanker는 추가하지 않았습니다.
+2026-10-24 main 기준 **상품 입력·원본 업로드·draft 조회·rembg 배경 제거·원본/처리본 비교와 선택**을 구현했습니다. 원본 byte와 입력 문자열을 보존하고 비공개 세션·24시간 정리를 적용합니다. 모델 경로 정책과 모델 연동 v1.1 계약·합성 fixture·검증도 반영됐습니다. CLIP/K-means 분석·LLM·광고 생성·MockRanker 엔진·편집·결과 다운로드는 미구현입니다. 완료 범위와 근거는 [DEVELOPMENT_STATUS](docs/DEVELOPMENT_STATUS.md)를 확인하세요.
 
 승인된 제품 우선순위는 **업로드 → AI 광고 4종 생성 → 선호 순위 → 문구 수정 → PNG 다운로드**입니다. A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합니다. 원본 보존·배경 제거·비율 유지 resize만 허용하고 상품 색상/채도/명도 보정은 보류합니다. 처리 실패·품질 저하 시 원본 사용 경로를 제공합니다.
 
-초기 운영 정책은 단일 서버·비공개 임시 저장·24시간 자동 삭제, pending/processing/completed/failed 상태입니다. 이번에는 원본·입력만 저장하고 pending을 유지합니다. 광고 processing·Job Polling은 후속 단계입니다. 세션/draft 메타데이터는 메모리라 재시작·배포 후 유실될 수 있으며 다시 업로드해야 합니다. 남은 원본은 시작 시와 60초 sweep에서 24시간 만료 파일을 정리합니다. 클라우드 스토리지·복잡한 큐는 도입하지 않습니다.
+초기 운영은 단일 서버·비공개 임시 저장·24시간 자동 삭제입니다. draft는 pending을 유지하고 별도 사진 처리 operation의 pending/processing/completed/failed를 polling합니다. 원본·처리본·마스크는 업로드 시점 기준 같은 TTL로 정리하며 조회/선택으로 연장하지 않습니다. 메타데이터는 메모리라 재시작·배포 후 유실될 수 있습니다. 광고 생성 작업·Polling은 후속이며 클라우드 스토리지·복잡한 큐는 없습니다.
 
 ## 기준 자료와 역할
 
@@ -41,13 +41,13 @@ git remote -v
 git fetch origin
 ```
 
-기본 clone은 main을 받습니다. 진행 중인 작업을 이어갈 때는 **같은 작업 브랜치**로 전환합니다. 아래는 현재 브랜치의 예시입니다. 로컬에 없을 때만 첫 번째 switch를 사용하고, 이미 있으면 두 번째를 사용하세요.
+기본 clone의 main에 PR #11·#14·#15 내용이 포함돼 있습니다. 실행만 확인할 때는 main에 머물러도 되며 commit/push하지 않습니다. 진행 중인 작업을 이어갈 때만 **해당 작업 브랜치**로 전환합니다. 아래 WORK_BRANCH는 실제 원격 브랜치명으로 바꿉니다. 이미 병합된 과거 업로드 브랜치로 돌아갈 필요는 없습니다.
 
 ```powershell
 # 로컬 브랜치가 없을 때
-git switch --track origin/feat/service-upload
+git switch --track origin/WORK_BRANCH
 # 이미 로컬에 있을 때는 위 명령 대신
-# git switch feat/service-upload
+# git switch WORK_BRANCH
 git pull --ff-only
 ```
 
@@ -55,11 +55,10 @@ git pull --ff-only
 
 ### 컴퓨터마다 의존성과 환경 다시 구성
 
-PowerShell에서 clone한 저장소 루트로 이동합니다. 아래 cd 경로는 현재 데스크탑 예시이므로 노트북에서는 실제 clone 경로를 사용하세요. 가상환경 activate나 실행 정책 변경 없이 다음을 사용할 수 있습니다.
+PowerShell에서 clone한 실제 저장소 루트로 이동합니다. 가상환경 activate나 실행 정책 변경 없이 다음을 사용할 수 있습니다. 기존 .venv가 있으면 Python 버전을 먼저 확인하고 무조건 재생성하지 않습니다.
 
 ```powershell
-cd C:\Users\siho\Desktop\hanjang
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
 npm.cmd --prefix frontend ci
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
@@ -73,6 +72,14 @@ frontend의 VITE_API_BASE_URL은 브라우저에 공개되는 값이므로 비�
 .venv와 node_modules를 두 컴퓨터 사이에 복사하지 않습니다. 위 설치 명령으로 컴퓨터마다 재생성하고 requirements.txt/package-lock.json은 Git으로 공유합니다. .env·API 키·원본/업로드·결과 파일은 Git으로 전달되지 않습니다. 현재는 .env.example만으로 health 실행이 가능하고 키가 필요 없습니다. 향후 필요한 키는 각 컴퓨터에서 직접 설정하거나 신뢰하는 비밀 관리 도구로 별도 전달합니다. 실제 .env를 Issue·PR·채팅·스크린샷에 붙이지 않습니다. 저장소 폴더를 OneDrive 등의 파일 동기화와 Git으로 동시에 공유하지 않는 것을 권장합니다.
 
 ## 개발 서버 실행
+
+배경 제거 모델은 선택적으로 준비합니다. 없어도 서버·업로드·원본 fallback을 사용할 수 있으며 자동 다운로드하지 않습니다. 실제 배경 제거에는 다음 명시적 다운로드 명령을 사용합니다. 공식 u2netp 약 4.36 MiB를 Git 제외 artifacts/models/rembg/u2netp.onnx에 checksum 검증 후 저장합니다. 기존 모델은 임의 덮어쓰지 않습니다.
+
+```powershell
+.\.venv\Scripts\python.exe scripts/service_download_photo_model.py --download
+```
+
+HANJANG_PHOTO_MODEL_PATH는 별도 모델 경로, HANJANG_PHOTO_TIMEOUT_SECONDS=90·HANJANG_PHOTO_MAX_SIDE=1600은 개발 기본값입니다. RANKING_MODEL_PATH는 미래 선호 모델 파일용이며 지금은 비워둡니다. 서비스 .venv에 B ML requirements를 섞지 않습니다.
 
 터미널 1, 저장소 루트:
 
@@ -129,7 +136,7 @@ npm.cmd --prefix frontend run build
 npm.cmd --prefix frontend test
 ```
 
-pytest는 health 응답·CORS 허용/거부·환경 설정·미구현 API를 검사합니다. Vitest는 연결 확인·성공·실패·재시도·잘못된 응답을 검사하고 외부 API를 호출하지 않습니다. Starlette TestClient에서 AnyIO BlockingPortal alias 폐기 예정 경고 1건이 발생하지만 테스트 실패는 아닙니다. 추후 호환성 갱신 대상입니다.
+pytest는 health·CORS·입력/업로드·사진 처리와 fallback·보호/만료·계약 Schema를 검사합니다. Vitest는 연결 상태와 상품 입력·사진 처리 UI의 정상/실패 흐름을 검사하고 외부 API를 호출하지 않습니다. Starlette TestClient에서 AnyIO BlockingPortal alias 폐기 예정 경고 1건이 발생하지만 테스트 실패는 아닙니다. 추후 호환성 갱신 대상입니다.
 
 CI는 main 대상 PR과 main/feat/fix/refactor/test/docs/chore 브랜치 push에서 Ubuntu·Python 3.12·Node 24로 backend 검사·frontend 타입/테스트/build·repository-policy(비밀 파일/패턴과 PR 제목)를 실행합니다. 배포·자동 merge·유료 API·모델 다운로드는 없습니다. 실제 원격 결과는 PR Checks에서 확인합니다.
 
@@ -151,28 +158,33 @@ npm.cmd --prefix frontend run test:e2e:report
 
 기존 8000/5173 서버가 있으면 로컬 테스트는 재사용하며 종료하지 않습니다. 없으면 Playwright가 테스트용 서버를 시작·종료합니다. 사용자 확인을 위해 계속 사용할 서버는 위 개발 실행 명령으로 별도로 실행하세요. Chrome 실행은 독립 테스트 프로필을 사용하며 개인 로그인 프로필을 열지 않습니다.
 
-결과는 Git 제외 artifacts/playwright/에 저장합니다: report/ HTML, results.json, results/ 테스트별 browser.log와 데스크탑/모바일 스크린샷. 실패 시 스크린샷·trace·video·assertion 오류도 남깁니다. CI는 Chromium으로 같은 E2E를 수행하고 실패 진단만 7일 보관합니다. 로컬 서버 로그는 이번 실행의 artifacts/dev-servers/에 있습니다. 결과·로그에는 환경 정보가 있을 수 있으므로 검토 없이 외부에 공유하지 않습니다.
+결과는 Git 제외 artifacts/playwright/에 저장합니다: report/ HTML, results.json, results/ 테스트별 browser.log와 데스크탑/모바일 스크린샷. 실패 시 스크린샷·trace·video·assertion 오류도 남깁니다. CI는 Chromium으로 같은 E2E를 수행하고 합성 화면 스크린샷과 실패 진단을 7일 보관합니다. 로컬 서버 로그는 이번 실행의 artifacts/dev-servers/에 있습니다. 결과·로그에는 환경 정보가 있을 수 있으므로 검토 없이 외부에 공유하지 않습니다.
 
 ## 현재 프로젝트 구조
 
 ```text
 frontend/                  # A: React/TypeScript/Vite/Vitest
-  src/api/health.ts        # 응답 검증
-  src/App.tsx              # 서비스 이름·연결 상태·재시도
+  src/api/                 # health·uploads·photos API client
+  src/components/          # ProductInput·PhotoProcessing
+  src/App.tsx              # 연결 상태와 입력/처리 UI
+  e2e/                     # Playwright
 backend/
-  app/api/health.py        # health
-  app/schemas/health.py    # Pydantic 응답
-  app/config.py           # 서버 환경·CORS
+  app/api/                 # health·uploads·photos, errors·body limits
+  app/schemas/             # health·upload·photo
+  app/services/            # private store·photo processor·isolated worker
+  app/config.py           # CORS·photo·ranking 환경
   app/main.py             # FastAPI app factory
   requirements.in         # 의존성 범위
   requirements.txt        # 테스트한 고정 버전
 tests/service/             # pytest
+tests/integration/         # 계약 검증 38개
+tests/fixtures/            # 합성 광고·JSON/Schema
 pytest.ini
 .github/workflows/ci.yml
 docs/                      # 공용 설계·계약
 ```
 
-향후 backend/app/services, backend/app/ml_adapter, templates는 A, ml/data·features·training·evaluation·inference는 B 영역입니다. 이번에 생성하지 않았습니다. raw /data/와 코드 ml/data/의 ignore 범위를 분리했으며 B 코드는 수정하지 않았습니다.
+backend/app/services는 구현돼 있습니다. backend/app/ml_adapter와 templates는 후속이며, ml/·tests/ml 환경은 B의 PR #13에서 별도로 검토 중입니다. 서비스 .venv와 ML .venv-ml은 분리합니다. raw /data/와 코드 ml/data/의 ignore 범위도 구분합니다.
 
 ## 문서와 협업
 
@@ -205,7 +217,7 @@ git rev-parse '@{upstream}'
 ```powershell
 git status --short --branch
 git fetch origin
-git switch feat/service-upload
+git switch WORK_BRANCH
 git pull --ff-only
 # 새 clone에서 로컬 브랜치가 없으면 위 switch 대신 --track origin/... 사용
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
