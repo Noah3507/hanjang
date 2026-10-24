@@ -27,7 +27,7 @@
 | tests/integration/**, docs/**, 루트 의존성·CI·설정 | 공동 | 상대 트랙 영향 확인 |
 | /data/**, /artifacts/models/**, /weights/**, /uploads/** | Git 제외 런타임 | private 외부 저장, manifest/checksum만 commit |
 
-경로는 계획이며 이번에 코드 폴더를 만들지 않습니다. 원본의 backend/models artifact 경로와 초기 ignore의 models/·data/ 충돌을 해결하려고 artifacts/models를 제안합니다(D18). 확정 전에 B 경로를 옮기지 않습니다.
+경로는 계획이며 이번에 코드 폴더를 만들지 않습니다. 원본의 backend/models artifact 경로와 초기 ignore의 models/·data/ 충돌을 해결하려고 artifacts/models/를 2026-10-24 사용자 결정으로 기본 저장 경로로 확정합니다(D18). 기존 파일은 이동하지 않습니다.
 
 ## 접점 제공과 고정 시점
 
@@ -62,3 +62,7 @@ main 직접 commit/push, 자동 merge, force push, 타인의 변경 덮어쓰기
 ## B 환경 준비 현황
 
 ml/, tests/ml/, 모델 의존성과 추론 코드는 아직 없습니다. [MODEL_DEVELOPMENT](MODEL_DEVELOPMENT.md)의 첫 환경 PR 절차를 따릅니다. A가 B 소유 코드를 생성하거나 수정하지 않습니다.
+
+## 2026-10-24 데이터 및 경로 정책
+
+[MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)의 확인/미확인 표와 artifacts/models/ 및 RANKING_MODEL_PATH 정책을 적용합니다. 원본 라이선스와 동일성은 미검증입니다. 기존 B 코드와 파일은 변경하지 않으며 loader의 file/directory 경계는 공동 합의 사항입니다.

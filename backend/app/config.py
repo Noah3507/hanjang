@@ -26,6 +26,16 @@ class Settings(BaseSettings):
     photo_model_path: Path = PROJECT_ROOT / "artifacts" / "models" / "rembg" / "u2netp.onnx"
     photo_timeout_seconds: float = Field(default=90, gt=0, le=120)
     photo_max_side: int = Field(default=1600, ge=256, le=4096)
+    # Exact unprefixed name agreed with B. Optional until the real adapter exists.
+    ranking_model_path: Path | None = Field(default=None, validation_alias="RANKING_MODEL_PATH")
+
+    @field_validator("ranking_model_path", mode="before")
+    @classmethod
+    def resolve_ranking_model(cls, value):
+        if value is None or value == "":
+            return None
+        path = Path(value).expanduser()
+        return (path if path.is_absolute() else PROJECT_ROOT / path).resolve()
 
     @field_validator("cors_origins")
     @classmethod

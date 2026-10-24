@@ -50,7 +50,7 @@ py -3.12 -m venv .venv-ml
 # .\.venv-ml\Scripts\python.exe -m pytest tests/ml
 ```
 
-현재 위 requirements와 테스트는 없으므로 설치·테스트 성공을 주장하지 않습니다. 가상환경은 각 PC에서 재생성하며 `.venv-*/`는 Git 제외입니다. 데이터 접근 권한·라이선스·다운로드 용량·외부 비용과 모델 artifact 저장 경로도 합의가 필요합니다. `/data/`, `/artifacts/models/`는 Git 제외 경로의 제안이며 실제 데이터·가중치·캐시·사용자 사진은 commit하지 않습니다. manifest/checksum/config/model card 등 비밀 없는 재현 정보만 공유합니다.
+현재 위 requirements와 테스트는 없으므로 설치·테스트 성공을 주장하지 않습니다. 가상환경은 각 PC에서 재생성하며 `.venv-*/`는 Git 제외입니다. 데이터 접근 권한·라이선스·다운로드 용량·외부 비용은 합의가 필요합니다. 모델 artifact 기본 root는 artifacts/models/로 사용자 확정됐습니다. `/data/`는 원본 데이터 경로 제안, `artifacts/models/`는 확정 모델 root이며 실제 데이터·가중치·캐시·사용자 사진은 commit하지 않습니다. manifest/checksum/config/model card 등 비밀 없는 재현 정보만 공유합니다.
 
 ## 모델 연동 계약: 준비된 초안과 미확정 사항
 
@@ -73,3 +73,7 @@ Issue 1개→B feature 브랜치→작은 검증 단위의 영어 Conventional C
 첫 환경 PR의 완료 기준은 버전/하드웨어/데이터 조건 문서화, pin/lock 파일, 독립 smoke 및 테스트 명령·실행 결과, 비밀/데이터 제외 확인입니다. 모델 다운로드 없이 실행 가능한 가벼운 fixture 테스트와 학습/대용량 평가를 분리합니다. 현재 CI에는 ML 전용 검증이 없으므로 B 환경이 확정된 뒤 공동 리뷰로 추가합니다. 기존 서비스 CI 통과를 모델 평가 통과로 해석하지 않습니다.
 
 최종 재조회에서 protect-main Ruleset의 main PR 필수·삭제/force push 금지가 확인됐습니다. 승인 리뷰 0건이며 필수 CI는 아직 없습니다. 두 사람 모두 PR 리뷰 절차를 지켜야 하며 저장소 권한/보호 변경은 사용자 승인 후 진행합니다.
+
+## 2026-10-24 데이터 및 경로 정책
+
+[MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)의 확인/미확인 표와 artifacts/models/ 및 RANKING_MODEL_PATH 정책을 적용합니다. 원본 라이선스와 동일성은 미검증입니다. 기존 B 코드와 파일은 변경하지 않으며 loader의 file/directory 경계는 공동 합의 사항입니다.
