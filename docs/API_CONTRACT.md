@@ -216,3 +216,7 @@ job 오류: COPY_SCHEMA_INVALID, COPY_PROVIDER_TIMEOUT, RENDER_FAILED, FACTS_MIS
 ## 계약 테스트와 고정 시점
 
 공동 fixture로 네 strategy·ID 완전 일치, 사실 문자열 동일, finite score·동점·wrong version·path, mock/real 동일 schema, edit revision을 검증합니다. 원본 일정은 Week 5 input, Week 6 output, Week 7 artifact/failure 고정입니다. OpenAPI→frontend 타입 생성은 S1 제안이며 이 문서는 구현된 schema가 아닙니다.
+
+## 2026-10-24 모델 저장 및 데이터 후보 협의
+
+기본 모델/학습 산출물 root는 artifacts/models/이며 신규 backend/models/ 저장은 사용하지 않습니다. RANKING_MODEL_PATH는 선택적 모델 파일 설정입니다. Evan12/CreativeRanking은 후보이며 원본 동일성/라이선스/이용 권한은 미검증입니다. 배치 방법과 loader 경계 차이는 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)를 따릅니다. 이번 변경은 실제 ranking을 구현하지 않습니다.

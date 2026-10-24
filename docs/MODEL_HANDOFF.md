@@ -58,7 +58,7 @@ A는 ID 누락/중복/추가, NaN/Infinity, 잘못된 rank/version을 검증하�
 
 ## 모델 파일 전달
 
-B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 load합니다. 사용자용 모델 업로드 API는 만들지 않습니다. 전달 매체·저장 위치·보관 권한은 공동 합의하며 `/artifacts/models/`는 Git 제외 경로 제안입니다. 원본 데이터·가중치·캐시는 GitHub 소스 저장소에 올리지 않습니다.
+B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 load합니다. 사용자용 모델 업로드 API는 만들지 않습니다. 전달 매체·저장 위치·보관 권한은 공동 합의하며 `artifacts/models/`는 사용자 확정 기본 경로입니다. 원본 데이터·가중치·캐시는 GitHub 소스 저장소에 올리지 않습니다.
 
 전달 묶음에는 model·scaler/config, 비밀 없는 manifest(파일 목록·checksum·model/feature/preprocessing version), 의존성 pin/lock·Python/device 조건, feature 순서, model card·평가 조건, 독립 smoke 명령과 예상 출력/허용 오차가 필요합니다. 파일 형식·manifest 실제 schema는 합의 전 제안입니다. A가 알 수 없는 출처의 pickle 등을 임의 load하지 않고 B 제공 형식·버전·checksum을 확인합니다. 누락/불일치/권한 실패의 재현 결과를 B에게 보고하며 A가 모델 내용을 수정하지 않습니다.
 
@@ -96,3 +96,7 @@ B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 loa
 | 과거 온보딩의 PR #8 미병합 안내 | 현재 병합 완료이므로 B가 최신 main에서 업로드 기능을 받을 수 있음 |
 
 공동 리뷰 완료 후 결정사항을 API_CONTRACT와 재현 fixture에 함께 반영합니다. 원본 일정 날짜는 목표이며 자동으로 완료된 것으로 처리하지 않습니다.
+
+## 2026-10-24 데이터 및 경로 정책
+
+[MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)의 확인/미확인 표와 artifacts/models/ 및 RANKING_MODEL_PATH 정책을 적용합니다. 원본 라이선스와 동일성은 미검증입니다. 기존 B 코드와 파일은 변경하지 않으며 loader의 file/directory 경계는 공동 합의 사항입니다.

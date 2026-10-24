@@ -23,6 +23,16 @@ class Settings(BaseSettings):
         ]
     )
     upload_root: Path = PROJECT_ROOT / "uploads" / "originals"
+    # Exact unprefixed name agreed with B. Optional until the real adapter exists.
+    ranking_model_path: Path | None = Field(default=None, validation_alias="RANKING_MODEL_PATH")
+
+    @field_validator("ranking_model_path", mode="before")
+    @classmethod
+    def resolve_ranking_model(cls, value):
+        if value is None or value == "":
+            return None
+        path = Path(value).expanduser()
+        return (path if path.is_absolute() else PROJECT_ROOT / path).resolve()
 
     @field_validator("cors_origins")
     @classmethod

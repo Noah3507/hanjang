@@ -101,3 +101,7 @@ flowchart LR
 ## 단계별 공통 완료 기준
 
 변경 범위와 소유자 확인, 합의된 계약 유지, 재현 명령·결과 기록, 비밀/데이터 제외, 서비스 불변 규칙 검사, PR 리뷰가 필요합니다. 유료 API·원본 upload는 승인된 시험 자료만 사용합니다. 배포·동의·비용 결정 전 실사용 운영을 시작하지 않습니다. 실제 모델 unavailable일 때 서비스 완료를 유지하되 최종 모델 연구 완료와는 구분합니다.
+
+## 2026-10-24 모델 저장 및 데이터 후보 협의
+
+기본 모델/학습 산출물 root는 artifacts/models/이며 신규 backend/models/ 저장은 사용하지 않습니다. RANKING_MODEL_PATH는 선택적 모델 파일 설정입니다. Evan12/CreativeRanking은 후보이며 원본 동일성/라이선스/이용 권한은 미검증입니다. 배치 방법과 loader 경계 차이는 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)를 따릅니다. 이번 변경은 실제 ranking을 구현하지 않습니다.

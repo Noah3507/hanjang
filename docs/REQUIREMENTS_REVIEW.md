@@ -59,3 +59,7 @@
 확정 순서는 업로드→AI 광고 4종→선호 순위→문구 수정→PNG입니다. 실제 사진·사실 보존과 접근/삭제 정책은 모든 단계의 필수 제약입니다. mock/real 경계, rule readability, 매장 프로필, 사용성 검증은 자료의 핵심 범위를 유지하며 readability 통합은 발표 일정의 Week 8입니다. A4, UMSI, small MLP, food-ad test set은 선택 확장입니다. A4는 PNG MVP 이후이며 최종 필수 조건에서 제외합니다. MLP는 validation 개선이 있을 때만 B가 선택합니다. 나머지 선택 기능 간 순서는 합의합니다.
 
 데이터 확보·성능·사용성 목표를 달성 사실로 쓰지 않습니다. Mock 서비스 성공은 실제 모델 검증을 대체하지 않습니다.
+
+## 2026-10-24 모델 저장 및 데이터 후보 협의
+
+기본 모델/학습 산출물 root는 artifacts/models/이며 신규 backend/models/ 저장은 사용하지 않습니다. RANKING_MODEL_PATH는 선택적 모델 파일 설정입니다. Evan12/CreativeRanking은 후보이며 원본 동일성/라이선스/이용 권한은 미검증입니다. 배치 방법과 loader 경계 차이는 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)를 따릅니다. 이번 변경은 실제 ranking을 구현하지 않습니다.
