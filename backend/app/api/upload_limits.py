@@ -13,7 +13,7 @@ class UploadLimitMiddleware:
     async def __call__(self, scope, receive, send):
         path = scope.get("path", "")
         upload = scope.get("method") == "POST" and path == "/api/v1/uploads"
-        draft = scope.get("method") == "PUT" and path.startswith("/api/v1/jobs/") and path.endswith("/input")
+        draft = path.startswith("/api/v1/jobs/") and ((scope.get("method") == "PUT" and path.endswith(("/input", "/photo-source"))) or (scope.get("method") == "POST" and path.endswith("/photo-processing")))
         if scope["type"] != "http" or not (upload or draft):
             return await self.app(scope, receive, send)
         try:

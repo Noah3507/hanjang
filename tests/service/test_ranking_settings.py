@@ -34,3 +34,18 @@ def test_absolute_file_and_dotenv_alias(monkeypatch, tmp_path):
     config = tmp_path / "settings.env"
     config.write_text(f"RANKING_MODEL_PATH={path.as_posix()}\n", encoding="utf-8")
     assert Settings(_env_file=config).ranking_model_path == path
+
+
+def test_photo_and_ranking_environment_settings_coexist(monkeypatch, tmp_path):
+    photo_path = tmp_path / "rembg" / "missing.onnx"
+    monkeypatch.setenv("HANJANG_PHOTO_MODEL_PATH", str(photo_path))
+    monkeypatch.setenv("HANJANG_PHOTO_TIMEOUT_SECONDS", "45")
+    monkeypatch.setenv("HANJANG_PHOTO_MAX_SIDE", "1024")
+    monkeypatch.setenv("RANKING_MODEL_PATH", "artifacts/models/ranking/missing.onnx")
+    settings = Settings(_env_file=None, upload_root=tmp_path / "uploads")
+    assert settings.photo_model_path == photo_path
+    assert settings.photo_timeout_seconds == 45
+    assert settings.photo_max_side == 1024
+    assert settings.ranking_model_path == PROJECT_ROOT / "artifacts/models/ranking/missing.onnx"
+    with TestClient(create_app(settings)) as client:
+        assert client.get("/health").status_code == 200
