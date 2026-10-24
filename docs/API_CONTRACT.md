@@ -41,7 +41,8 @@ PUT 요청은 InputDraft = {facts: Facts, mood: Mood}. GET/PUT 응답은 DraftRe
 | Asset | asset_id/url/mime_type:string, width/height:int 또는 null, revision:int>=1. PNG는 크기 필수, PDF는 null 가능 |
 | Warning | code/message:string. 안전한 설명만 |
 | RankingItem | candidate_id:string, score:finite float, rank:int 1..4 |
-| Ranking | source:mock 또는 model 또는 fallback_mock, model_version:string, feature_version:string 또는 null, revision:int, items:RankingItem[4] |
+| Ranking | source:mock 또는 model 또는 fallback_mock, model_version:string, feature_version:string 또는 null, revision:int, items:RankingItem[4], pairwise:Pairwise 또는 null(생략 가능) |
+| Pairwise | method:bradley_terry_sigmoid_v1, comparisons:6개 {candidate_a_id, candidate_b_id, probability_a_preferred}. 상세 ID·순서·확률 규칙은 v1.1 문서 기준; mock에서는 금지 |
 | TextBox | field/text:string, x/y/width/height:number, font_size_px:number, font_weight:int, foreground:#RRGGBB, background:#RRGGBB 또는 null, overflow:bool |
 | RendererMetadata | template_version:string, canvas_width/height:int, text_boxes:TextBox[], product_bbox:{x,y,width,height}, photo_sha256/processed_photo_sha256:string |
 | Diagnostics | status:available 또는 partial 또는 unavailable, rules_version:string, min_font_size_px/min_contrast_ratio/text_overlap_ratio/product_overlap_ratio:number 또는 null, layout_order:string[] 또는 null, attention:Attention 또는 null, warnings:Warning[] |
