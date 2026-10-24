@@ -4,7 +4,7 @@
 
 ## 구현 상태와 계약의 확정 수준
 
-기본 서비스·상품 입력·원본 업로드·draft 저장/조회는 구현됐습니다. MockRanker, 네 광고 생성, 편집·PNG 다운로드, RealRanker와 B 추론 코드는 없습니다. 업로드 PR #8과 협업 문서 PR #9는 병합됐습니다. 기존 문서에 적힌 모델 signature·예시 점수를 구현 완료나 A/B 합의 완료로 해석하지 않습니다.
+기본 서비스·상품 입력·원본 업로드·draft와 사진 전처리·비교·선택이 구현됐습니다. PR #11과 #14가 main에 병합되어 photo/ranking 설정이 함께 존재합니다. MockRanker, 네 광고 생성, 편집·PNG 다운로드, RealRanker와 B 추론 코드는 없습니다. 기존 문서에 적힌 모델 signature·예시 점수를 구현 완료로 해석하지 않으며 v1.1 승인 항목과 B 세부 합의 항목을 구분합니다.
 
 | 항목 | 구분 | 적용 방식 |
 | --- | --- | --- |
@@ -12,10 +12,10 @@
 | 전략 4종 emotional/price/visual/brand | 사용자 확정 | 네 후보 식별 유지 |
 | 모델 없이 MockRanker로 서비스 동작 | 사용자 확정 목표 | S5c/S6에서 구현·검증할 것; 현재 미구현 |
 | preference는 상대 선호, 매출/구매율/CTR 예측 아님 | 확정 불변 규칙 | UI와 모델 보고서에 적용 |
-| load/extract/score/rank 공개 함수 | 원본 자료에 기재된 접점 | 정확한 signature·타입·모듈 경로는 공동 합의 필요 |
-| 최종 PNG 로컬 경로, version·ID·finite score 검증, 전체 mock fallback | 기존 설계 초안 | B와 계약 리뷰 후 fixture·소비자 구현 |
-| 고정 mock 점수·동점 사전순·예외 클래스 | 기존 제안 | 실제 성능이나 합의 완료로 표시하지 않음 |
-| resize/crop/normalize·alpha 처리·device·timeout·artifact 위치 | 미확정 | 아래 공동 체크리스트에서 결정 |
+| load/extract/score/rank 공개 함수 | v1.1 논리 입출력 승인 | 구체 Python 타입·모듈 경로는 공동 합의 필요 |
+| 최종 RGB PNG 경로, version·ID·finite score, batch/순서·동점·선택적 pairwise | v1.1 승인 | fixture는 검증하며 실제 소비자/adapter 구현은 후속 |
+| 고정 mock 점수·예외 클래스 | 기존 제안 | mock fixture 점수를 실제 성능으로 표시하지 않음 |
+| 정규화·padding 색·device·timeout·bundle 상세 | 미확정 | 비율 유지 padding과 artifacts/models/ root는 확정, 나머지 공동 결정 |
 
 ## B 추론 함수 초안: 기존 API를 유지
 
@@ -27,7 +27,8 @@ score_ad(image_path: Path, model: ModelHandle) -> float
 rank_ads(items: list[RankInput], model: ModelHandle) -> RankOutput
 # RankInput: candidate_id: str, rendered_image_path: Path
 # RankOutput: model_version: str, feature_version: str,
-#             items: list[{candidate_id: str, score: float, rank: int}]
+#             items: list[{candidate_id: str, score: float, rank: int}], pairwise?: Pairwise | None
+# items preserve batch input order; HTTP display order is derived separately.
 ```
 
 A는 `rank_ads` 경계만 소비하고 B feature 코드를 복제하지 않는 초안입니다. `ModelHandle`/`FeatureVector`의 구체 타입, package import 경로, dataclass/Pydantic/dict 선택은 아직 확정하지 않습니다. 기존 HTTP 스키마는 변경하지 않습니다.
@@ -48,7 +49,7 @@ B가 학습과 추론에 동일한 decode·색 공간·resize/crop·normalizatio
 - scaler 학습 범위·전달 형태, preprocessing version, CPU/GPU·dtype·seed와 허용 수치 오차
 - 손상 파일·크기 제한·예상 밖 채널의 거부 조건
 
-현재 발표의 frozen CLIP ViT-L/14+통계 방향을 임의 교체하지 않습니다. 구체적인 픽셀 수나 crop 정책은 확인되지 않았으므로 새 확정값을 만들지 않습니다. B가 네 개의 권한 확인된 샘플 광고로 독립 smoke를 제공하고 A가 같은 fixture로 연결을 검증합니다.
+2026-10-24 사용자 승인으로 open_clip_torch와 전체 광고 비율 유지 padding을 적용합니다. encoder와 feature 차원은 확정하지 않으며 가중치 호환성 검증 후 결정합니다. B가 네 개의 권한 확인된 샘플 광고로 독립 smoke를 제공하고 A가 같은 fixture로 연결을 검증합니다.
 
 ## 오류와 fallback
 
@@ -72,7 +73,7 @@ B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 loa
 4. S6에서 실제 업로드→네 후보→mock 순위→문구 수정→전체 재정렬→PNG 다운로드를 통합합니다. facts/원본 hash 보존, 수정 revision, 예외, 브라우저 Console과 실제 PNG를 E2E 검증합니다. 유료 LLM 연결 시험은 별도 승인합니다.
 5. B6 artifact와 함수 계약·독립 smoke가 준비된 뒤 **별도 S8 PR**로 RealRanker를 연결합니다. 실패/timeout/잘못된 출력의 전체 mock fallback과 동일 UI schema를 검증합니다.
 
-현재 S3–S6가 없으므로 이번 문서 점검만으로 전체 흐름 테스트가 가능해지지는 않습니다. MockRanker 단독 구현도 전체 서비스 완료가 아닙니다. 모델 성능 평가는 B7의 별도 완료 조건입니다.
+현재 S3 사진 전처리·비교·선택은 구현됐으나 S4–S6는 미구현입니다. 이번 계약 테스트로 전체 광고 흐름이 가능해지지는 않습니다. MockRanker 단독 구현도 전체 서비스 완료가 아닙니다. 모델 성능 평가는 B7의 별도 완료 조건입니다.
 
 ## 충돌 최소화와 공동 리뷰
 
@@ -91,7 +92,7 @@ B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 loa
 | --- | --- |
 | S1 네 후보 fixture 미완료인데 S5c가 이를 의존 | fixture 리뷰를 S5c 선행 작업으로 유지; 완료 주장 금지 |
 | 전체 흐름 준비 요청과 현재 S3–S6 미구현 사이 차이 | 이번은 점검/계획; 구현은 각 기능 PR로 진행 |
-| 문서의 local path·동점·예외 규칙은 아직 제안 | B 동의를 받기 전 확정 계약으로 승격하지 않음 |
+| 예외 구현·bundle manifest 등 세부사항은 아직 제안 | v1.1 논리 계약과 구분하고 B 합의 후 구현 |
 | 개발 계획 S9에 S8 의존이 있으나 말미에는 실제 모델 unavailable 시 서비스 완료 유지라고 기재 | mock 서비스 MVP(S6/S7)와 실제 모델 통합 demo(S8/S9)의 완료 경계가 다소 모호함. 계획 의존관계는 변경하지 않고 A/B·사용자 리뷰에 남김 |
 | 과거 온보딩의 PR #8 미병합 안내 | 현재 병합 완료이므로 B가 최신 main에서 업로드 기능을 받을 수 있음 |
 
@@ -100,3 +101,7 @@ B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 loa
 ## 2026-10-24 데이터 및 경로 정책
 
 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)의 확인/미확인 표와 artifacts/models/ 및 RANKING_MODEL_PATH 정책을 적용합니다. 원본 라이선스와 동일성은 미검증입니다. 기존 B 코드와 파일은 변경하지 않으며 loader의 file/directory 경계는 공동 합의 사항입니다.
+
+## v1.1 승인으로 대체되는 초안
+
+[RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)이 최종 광고 RGB 1080×1350, padding, batch/ID/순서, version, 선택적 pairwise의 기준입니다. 이 문서 상단의 과거 미확정 표는 해당 항목에 한해 최신 승인으로 대체됩니다. RANKING_MODEL_PATH 파일 의미는 PR #14와 동일하게 유지하며 directory loader 연결은 B와 세부 합의합니다. ViT-L/14·768은 기본값으로 확정하지 않습니다.

@@ -67,7 +67,7 @@ API는 202 job을 반환하고 frontend가 polling합니다. 작업 상태는 `p
 
 MockRanker는 R10 예시에 따라 visual=0.8, emotional=0.6, price=0.4, brand=0.2 고정값을 제안합니다. 학습된 선호도가 아닌 UI 검증용입니다. API source=mock/model_version=mock-v1, UI는 '데모 순위'로 표시합니다.
 
-RealRanker는 B package를 한 번 load하고 **최종 렌더링 PNG**를 평가합니다. 상품 cutout만 평가하지 않습니다. strategy는 추적 metadata이며 학습 feature가 아닙니다. B의 frozen CLIP ViT-L/14·통계 순서·scaler·전처리를 A가 재구현하지 않습니다. A 사진 분석 CLIP은 별도 책임이며 모델 버전·전처리가 같다고 가정하지 않습니다.
+RealRanker는 B package를 한 번 load하고 **최종 렌더링 PNG**를 평가합니다. 상품 cutout만 평가하지 않습니다. strategy는 추적 metadata이며 학습 feature가 아닙니다. B의 승인된 CLIP encoder·통계 순서·scaler·전처리를 A가 재구현하지 않습니다. A 사진 분석 CLIP은 별도 책임이며 모델 버전·전처리가 같다고 가정하지 않습니다.
 
 4 ID 완전 일치, finite score, model/feature version, rank 정합을 검증합니다. 실패 시 네 후보 전체 mock fallback과 warning을 반환합니다. mock/real 점수를 섞거나 readability를 preference에 더하지 않습니다. 10초 timeout은 D14 제안이며 cold start 포함 여부·실측 후 B와 합의합니다. 로컬 inference timeout 격리는 별도 실행 경계에서 구현하고 단순 thread 취소로 작업 종료를 보장하지 않습니다.
 
@@ -108,3 +108,7 @@ A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합�
 ## 2026-10-24 모델 저장 및 데이터 후보 협의
 
 기본 모델/학습 산출물 root는 artifacts/models/이며 신규 backend/models/ 저장은 사용하지 않습니다. RANKING_MODEL_PATH는 선택적 모델 파일 설정입니다. Evan12/CreativeRanking은 후보이며 원본 동일성/라이선스/이용 권한은 미검증입니다. 배치 방법과 loader 경계 차이는 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)를 따릅니다. 이번 변경은 실제 ranking을 구현하지 않습니다.
+
+## 2026-10-24 모델 연동 계약 승인
+
+확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.

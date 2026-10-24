@@ -35,7 +35,7 @@ A가 B 코드를 구현·수정하는 작업 지시가 아니라 B의 독립 산
 | --- | --- | --- | --- |
 | B1 데이터 접근·manifest | CreativeRanking/TASTE 형식·조건·샘플 | 없음 | 실제 다운로드·라이선스 확인, raw Git 제외. 발표의 접근 가능 주장을 확인 실적으로 오해하지 않음 |
 | B2 pair·split | same-product CTR / designer vote 정규화 | B1 | 방향·impression/CTR gap config·70/15/15 group 누수 검사·split manifest |
-| B3 features | frozen CLIP ViT-L/14+통계 cache | B1 | sample ad folder CLI, feature 순서·전처리·version·seed, A PNG smoke |
+| B3 features | frozen CLIP+통계 cache (encoder/차원 미확정) | B1 | sample ad folder CLI, feature 순서·전처리·version·seed, A PNG smoke |
 | B4 baseline | Random/LAION/rule/양방향 LLM judge | B2,B3 | 동일 held-out pairs·공정 비교·비용/실패 기록 |
 | B5 shared linear scorer | Bradley–Terry logistic v1 | B2,B3 | BCE·같은 scorer·finite scalar·validation 기록. MLP는 validation 개선 때만 선택 |
 | B6 inference artifact | load/extract/score/rank surface | B5 | model/scaler/config·checksum·feature spec·error·sample smoke, A 없이 4 PNG 정렬 |
@@ -109,3 +109,7 @@ flowchart LR
 ## 2026-10-24 모델 저장 및 데이터 후보 협의
 
 기본 모델/학습 산출물 root는 artifacts/models/이며 신규 backend/models/ 저장은 사용하지 않습니다. RANKING_MODEL_PATH는 선택적 모델 파일 설정입니다. Evan12/CreativeRanking은 후보이며 원본 동일성/라이선스/이용 권한은 미검증입니다. 배치 방법과 loader 경계 차이는 [MODEL_STORAGE_AND_DATASET](MODEL_STORAGE_AND_DATASET.md)를 따릅니다. 이번 변경은 실제 ranking을 구현하지 않습니다.
+
+## 2026-10-24 모델 연동 계약 승인
+
+확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.
