@@ -1,0 +1,364 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "c_emotional",
+      "strategy": "emotional",
+      "revision": 1,
+      "facts": {
+        "store_name": "  Fixture Shop  ",
+        "product_name": "Sample Product",
+        "price_text": " 10,500 KRW ",
+        "address": null,
+        "instagram_handle": null
+      },
+      "copy": {
+        "headline": "Synthetic emotional fixture",
+        "body": "",
+        "cta": ""
+      },
+      "png": {
+        "asset_id": "fixture_emotional",
+        "url": "/api/v1/assets/fixture_emotional",
+        "mime_type": "image/png",
+        "width": 1080,
+        "height": 1350,
+        "revision": 1
+      },
+      "renderer": {
+        "template_version": "contract-fixture-v1",
+        "canvas_width": 1080,
+        "canvas_height": 1350,
+        "text_boxes": [
+          {
+            "field": "store_name",
+            "text": "  Fixture Shop  ",
+            "x": 60.0,
+            "y": 1050.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "product_name",
+            "text": "Sample Product",
+            "x": 60.0,
+            "y": 1120.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "price_text",
+            "text": " 10,500 KRW ",
+            "x": 60.0,
+            "y": 1190.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          }
+        ],
+        "product_bbox": {
+          "x": 150.0,
+          "y": 300.0,
+          "width": 780.0,
+          "height": 650.0
+        },
+        "photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801",
+        "processed_photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801"
+      },
+      "diagnostics": {
+        "status": "unavailable",
+        "rules_version": "fixture-only",
+        "min_font_size_px": null,
+        "min_contrast_ratio": null,
+        "text_overlap_ratio": null,
+        "product_overlap_ratio": null,
+        "layout_order": null,
+        "attention": null,
+        "warnings": []
+      }
+    },
+    {
+      "candidate_id": "c_price",
+      "strategy": "price",
+      "revision": 1,
+      "facts": {
+        "store_name": "  Fixture Shop  ",
+        "product_name": "Sample Product",
+        "price_text": " 10,500 KRW ",
+        "address": null,
+        "instagram_handle": null
+      },
+      "copy": {
+        "headline": "Synthetic price fixture",
+        "body": "",
+        "cta": ""
+      },
+      "png": {
+        "asset_id": "fixture_price",
+        "url": "/api/v1/assets/fixture_price",
+        "mime_type": "image/png",
+        "width": 1080,
+        "height": 1350,
+        "revision": 1
+      },
+      "renderer": {
+        "template_version": "contract-fixture-v1",
+        "canvas_width": 1080,
+        "canvas_height": 1350,
+        "text_boxes": [
+          {
+            "field": "store_name",
+            "text": "  Fixture Shop  ",
+            "x": 60.0,
+            "y": 1050.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "product_name",
+            "text": "Sample Product",
+            "x": 60.0,
+            "y": 1120.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "price_text",
+            "text": " 10,500 KRW ",
+            "x": 60.0,
+            "y": 1190.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          }
+        ],
+        "product_bbox": {
+          "x": 150.0,
+          "y": 300.0,
+          "width": 780.0,
+          "height": 650.0
+        },
+        "photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801",
+        "processed_photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801"
+      },
+      "diagnostics": {
+        "status": "unavailable",
+        "rules_version": "fixture-only",
+        "min_font_size_px": null,
+        "min_contrast_ratio": null,
+        "text_overlap_ratio": null,
+        "product_overlap_ratio": null,
+        "layout_order": null,
+        "attention": null,
+        "warnings": []
+      }
+    },
+    {
+      "candidate_id": "c_visual",
+      "strategy": "visual",
+      "revision": 1,
+      "facts": {
+        "store_name": "  Fixture Shop  ",
+        "product_name": "Sample Product",
+        "price_text": " 10,500 KRW ",
+        "address": null,
+        "instagram_handle": null
+      },
+      "copy": {
+        "headline": "Synthetic visual fixture",
+        "body": "",
+        "cta": ""
+      },
+      "png": {
+        "asset_id": "fixture_visual",
+        "url": "/api/v1/assets/fixture_visual",
+        "mime_type": "image/png",
+        "width": 1080,
+        "height": 1350,
+        "revision": 1
+      },
+      "renderer": {
+        "template_version": "contract-fixture-v1",
+        "canvas_width": 1080,
+        "canvas_height": 1350,
+        "text_boxes": [
+          {
+            "field": "store_name",
+            "text": "  Fixture Shop  ",
+            "x": 60.0,
+            "y": 1050.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "product_name",
+            "text": "Sample Product",
+            "x": 60.0,
+            "y": 1120.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "price_text",
+            "text": " 10,500 KRW ",
+            "x": 60.0,
+            "y": 1190.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          }
+        ],
+        "product_bbox": {
+          "x": 150.0,
+          "y": 300.0,
+          "width": 780.0,
+          "height": 650.0
+        },
+        "photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801",
+        "processed_photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801"
+      },
+      "diagnostics": {
+        "status": "unavailable",
+        "rules_version": "fixture-only",
+        "min_font_size_px": null,
+        "min_contrast_ratio": null,
+        "text_overlap_ratio": null,
+        "product_overlap_ratio": null,
+        "layout_order": null,
+        "attention": null,
+        "warnings": []
+      }
+    },
+    {
+      "candidate_id": "c_brand",
+      "strategy": "brand",
+      "revision": 1,
+      "facts": {
+        "store_name": "  Fixture Shop  ",
+        "product_name": "Sample Product",
+        "price_text": " 10,500 KRW ",
+        "address": null,
+        "instagram_handle": null
+      },
+      "copy": {
+        "headline": "Synthetic brand fixture",
+        "body": "",
+        "cta": ""
+      },
+      "png": {
+        "asset_id": "fixture_brand",
+        "url": "/api/v1/assets/fixture_brand",
+        "mime_type": "image/png",
+        "width": 1080,
+        "height": 1350,
+        "revision": 1
+      },
+      "renderer": {
+        "template_version": "contract-fixture-v1",
+        "canvas_width": 1080,
+        "canvas_height": 1350,
+        "text_boxes": [
+          {
+            "field": "store_name",
+            "text": "  Fixture Shop  ",
+            "x": 60.0,
+            "y": 1050.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "product_name",
+            "text": "Sample Product",
+            "x": 60.0,
+            "y": 1120.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          },
+          {
+            "field": "price_text",
+            "text": " 10,500 KRW ",
+            "x": 60.0,
+            "y": 1190.0,
+            "width": 960.0,
+            "height": 60.0,
+            "font_size_px": 42.0,
+            "font_weight": 400,
+            "foreground": "#181818",
+            "background": null,
+            "overflow": false
+          }
+        ],
+        "product_bbox": {
+          "x": 150.0,
+          "y": 300.0,
+          "width": 780.0,
+          "height": 650.0
+        },
+        "photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801",
+        "processed_photo_sha256": "a62153885a95e46e4cbfee9199168cacce9d23a4965a0fe65358b4f1824c3801"
+      },
+      "diagnostics": {
+        "status": "unavailable",
+        "rules_version": "fixture-only",
+        "min_font_size_px": null,
+        "min_contrast_ratio": null,
+        "text_overlap_ratio": null,
+        "product_overlap_ratio": null,
+        "layout_order": null,
+        "attention": null,
+        "warnings": []
+      }
+    }
+  ]
+}

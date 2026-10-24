@@ -1,0 +1,481 @@
+{
+  "$defs": {
+    "Box": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "title": "Box",
+      "type": "object"
+    },
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "minLength": 1,
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "strategy": {
+          "enum": [
+            "emotional",
+            "price",
+            "visual",
+            "brand"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "facts": {
+          "$ref": "#/$defs/Facts"
+        },
+        "copy": {
+          "$ref": "#/$defs/Copy"
+        },
+        "png": {
+          "$ref": "#/$defs/Png"
+        },
+        "renderer": {
+          "$ref": "#/$defs/Renderer"
+        },
+        "diagnostics": {
+          "$ref": "#/$defs/Diagnostics"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "strategy",
+        "revision",
+        "facts",
+        "copy",
+        "png",
+        "renderer",
+        "diagnostics"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "Copy": {
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Headline",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 160,
+          "title": "Body",
+          "type": "string"
+        },
+        "cta": {
+          "maxLength": 30,
+          "title": "Cta",
+          "type": "string"
+        }
+      },
+      "required": [
+        "headline",
+        "body",
+        "cta"
+      ],
+      "title": "Copy",
+      "type": "object"
+    },
+    "Diagnostics": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "partial",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "rules_version": {
+          "title": "Rules Version",
+          "type": "string"
+        },
+        "min_font_size_px": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Min Font Size Px"
+        },
+        "min_contrast_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Min Contrast Ratio"
+        },
+        "text_overlap_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Text Overlap Ratio"
+        },
+        "product_overlap_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Product Overlap Ratio"
+        },
+        "layout_order": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Layout Order"
+        },
+        "attention": {
+          "title": "Attention",
+          "type": "null"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/Warning"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "rules_version",
+        "min_font_size_px",
+        "min_contrast_ratio",
+        "text_overlap_ratio",
+        "product_overlap_ratio",
+        "layout_order",
+        "attention",
+        "warnings"
+      ],
+      "title": "Diagnostics",
+      "type": "object"
+    },
+    "Facts": {
+      "additionalProperties": false,
+      "properties": {
+        "store_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Store Name",
+          "type": "string"
+        },
+        "product_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Product Name",
+          "type": "string"
+        },
+        "price_text": {
+          "maxLength": 40,
+          "minLength": 1,
+          "title": "Price Text",
+          "type": "string"
+        },
+        "address": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address"
+        },
+        "instagram_handle": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Instagram Handle"
+        }
+      },
+      "required": [
+        "store_name",
+        "product_name",
+        "price_text"
+      ],
+      "title": "Facts",
+      "type": "object"
+    },
+    "Png": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "url": {
+          "pattern": "^/api/v1/assets/[^/]+$",
+          "title": "Url",
+          "type": "string"
+        },
+        "mime_type": {
+          "const": "image/png",
+          "title": "Mime Type",
+          "type": "string"
+        },
+        "width": {
+          "const": 1080,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "const": 1350,
+          "title": "Height",
+          "type": "integer"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "asset_id",
+        "url",
+        "mime_type",
+        "width",
+        "height",
+        "revision"
+      ],
+      "title": "Png",
+      "type": "object"
+    },
+    "Renderer": {
+      "additionalProperties": false,
+      "properties": {
+        "template_version": {
+          "title": "Template Version",
+          "type": "string"
+        },
+        "canvas_width": {
+          "const": 1080,
+          "title": "Canvas Width",
+          "type": "integer"
+        },
+        "canvas_height": {
+          "const": 1350,
+          "title": "Canvas Height",
+          "type": "integer"
+        },
+        "text_boxes": {
+          "items": {
+            "$ref": "#/$defs/TextBox"
+          },
+          "title": "Text Boxes",
+          "type": "array"
+        },
+        "product_bbox": {
+          "$ref": "#/$defs/Box"
+        },
+        "photo_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Photo Sha256",
+          "type": "string"
+        },
+        "processed_photo_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Processed Photo Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template_version",
+        "canvas_width",
+        "canvas_height",
+        "text_boxes",
+        "product_bbox",
+        "photo_sha256",
+        "processed_photo_sha256"
+      ],
+      "title": "Renderer",
+      "type": "object"
+    },
+    "TextBox": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "x": {
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "font_size_px": {
+          "exclusiveMinimum": 0,
+          "title": "Font Size Px",
+          "type": "number"
+        },
+        "font_weight": {
+          "title": "Font Weight",
+          "type": "integer"
+        },
+        "foreground": {
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "title": "Foreground",
+          "type": "string"
+        },
+        "background": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Background"
+        },
+        "overflow": {
+          "title": "Overflow",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "field",
+        "text",
+        "x",
+        "y",
+        "width",
+        "height",
+        "font_size_px",
+        "font_weight",
+        "foreground",
+        "background",
+        "overflow"
+      ],
+      "title": "TextBox",
+      "type": "object"
+    },
+    "Warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "Warning",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/Candidate"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "title": "Candidates",
+      "type": "array"
+    }
+  },
+  "required": [
+    "candidates"
+  ],
+  "title": "CandidateSet",
+  "type": "object"
+}

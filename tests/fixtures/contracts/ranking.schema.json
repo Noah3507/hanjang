@@ -1,0 +1,144 @@
+{
+  "$defs": {
+    "Pairwise": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "const": "bradley_terry_sigmoid_v1",
+          "title": "Method",
+          "type": "string"
+        },
+        "comparisons": {
+          "items": {
+            "$ref": "#/$defs/Preference"
+          },
+          "maxItems": 6,
+          "minItems": 6,
+          "title": "Comparisons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "method",
+        "comparisons"
+      ],
+      "title": "Pairwise",
+      "type": "object"
+    },
+    "Preference": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_a_id": {
+          "title": "Candidate A Id",
+          "type": "string"
+        },
+        "candidate_b_id": {
+          "title": "Candidate B Id",
+          "type": "string"
+        },
+        "probability_a_preferred": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Probability A Preferred",
+          "type": "number"
+        }
+      },
+      "required": [
+        "candidate_a_id",
+        "candidate_b_id",
+        "probability_a_preferred"
+      ],
+      "title": "Preference",
+      "type": "object"
+    },
+    "RankingItem": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "minLength": 1,
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "rank": {
+          "maximum": 4,
+          "minimum": 1,
+          "title": "Rank",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "score",
+        "rank"
+      ],
+      "title": "RankingItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "enum": [
+        "mock",
+        "model",
+        "fallback_mock"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "model_version": {
+      "minLength": 1,
+      "title": "Model Version",
+      "type": "string"
+    },
+    "feature_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Feature Version"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/RankingItem"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "title": "Items",
+      "type": "array"
+    },
+    "pairwise": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Pairwise"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "source",
+    "model_version",
+    "feature_version",
+    "revision",
+    "items"
+  ],
+  "title": "Ranking",
+  "type": "object"
+}

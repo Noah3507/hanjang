@@ -1,0 +1,29 @@
+{
+  "source": "mock",
+  "model_version": "mock-v1",
+  "feature_version": null,
+  "revision": 1,
+  "items": [
+    {
+      "candidate_id": "c_visual",
+      "score": 0.8,
+      "rank": 1
+    },
+    {
+      "candidate_id": "c_emotional",
+      "score": 0.6,
+      "rank": 2
+    },
+    {
+      "candidate_id": "c_price",
+      "score": 0.4,
+      "rank": 3
+    },
+    {
+      "candidate_id": "c_brand",
+      "score": 0.2,
+      "rank": 4
+    }
+  ],
+  "pairwise": null
+}

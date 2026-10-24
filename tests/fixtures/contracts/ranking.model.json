@@ -1,0 +1,63 @@
+{
+  "source": "model",
+  "model_version": "synthetic-example-v1",
+  "feature_version": "synthetic-features-v1",
+  "revision": 1,
+  "items": [
+    {
+      "candidate_id": "c_visual",
+      "score": 0.8,
+      "rank": 1
+    },
+    {
+      "candidate_id": "c_emotional",
+      "score": 0.6,
+      "rank": 2
+    },
+    {
+      "candidate_id": "c_price",
+      "score": 0.4,
+      "rank": 3
+    },
+    {
+      "candidate_id": "c_brand",
+      "score": 0.2,
+      "rank": 4
+    }
+  ],
+  "pairwise": {
+    "method": "bradley_terry_sigmoid_v1",
+    "comparisons": [
+      {
+        "candidate_a_id": "c_brand",
+        "candidate_b_id": "c_emotional",
+        "probability_a_preferred": 0.401312339887548
+      },
+      {
+        "candidate_a_id": "c_brand",
+        "candidate_b_id": "c_price",
+        "probability_a_preferred": 0.45016600268752216
+      },
+      {
+        "candidate_a_id": "c_brand",
+        "candidate_b_id": "c_visual",
+        "probability_a_preferred": 0.35434369377420455
+      },
+      {
+        "candidate_a_id": "c_emotional",
+        "candidate_b_id": "c_price",
+        "probability_a_preferred": 0.5498339973124778
+      },
+      {
+        "candidate_a_id": "c_emotional",
+        "candidate_b_id": "c_visual",
+        "probability_a_preferred": 0.45016600268752216
+      },
+      {
+        "candidate_a_id": "c_price",
+        "candidate_b_id": "c_visual",
+        "probability_a_preferred": 0.401312339887548
+      }
+    ]
+  }
+}
