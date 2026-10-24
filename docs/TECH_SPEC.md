@@ -67,7 +67,7 @@ API는 202 job을 반환하고 frontend가 polling합니다. 작업 상태는 `p
 
 MockRanker는 R10 예시에 따라 visual=0.8, emotional=0.6, price=0.4, brand=0.2 고정값을 제안합니다. 학습된 선호도가 아닌 UI 검증용입니다. API source=mock/model_version=mock-v1, UI는 '데모 순위'로 표시합니다.
 
-RealRanker는 B package를 한 번 load하고 **최종 렌더링 PNG**를 평가합니다. 상품 cutout만 평가하지 않습니다. strategy는 추적 metadata이며 학습 feature가 아닙니다. B의 frozen CLIP ViT-L/14·통계 순서·scaler·전처리를 A가 재구현하지 않습니다. A 사진 분석 CLIP은 별도 책임이며 모델 버전·전처리가 같다고 가정하지 않습니다.
+RealRanker는 B package를 한 번 load하고 **최종 렌더링 PNG**를 평가합니다. 상품 cutout만 평가하지 않습니다. strategy는 추적 metadata이며 학습 feature가 아닙니다. B의 승인된 CLIP encoder·통계 순서·scaler·전처리를 A가 재구현하지 않습니다. A 사진 분석 CLIP은 별도 책임이며 모델 버전·전처리가 같다고 가정하지 않습니다.
 
 4 ID 완전 일치, finite score, model/feature version, rank 정합을 검증합니다. 실패 시 네 후보 전체 mock fallback과 warning을 반환합니다. mock/real 점수를 섞거나 readability를 preference에 더하지 않습니다. 10초 timeout은 D14 제안이며 cold start 포함 여부·실측 후 B와 합의합니다. 로컬 inference timeout 격리는 별도 실행 경계에서 구현하고 단순 thread 취소로 작업 종료를 보장하지 않습니다.
 
@@ -100,3 +100,7 @@ A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합�
 저장소 협업은 [CONTRIBUTING.md](../CONTRIBUTING.md)의 GitHub Flow·Conventional Commits를 따릅니다. CI의 repository-policy는 stage/index 파일·흔한 비밀 패턴·PR 제목을 검증하고 기존 backend/frontend 검사와 함께 실행합니다. 이는 모델 API 계약·A/B 소유권·제품 범위를 바꾸지 않습니다. main 보호 적용·새 권한·브랜치 삭제는 사용자 사전 승인 대상이며 자동 merge·force push는 수행하지 않습니다.
 
 파일 upload를 JSON job 요청과 별도 endpoint로 나눈 것은 [FastAPI 파일 요청 문서](https://fastapi.tiangolo.com/tutorial/request-files/)의 multipart/JSON 구분에 맞춘 설계 제안입니다. HTML escaping은 [Jinja API 문서](https://jinja.palletsprojects.com/en/stable/api/)의 autoescape 설정을 명시적으로 활성화해야 합니다. rembg는 [공식 저장소](https://github.com/danielgatis/rembg)의 배경 제거 도구이며 이미지 생성 도구로 사용하지 않습니다. PNG·PDF 렌더링은 [Playwright Python Page 문서](https://playwright.dev/python/docs/api/class-page)의 screenshot/pdf 기능을 기준으로 구현합니다. 이 확인은 원본 요구사항이나 라이브러리 호환성 smoke test를 대신하지 않습니다.
+
+## 2026-10-24 모델 연동 계약 승인
+
+확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.

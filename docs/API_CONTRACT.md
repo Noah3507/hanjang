@@ -1,6 +1,6 @@
 # API와 Ranking 계약 초안
 
-계약 version: v1-draft. R5의 접점은 candidate ID·image path/url·score/rank/model version입니다. 자료 충돌 시 최종 발표본을 우선합니다. 사용자 승인에 따라 입력·업로드 API 및 아래 draft 계약을 구현했습니다. 나머지 광고 API는 설계 단계입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다.
+계약 version: v1.1-contract (문서·fixture 승인 기준; 현재 서비스 HTTP 구현 범위는 유지). R5의 접점은 candidate ID·image path/url·score/rank/model version입니다. 자료 충돌 시 최종 발표본을 우선합니다. 사용자 승인에 따라 입력·업로드 API 및 아래 draft 계약을 구현했습니다. 나머지 광고 API는 설계 단계입니다. P/R 표기는 [결정 목록](REQUIREMENTS_REVIEW.md)을 따릅니다.
 
 ## 공통 규약
 
@@ -216,3 +216,7 @@ job 오류: COPY_SCHEMA_INVALID, COPY_PROVIDER_TIMEOUT, RENDER_FAILED, FACTS_MIS
 ## 계약 테스트와 고정 시점
 
 공동 fixture로 네 strategy·ID 완전 일치, 사실 문자열 동일, finite score·동점·wrong version·path, mock/real 동일 schema, edit revision을 검증합니다. 원본 일정은 Week 5 input, Week 6 output, Week 7 artifact/failure 고정입니다. OpenAPI→frontend 타입 생성은 S1 제안이며 이 문서는 구현된 schema가 아닙니다.
+
+## v1.1 확정 모델 접점
+
+2026-10-24 승인된 최종 RGB PNG, open_clip_torch, 비율 유지 padding, 네 후보 batch, version/ID 유지와 선택적 pairwise는 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)이 기준입니다. 기존 Ranking에 nullable pairwise를 추가하며 mock은 확률을 생성하지 않습니다. B RankOutput의 입력 순서와 서비스 Ranking의 rank 순서를 구분합니다. 현재 실서비스 ranking endpoint는 구현하지 않습니다.

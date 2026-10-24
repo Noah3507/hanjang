@@ -62,3 +62,7 @@ main 직접 commit/push, 자동 merge, force push, 타인의 변경 덮어쓰기
 ## B 환경 준비 현황
 
 ml/, tests/ml/, 모델 의존성과 추론 코드는 아직 없습니다. [MODEL_DEVELOPMENT](MODEL_DEVELOPMENT.md)의 첫 환경 PR 절차를 따릅니다. A가 B 소유 코드를 생성하거나 수정하지 않습니다.
+
+## 2026-10-24 모델 연동 계약 승인
+
+확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.

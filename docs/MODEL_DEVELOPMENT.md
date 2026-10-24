@@ -73,3 +73,7 @@ Issue 1개→B feature 브랜치→작은 검증 단위의 영어 Conventional C
 첫 환경 PR의 완료 기준은 버전/하드웨어/데이터 조건 문서화, pin/lock 파일, 독립 smoke 및 테스트 명령·실행 결과, 비밀/데이터 제외 확인입니다. 모델 다운로드 없이 실행 가능한 가벼운 fixture 테스트와 학습/대용량 평가를 분리합니다. 현재 CI에는 ML 전용 검증이 없으므로 B 환경이 확정된 뒤 공동 리뷰로 추가합니다. 기존 서비스 CI 통과를 모델 평가 통과로 해석하지 않습니다.
 
 최종 재조회에서 protect-main Ruleset의 main PR 필수·삭제/force push 금지가 확인됐습니다. 승인 리뷰 0건이며 필수 CI는 아직 없습니다. 두 사람 모두 PR 리뷰 절차를 지켜야 하며 저장소 권한/보호 변경은 사용자 승인 후 진행합니다.
+
+## 2026-10-24 모델 연동 계약 승인
+
+확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.

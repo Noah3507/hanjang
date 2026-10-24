@@ -48,7 +48,7 @@ B가 학습과 추론에 동일한 decode·색 공간·resize/crop·normalizatio
 - scaler 학습 범위·전달 형태, preprocessing version, CPU/GPU·dtype·seed와 허용 수치 오차
 - 손상 파일·크기 제한·예상 밖 채널의 거부 조건
 
-현재 발표의 frozen CLIP ViT-L/14+통계 방향을 임의 교체하지 않습니다. 구체적인 픽셀 수나 crop 정책은 확인되지 않았으므로 새 확정값을 만들지 않습니다. B가 네 개의 권한 확인된 샘플 광고로 독립 smoke를 제공하고 A가 같은 fixture로 연결을 검증합니다.
+2026-10-24 사용자 승인으로 open_clip_torch와 전체 광고 비율 유지 padding을 적용합니다. encoder와 feature 차원은 확정하지 않으며 가중치 호환성 검증 후 결정합니다. B가 네 개의 권한 확인된 샘플 광고로 독립 smoke를 제공하고 A가 같은 fixture로 연결을 검증합니다.
 
 ## 오류와 fallback
 
@@ -96,3 +96,7 @@ B가 신뢰할 수 있는 경로로 artifact를 전달하고 A가 확인 후 loa
 | 과거 온보딩의 PR #8 미병합 안내 | 현재 병합 완료이므로 B가 최신 main에서 업로드 기능을 받을 수 있음 |
 
 공동 리뷰 완료 후 결정사항을 API_CONTRACT와 재현 fixture에 함께 반영합니다. 원본 일정 날짜는 목표이며 자동으로 완료된 것으로 처리하지 않습니다.
+
+## v1.1 승인으로 대체되는 초안
+
+[RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)이 최종 광고 RGB 1080×1350, padding, batch/ID/순서, version, 선택적 pairwise의 기준입니다. 이 문서 상단의 과거 미확정 표는 해당 항목에 한해 최신 승인으로 대체됩니다. RANKING_MODEL_PATH 파일 의미는 PR #14와 동일하게 유지하며 directory loader 연결은 B와 세부 합의합니다. ViT-L/14·768은 기본값으로 확정하지 않습니다.

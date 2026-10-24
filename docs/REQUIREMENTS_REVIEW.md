@@ -59,3 +59,7 @@
 확정 순서는 업로드→AI 광고 4종→선호 순위→문구 수정→PNG입니다. 실제 사진·사실 보존과 접근/삭제 정책은 모든 단계의 필수 제약입니다. mock/real 경계, rule readability, 매장 프로필, 사용성 검증은 자료의 핵심 범위를 유지하며 readability 통합은 발표 일정의 Week 8입니다. A4, UMSI, small MLP, food-ad test set은 선택 확장입니다. A4는 PNG MVP 이후이며 최종 필수 조건에서 제외합니다. MLP는 validation 개선이 있을 때만 B가 선택합니다. 나머지 선택 기능 간 순서는 합의합니다.
 
 데이터 확보·성능·사용성 목표를 달성 사실로 쓰지 않습니다. Mock 서비스 성공은 실제 모델 검증을 대체하지 않습니다.
+
+## 2026-10-24 모델 연동 계약 승인
+
+확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.
