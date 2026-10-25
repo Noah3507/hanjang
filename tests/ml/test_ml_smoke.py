@@ -4,8 +4,10 @@ These tests download no model weights and need no dataset.
 Run from the repository root: python -m pytest tests/ml
 """
 
+import pytest
 import torch
 
+from ml.clip_config import CLIP_CANDIDATES, PRETRAINED_TAG, embedding_dim, input_size
 from ml.device import select_device
 
 
@@ -27,12 +29,19 @@ def test_select_device_respects_preferred():
     assert select_device("cpu").type == "cpu"
 
 
-def test_clip_vit_l14_embedding_size_without_download():
+@pytest.mark.parametrize("model_name", CLIP_CANDIDATES)
+def test_clip_candidate_metadata_without_download(model_name):
     import open_clip
 
-    config = open_clip.get_model_config("ViT-L-14")
-    assert config is not None
-    assert config["embed_dim"] == 768
+    assert model_name in open_clip.list_models()
+    assert PRETRAINED_TAG in open_clip.list_pretrained_tags_by_model(model_name)
+    assert embedding_dim(model_name) > 0
+    assert input_size(model_name) > 0
+
+
+def test_unknown_clip_model_is_rejected():
+    with pytest.raises(ValueError):
+        embedding_dim("not-a-real-model")
 
 
 def test_pairwise_preference_probability_shape():
