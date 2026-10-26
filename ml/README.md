@@ -35,3 +35,17 @@
 ## 테스트
 - 실행: python -m pytest tests/ml (모델 가중치·데이터 다운로드 없음)
 - 결과 (2026-10-25, macOS MPS): 8 passed
+## CLIP 후보 측정 (2026-10-26, Mac CPU)
+
+`scripts/ml_benchmark_clip.py`로 측정. MacBook Pro arm64, CPU 8스레드, Python 3.12.10, torch 2.14.1, open_clip 3.3.0. 광고 4장(1080×1350)을 `pad-square-v1`(흰색)으로 padding한 뒤 224로 줄여 한 번에 처리. openai 가중치에 맞춰 QuickGELU 사용(`ml.clip_config.uses_quick_gelu`).
+
+| 모델 | embedding | 가중치 | 불러오기 | 4장 처리 (warm 중앙값) | 최대 메모리 |
+| --- | --- | --- | --- | --- | --- |
+| ViT-B-32 | 512 | 605 MB | 1.5초 | 0.042초 | 1.52 GB |
+| ViT-B-16 | 512 | 599 MB | 1.6초 | 0.123초 | 1.49 GB |
+| ViT-L-14 | 768 | 1.71 GB | 3.4초 | 0.442초 | 3.59 GB |
+
+- 제안: 기본 ViT-B-32. B-16은 평가에서 확실히 나을 때만 검토, L-14는 제외. 배포 서버 사양이 정해지면 A와 최종 결정.
+- 전처리 제안: padding 흰색, 입력 224, open_clip 기본 보간·정규화, QuickGELU, `pad-square-v1`.
+- 배포 서버 CPU에서는 측정하지 않았다. 측정 JSON은 `artifacts/benchmarks/`(Git 제외)에 있다.
+- 테스트: `python -m pytest tests/ml -q` → 17 passed (2026-10-26).

@@ -30,3 +30,7 @@ def input_size(model_name: str) -> int:
         raise ValueError(f"Unknown open_clip model: {model_name}")
     size = config["vision_cfg"]["image_size"]
     return int(size[0] if isinstance(size, (list, tuple)) else size)
+
+def uses_quick_gelu(model_name: str, pretrained: str = PRETRAINED_TAG) -> bool:
+    """True when the pretrained weights were trained with QuickGELU (e.g. openai)."""
+    return bool(open_clip.get_pretrained_cfg(model_name, pretrained).get("quick_gelu", False))
