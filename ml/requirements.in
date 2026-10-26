@@ -3,3 +3,5 @@
 torch>=2
 open_clip_torch>=2
 pytest>=8
+pandas>=2
+pyarrow>=15
