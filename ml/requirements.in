@@ -1,0 +1,5 @@
+# B 모델 트랙이 직접 쓰는 패키지와 허용 범위.
+# 실제 설치는 ml/requirements.txt(정확한 버전 고정)로 한다.
+torch>=2
+open_clip_torch>=2
+pytest>=8
