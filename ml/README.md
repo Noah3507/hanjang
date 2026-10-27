@@ -45,7 +45,9 @@
 | ViT-B-16 | 512 | 599 MB | 1.6초 | 0.123초 | 1.49 GB |
 | ViT-L-14 | 768 | 1.71 GB | 3.4초 | 0.442초 | 3.59 GB |
 
-- 제안: 기본 ViT-B-32. B-16은 평가에서 확실히 나을 때만 검토, L-14는 제외. 배포 서버 사양이 정해지면 A와 최종 결정.
-- 전처리 제안: padding 흰색, 입력 224, open_clip 기본 보간·정규화, QuickGELU, `pad-square-v1`.
+- 결정 (A 동의, 2026-10-27): 기본 ViT-B-32. B-16은 같은 split·평가 지표에서 의미 있는 개선이 있을 때만 검토. L-14는 배포 후보에서 제외(연구 비교용으로만 남김).
+- 전처리 결정: padding 흰색, 입력 224, open_clip 기본 보간·정규화, QuickGELU, `pad-square-v1`. 학습과 추론에 똑같이 쓰고 모델 manifest에 기록한다.
+- 측정 스크립트는 macOS·Linux·Windows에서 실행된다(Windows는 추가 패키지 없이 Windows API로 메모리 측정). 입력은 정확히 4장, 1080×1350 RGB여야 한다.
+- 1.52 GB는 Mac 측정 프로세스의 최대 메모리이며 배포 서버 전체 RAM 요구량이 아니다(FastAPI·이미지 처리 등은 별도).
 - 배포 서버 CPU에서는 측정하지 않았다. 측정 JSON은 `artifacts/benchmarks/`(Git 제외)에 있다.
-- 테스트: `python -m pytest tests/ml -q` → 17 passed (2026-10-26).
+- 테스트: `python -m pytest tests/ml -q` → 28 passed (2026-10-27).
