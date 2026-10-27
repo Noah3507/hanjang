@@ -229,3 +229,64 @@ job 오류: COPY_SCHEMA_INVALID, COPY_PROVIDER_TIMEOUT, RENDER_FAILED, FACTS_MIS
 ## v1.1 확정 모델 접점
 
 2026-10-24 승인된 최종 RGB PNG, open_clip_torch, 비율 유지 padding, 네 후보 batch, version/ID 유지와 선택적 pairwise는 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)이 기준입니다. 기존 Ranking에 nullable pairwise를 추가하며 mock은 확률을 생성하지 않습니다. B RankOutput의 입력 순서와 서비스 Ranking의 rank 순서를 구분합니다. 현재 실서비스 ranking endpoint는 구현하지 않습니다.
+# 2026-10-28 승인 추가: 상품 사진 분석 API v1
+
+기존 광고 API/B ranking v1.1 및 사진 처리 API의 요청·응답은 변경하지 않습니다. 상세 실행 규칙은 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md)를 따릅니다. 본 추가 계약의 소비자는 A React·FastAPI이며 B 학습/추론 계약과 별개입니다.
+
+| API | 요청 | 응답 |
+| --- | --- | --- |
+| POST /api/v1/jobs/{job_id}/photo-analysis | JSON `{ "expected_asset_id": "현재 선택 asset의 32자리 소문자 hex ID" }`, 추가 필드 거부 | 202 AnalysisResponse, Location=status_url, Cache-Control:no-store |
+| GET /api/v1/jobs/{job_id}/photo-analysis | 본문 없음 | 200 AnalysisResponse, Cache-Control:no-store |
+
+두 API 모두 기존 X-Hanjang-Session과 업로드 소유권·만료를 검사합니다. 서버 경로·원본 사용자 파일명을 노출하지 않습니다. POST 본문은16KiB 제한이며 기존 JobStatus 상태 이름을 유지합니다. 사용자의 running/succeeded 예시는 각각 processing/completed로 대응합니다.
+
+AnalysisResponse 예시(단일색 합성 예, CLIP 모델 부재로 부분 성공):
+
+```json
+{
+  "job_id": "11111111111111111111111111111111",
+  "operation": "photo_analysis",
+  "status": "completed",
+  "status_url": "/api/v1/jobs/11111111111111111111111111111111/photo-analysis",
+  "source_asset_id": "22222222222222222222222222222222",
+  "photo_source": "original",
+  "is_current": true,
+  "analysis_version": "product-analysis-v1",
+  "expires_at": "2026-10-29T00:00:00Z",
+  "warnings": ["ANALYSIS_MODEL_UNAVAILABLE"],
+  "error": null,
+  "clip": {
+    "status": "unavailable",
+    "model_version": "ViT-B-32-openai-40d36571",
+    "prompt_version": "product-cues-v1",
+    "preprocessing_version": "product-white-pad-224-v1",
+    "score_type": "cosine_similarity",
+    "cues": []
+  },
+  "palette": {
+    "status": "available",
+    "method_version": "rgb-kmeans-seed0-alpha128-v1",
+    "sampled_pixels": 4096,
+    "colors": [{"hex": "#FF0000", "rgb": [255, 0, 0], "proportion": 1.0}]
+  }
+}
+```
+
+- status: pending=미요청, processing=실행 중, completed=한 가지 이상 사용 가능한 결과, failed=분석 결과 없음/입력 decode 오류. POST는 processing 또는 재사용된 completed를202로 반환합니다. 미요청 GET은 현재 asset·빈 cues/colors·error:null의 pending을 반환합니다.
+- CLIP available: 각 cue는 `{category:category|appearance|impression,candidate_id,label,similarity}`. similarity는 finite [-1,1] cosine 값이며 확률/정답 신뢰도/선호도/CTR이 아닙니다. 12개 고정 후보는 IMAGE_ANALYSIS에 정의합니다. unavailable에는 cues=[]와 warning을 제공합니다.
+- palette available: 최대5색, RGB 각0..255 정수·대문자 HEX 일치, finite proportion (0,1]이며 합1(허용오차1e-6). 비중은 alpha>=128 유효 표본 기준, 단색/고유색 부족 시5개보다 적습니다. unavailable은 colors=[]입니다.
+- 사진 선택은 시작 시 source_asset_id와 photo_source로 고정합니다. GET의 is_current는 현재 선택 asset과 비교해 매번 계산합니다. 선택이 바뀌어도 이전 결과는 같은 업로드 TTL까지 보존하며 LLM 소비 gate는 is_current && completed만 허용합니다.
+- 동일 asset의 processing/completed는 추가 worker 실행 없이 재사용합니다. failed는 재시도합니다. completed 부분 성공도 캐시하며, 모델 준비 후 새 업로드로 재분석할 수 있습니다. 버전 변경 후 서버 재시작은 메모리 캐시/작업을 유실시킵니다.
+- 모델 부재·실패·timeout에서도 palette 성공이면 completed이며 clip unavailable+warnings입니다. 양쪽 사용 불가면 failed와 error `{code,message}`를 반환합니다. 기존 상품 facts·사진 선택은 변경하지 않습니다.
+
+| 상태 코드 | 조건·코드 |
+| --- | --- |
+| 401 | 세션 누락/무효 |
+| 404 | 없는 작업·다른 소유자 |
+| 410 | 업로드 만료, 분석 중 만료도 결과 게시 차단 |
+| 409 | ANALYSIS_SOURCE_CHANGED: expected_asset_id 불일치. PHOTO_PROCESSING_BUSY: 배경 처리 중 |
+| 413 | POST 요청16KiB 초과 |
+| 422 | 잘못된 asset ID 형식·누락·추가 필드 |
+| 503 | ANALYSIS_BUSY: 다른 분석 실행 중. 큐에 넣거나 임의 성공 처리하지 않음 |
+
+warnings: ANALYSIS_MODEL_UNAVAILABLE, ANALYSIS_ENV_UNAVAILABLE, ANALYSIS_MODEL_INVALID, ANALYSIS_CLIP_FAILED, ANALYSIS_WORKER_FAILED, ANALYSIS_TIMEOUT, ANALYSIS_CLIP_UNAVAILABLE, ANALYSIS_NO_VISIBLE_PIXELS, ANALYSIS_FAILED. failed error.code는 ANALYSIS_FAILED 또는 ANALYSIS_UNAVAILABLE입니다. HTTP 오류 본문은 기존 ErrorBody를 따릅니다. 내부 경로·예외 stack·worker PID는 API에 반환하지 않습니다.

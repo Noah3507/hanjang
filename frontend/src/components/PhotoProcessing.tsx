@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { UploadHandle } from '../api/uploads'
 import { choosePhoto, photoBlob, photoState, type PhotoState } from '../api/photos'
+import PhotoAnalysis from './PhotoAnalysis'
 
 const warningText: Record<string, string> = {
   PHOTO_MODEL_UNAVAILABLE: '배경 제거 모델이 없습니다. 자동 다운로드 없이 원본을 사용합니다.',
@@ -86,5 +87,6 @@ export default function PhotoProcessing({ handle }: { handle: UploadHandle }) {
     </div>
     <p>선택된 사진: {state?.photo_source === 'processed' ? '처리본' : '원본'}</p>
     <p className="help">자동 검사는 상품 손상을 모두 판별하지 못합니다. 윤곽·색·누락 여부를 직접 비교해 주세요. 원본과 처리본은 업로드 시점부터 24시간 후 삭제됩니다.</p>
+    {state && <PhotoAnalysis handle={handle} disabled={busy || state.status === 'processing'} asset={state.photo_source === 'processed' && state.processed ? state.processed.asset_id : state.original.asset_id} />}
   </section>
 }

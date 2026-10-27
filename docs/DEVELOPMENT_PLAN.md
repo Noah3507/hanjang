@@ -113,3 +113,6 @@ flowchart LR
 ## 2026-10-24 모델 연동 계약 승인
 
 확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.
+# 2026-10-28 S4 현재 범위 추가
+
+사용자 가이드의 6단계=S4 사진 분석입니다. 선택 사진의 CLIP zero-shot·K-means·POST/GET 분석·UI를 이번 feat/service-image-analysis에서 구현합니다. 승인된 상세 범위는 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md), 실제 검증은 [IMAGE_ANALYSIS_TEST_REPORT](IMAGE_ANALYSIS_TEST_REPORT.md)를 따릅니다. 아래 2026-10-24 구현 현황은 과거 기준입니다. S5 LLM/copy·renderer·ranking은 시작하지 않습니다.

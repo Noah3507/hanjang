@@ -12,11 +12,16 @@ from app.api.uploads import router as upload_router
 from app.api.errors import upload_error, validation_error
 from app.api.upload_limits import UploadLimitMiddleware
 from app.services.uploads import PrivateUploadStore, UploadError
+from app.api.analysis import router as analysis_router
+from app.services.analysis_execution import AnalysisExecution
+from app.services.analysis_store import AnalysisStore
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings if settings is not None else Settings()
     storage = PrivateUploadStore(settings.upload_root)
+    analysis_executor = AnalysisExecution(settings.analysis_python, settings.analysis_model_path,
+        settings.analysis_timeout_seconds, settings.analysis_idle_seconds)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -29,6 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            await asyncio.to_thread(analysis_executor.close)
             task.cancel()
             try:
                 await task
@@ -37,6 +43,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application = FastAPI(title="Hanjang API", version="0.1.0", lifespan=lifespan)
     application.state.upload_store = storage
+    application.state.analysis_executor = analysis_executor
+    application.state.analysis_store = AnalysisStore(storage, analysis_executor)
     application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
     application.add_exception_handler(UploadError, upload_error)
     application.add_exception_handler(RequestValidationError, validation_error)
@@ -51,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(health_router, prefix="/api/v1")
     application.include_router(upload_router, prefix="/api/v1")
     application.include_router(photo_router, prefix="/api/v1")
+    application.include_router(analysis_router, prefix="/api/v1")
     # Requested local health path; same response as the versioned contract.
     application.include_router(health_router, include_in_schema=False)
     return application

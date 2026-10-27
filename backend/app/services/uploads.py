@@ -65,6 +65,8 @@ class Record:
     draft: InputDraft | None = None
     photo: PhotoResponse | None = None
     derived: dict[str, Path] = field(default_factory=dict)
+    analyses: dict = field(default_factory=dict)
+    last_analysis: str | None = None
 
 
 class PrivateUploadStore:

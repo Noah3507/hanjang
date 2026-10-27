@@ -4,7 +4,7 @@
 
 ## 현재 구현 범위
 
-2026-10-24 main 기준 **상품 입력·원본 업로드·draft 조회·rembg 배경 제거·원본/처리본 비교와 선택**을 구현했습니다. 원본 byte와 입력 문자열을 보존하고 비공개 세션·24시간 정리를 적용합니다. 모델 경로 정책과 모델 연동 v1.1 계약·합성 fixture·검증도 반영됐습니다. CLIP/K-means 분석·LLM·광고 생성·MockRanker 엔진·편집·결과 다운로드는 미구현입니다. 완료 범위와 근거는 [DEVELOPMENT_STATUS](docs/DEVELOPMENT_STATUS.md)를 확인하세요.
+기존 main의 **상품 입력·원본 업로드·draft 조회·rembg 배경 제거·원본/처리본 비교와 선택**에 더해, 2026-10-28 feat/service-image-analysis는 **선택 사진의 CLIP zero-shot 참고 단서·K-means 대표색**을 추가합니다. 원본 byte와 입력 문자열을 보존하고 비공개 세션·24시간 정리를 적용합니다. LLM·광고 생성·MockRanker 엔진·편집·결과 다운로드는 미구현입니다. [분석 실행 방법](docs/IMAGE_ANALYSIS.md)과 [검증 결과](docs/IMAGE_ANALYSIS_TEST_REPORT.md)를 확인하세요. 이전 단계 근거는 [DEVELOPMENT_STATUS](docs/DEVELOPMENT_STATUS.md)에 있습니다.
 
 승인된 제품 우선순위는 **업로드 → AI 광고 4종 생성 → 선호 순위 → 문구 수정 → PNG 다운로드**입니다. A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합니다. 원본 보존·배경 제거·비율 유지 resize만 허용하고 상품 색상/채도/명도 보정은 보류합니다. 처리 실패·품질 저하 시 원본 사용 경로를 제공합니다.
 

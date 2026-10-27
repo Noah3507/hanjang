@@ -1,6 +1,7 @@
 """Server-only configuration, independent from Vite's public environment."""
 
 from pathlib import Path
+import os
 
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -26,6 +27,10 @@ class Settings(BaseSettings):
     photo_model_path: Path = PROJECT_ROOT / "artifacts" / "models" / "rembg" / "u2netp.onnx"
     photo_timeout_seconds: float = Field(default=90, gt=0, le=120)
     photo_max_side: int = Field(default=1600, ge=256, le=4096)
+    analysis_python: Path = PROJECT_ROOT / '.venv-analysis' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+    analysis_model_path: Path = PROJECT_ROOT / 'artifacts/models/analysis/ViT-B-32.pt'
+    analysis_timeout_seconds: float = Field(default=120, gt=0, le=300)
+    analysis_idle_seconds: float = Field(default=300, gt=0, le=3600)
     # Exact unprefixed name agreed with B. Optional until the real adapter exists.
     ranking_model_path: Path | None = Field(default=None, validation_alias="RANKING_MODEL_PATH")
 
