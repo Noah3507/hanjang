@@ -1,0 +1,16 @@
+{
+  "version": "pairs-v1",
+  "taste": {
+    "dimension": "preference",
+    "group_size": 4
+  },
+  "creativeranking": {
+    "min_pv": 100,
+    "min_z": 1.96,
+    "items_per_split": {
+      "train": 14000,
+      "val": 3000,
+      "test": 3000
+    }
+  }
+}
