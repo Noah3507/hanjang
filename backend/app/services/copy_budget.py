@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 import uuid
-from app.services.copy_validation import CopyFailure
+from app.services.copy_contract import CopyFailure
 
 MAX_COST = (6000 * .75 + 2048 * 4.5) / 1_000_000
 

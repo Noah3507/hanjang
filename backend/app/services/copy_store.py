@@ -6,14 +6,15 @@ from threading import RLock
 import time
 from app.schemas.copy import CopyResponse, CopyError, Attempt
 from app.services.copy_prompt import provider_payload, PROMPT_VERSION, input_bound
-from app.services.copy_validation import validate_copy, CopyFailure
+from app.services.copy_validation import validate_copy
+from app.services.copy_contract import CopyFailure, CopyProvider, ProviderUsage
 from app.services.uploads import UploadError
 
 def digest(value):
     return sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 class CopyStore:
-    def __init__(self, uploads, analysis, provider):
+    def __init__(self, uploads, analysis, provider: CopyProvider):
         self.uploads, self.analysis, self.provider = uploads, analysis, provider
         self.lock = RLock()
         self.active = False
@@ -92,19 +93,14 @@ class CopyStore:
                     # Check TTL before a potentially billable retry.
                     self.uploads.get(owner, job)
                     reply = self.provider.generate(payload)
-                    metric.input_tokens, metric.output_tokens = reply.input_tokens, reply.output_tokens
-                    if reply.input_tokens is not None and reply.output_tokens is not None:
-                        metric.estimated_cost_usd = (reply.input_tokens*.75+reply.output_tokens*4.5)/1_000_000
+                    self.apply_usage(metric, reply.usage)
                     variants = validate_copy(reply.text, draft).variants
                     error = None
                 except CopyFailure as failure:
                     error = failure
                     metric.error_code = failure.code
-                    usage = getattr(self.provider, 'last_usage', None)
-                    if usage:
-                        metric.input_tokens, metric.output_tokens = usage
-                        metric.estimated_cost_usd = (usage[0]*.75+usage[1]*4.5)/1_000_000
-                    metric.reserved_unknown_cost_usd = getattr(self.provider, 'last_reserved_unknown', 0)
+                    if failure.usage is not None:
+                        self.apply_usage(metric, failure.usage)
                 finally:
                     metric.latency_seconds = round(time.perf_counter()-started, 4)
                     attempts.append(metric)
@@ -132,6 +128,13 @@ class CopyStore:
         finally:
             with self.lock:
                 self.active = False
+
+    @staticmethod
+    def apply_usage(metric: Attempt, usage: ProviderUsage):
+        metric.input_tokens = usage.input_tokens
+        metric.output_tokens = usage.output_tokens
+        metric.estimated_cost_usd = usage.estimated_cost_usd
+        metric.reserved_unknown_cost_usd = usage.reserved_unknown_cost_usd
 
     def current_for_render(self, owner, job):
         """Future renderer must not use a stale snapshot. No rendering implemented here."""

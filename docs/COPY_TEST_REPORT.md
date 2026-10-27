@@ -62,3 +62,13 @@ artifacts/service-copy/mock-cases/examples.json에 실제 로컬 Mock 응답을 
 사진·가게명·상품명·가격·특징 저장 → 필요 시 사진 선택/분석 → '4전략 카피 생성' → Mock 카드4개와 원문 facts 확인 → 특징 변경/저장 → 이전 결과 경고 → 재생성 → 저장 정보 다시 조회 순서로 검토합니다.
 
 브라우저 보고서: artifacts/playwright/report/index.html, results.json, results/의 copy-mock.png·copy-mobile.png·browser.log. 결과물은 Git 제외이며 검토 없이 외부 공유하지 않습니다. 무료/저비용 대안과 미승인 이미지 A/B 계획은 [COPY_PROVIDER_OPTIONS](COPY_PROVIDER_OPTIONS.md)를 따릅니다.
+
+## 같은 PR의 의존성 분리 후 재검증
+
+기존 기능을 중복 구현하지 않고, provider 공통 계약·factory·OpenAI adapter·사용량 결과를 분리했습니다. public API/입력 정책/UI/Mock 예시는 유지했습니다. 유료 호출·다른 제공자·이미지 입력은 추가하지 않았습니다.
+
+최신 pytest는 **155 passed**(copy 시험43개 포함), Vitest22개·TypeScript·build·pip check 통과입니다. 기존 AnyIO 경고1건은 남습니다. 새5개 시험은 provider가 반환한 단가를 Store가 다시 계산하지 않는지, validation retry의 각 사용량 유지, 비용 불명 오류의 명시적 예약액, SDK/adapter import를 차단한 Mock 실행, 이전 성공 사용량이 다음 실패에 섞이지 않는지를 검증합니다. OpenAI 시험은 fake client만 사용하며 실제 모델 접근·카피 품질·토큰/지연은 여전히 미검증입니다.
+
+최신 Chrome Playwright는 **20개 모두 통과(36.1초)**했습니다. 카피는 실제 로컬 API와 Mock 제공자로 시험했고, 409/비정상 응답 화면은 모의입니다. 기존 업로드·사진 선택·분석 회귀도 포함합니다. 실제 OpenAI 요청은0회/비용$0이며 토큰·한국어 생성 품질·실제 네트워크 지연은 미검증입니다.
+
+현재 확인용 URL은 http://127.0.0.1:5181, API http://127.0.0.1:8011/docs입니다. 기존5180/8010 서버와 세션은 보존하고 별도 Mock/paid=false 서버를 실행했습니다.

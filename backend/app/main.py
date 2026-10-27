@@ -17,8 +17,7 @@ from app.services.analysis_execution import AnalysisExecution
 from app.services.analysis_store import AnalysisStore
 from app.api.copy import router as copy_router
 from app.services.copy_store import CopyStore
-from app.services.copy_provider import MockCopyProvider, OpenAICopyProvider
-from app.services.copy_budget import CopyBudget
+from app.services.copy_provider import build_copy_provider
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,9 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     storage = PrivateUploadStore(settings.upload_root)
     analysis_executor = AnalysisExecution(settings.analysis_python, settings.analysis_model_path,
         settings.analysis_timeout_seconds, settings.analysis_idle_seconds)
-    copy_provider = MockCopyProvider() if settings.copy_provider == 'mock' else OpenAICopyProvider(
-        settings.copy_model, settings.openai_api_key.get_secret_value() if settings.openai_api_key else None,
-        settings.copy_allow_paid, CopyBudget(settings.copy_budget_path))
+    copy_provider = build_copy_provider(settings)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -41,8 +38,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
-            if hasattr(copy_provider, 'close'):
-                await asyncio.to_thread(copy_provider.close)
+            await asyncio.to_thread(copy_provider.close)
             await asyncio.to_thread(analysis_executor.close)
             task.cancel()
             try:

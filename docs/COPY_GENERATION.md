@@ -66,3 +66,16 @@ npm.cmd --prefix frontend run dev
 ## 검증과 다음 단계
 
 단위/API·브라우저·Mock/실제 구분은 [COPY_TEST_REPORT](COPY_TEST_REPORT.md), 제공자 비교와 사진 전송 비교 계획은 [COPY_PROVIDER_OPTIONS](COPY_PROVIDER_OPTIONS.md)를 따릅니다. 다음 구현은 사용자 승인 후 렌더링 단계이며 이번에는 이미지 생성이나 B ranking을 구현하지 않습니다.
+
+## 제공자 의존성 분리 보완
+
+PR #25의 같은 브랜치에서 기존 API/UI를 유지하고 아래 경계를 분리했습니다. 제공자를 추가하거나 이미지 입력을 구현한 변경은 아닙니다.
+
+- `copy_contract.py`: SDK와 요금에 의존하지 않는 `CopyProvider` Protocol, 텍스트 전용 `CopyPayload`, `ProviderResult`/`ProviderUsage`, 공통 오류입니다. 사용량은 각 호출의 불변 결과/오류에 포함되며 provider의 이전 요청 상태를 조회하지 않습니다.
+- `copy_provider.py`: Mock과 명시적인 factory입니다. Mock 선택 시 OpenAI adapter나 SDK를 import/초기화하지 않습니다. API 키 없이 사용하며 다른 제공자로 자동 전환하지 않습니다.
+- `copy_openai.py`: 승인된 OpenAI adapter의 SDK 요청·오류 변환·단가 계산입니다. 실제 호출은 계속 보류하고 paid gate=false를 유지합니다. 기존 OpenAI용 비용 원장도 이 adapter에서만 연결합니다.
+- `CopyStore`: 공통 텍스트 payload·응답 검증·snapshot/TTL/캐시를 담당합니다. SDK, OpenAI 단가, provider의 last_usage 같은 내부 속성을 알지 않고 사용량 결과를 그대로 API에 매핑합니다. JSON/사실 검사에서 재시도해도 각 시도의 사용량을 유지합니다.
+
+향후 다른 제공자를 승인하면 adapter와 factory 선택, 해당 제공자의 인증·요금·schema 매핑을 추가하고 공통 계약 시험을 통과시켜야 합니다. 현재 public provider enum은 mock/openai로 유지하므로 새 제공자 ID 공개는 별도 API 계약 승인 사항입니다. 이름만 바꾸거나 OpenAI base URL을 교체하는 방식으로 지원한다고 가정하지 않습니다.
+
+이미지 입력도 현재 payload에 빈 image 필드를 미리 넣지 않습니다. 현 경로는 텍스트 전용이며 사진/Instagram 전송 금지와 주소 명시 옵션을 유지합니다. 미래 별도 승인 후 이미지 전송용 입력 계약·동의/원본 보존·예산·별도 payload builder/adapter를 설계해야 합니다. 현재 텍스트용 snapshot/검증·UI를 유지할 수 있는 경계를 마련한 것이며 멀티모달 지원 완료를 뜻하지 않습니다.

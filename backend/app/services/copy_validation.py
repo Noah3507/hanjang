@@ -1,11 +1,7 @@
 """Conservative evidence checks, not a semantic truth verifier."""
 import re
 from app.schemas.copy import Variants, Copy, STRATEGIES
-
-class CopyFailure(Exception):
-    def __init__(self, code, retryable=False):
-        self.code, self.retryable = code, retryable
-        super().__init__(code)
+from app.services.copy_contract import CopyFailure
 
 CLAIMS = re.compile(
     r'할인|이벤트|특가|무료|증정|쿠폰|한정|국산|국내산|수입산|원산지|유기농|무첨가|저당|'

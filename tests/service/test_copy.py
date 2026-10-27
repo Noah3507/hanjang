@@ -10,7 +10,9 @@ from app.config import Settings
 from app.main import create_app
 from app.schemas.upload import InputDraft
 from app.schemas.copy import CopyRequest
-from app.services.copy_provider import MockCopyProvider, OpenAICopyProvider, ProviderResult
+from app.services.copy_provider import MockCopyProvider
+from app.services.copy_openai import OpenAICopyProvider
+from app.services.copy_contract import ProviderResult, ProviderUsage
 from app.services.copy_prompt import provider_payload
 from app.services.copy_validation import validate_copy, CopyFailure
 from app.services.copy_budget import CopyBudget, MAX_COST
@@ -275,3 +277,79 @@ def test_openai_adapter_with_fake_client_only(tmp_path):
     assert calls[0]['reasoning']=={'effort':'none'}
     assert calls[0]['text']['format']['strict']
     assert 'address' not in json.loads(calls[0]['input'][0]['content'])
+
+def test_store_uses_provider_receipt_not_vendor_prices(setup):
+    app, client, headers, meta, path, raw = setup
+    save(client, headers, path)
+    provider = app.state.copy_store.provider
+    text = provider.generate({}).text
+    provider.generate = lambda payload: ProviderResult(text, ProviderUsage(11, 29, .012345))
+    client.post(path, headers=headers, json=request(meta))
+    attempt = client.get(path, headers=headers).json()['attempts'][0]
+    assert attempt['input_tokens'] == 11 and attempt['output_tokens'] == 29
+    assert attempt['estimated_cost_usd'] == .012345
+
+def test_validation_retry_keeps_each_receipt(setup):
+    app, client, headers, meta, path, raw = setup
+    save(client, headers, path)
+    provider = app.state.copy_store.provider
+    text = provider.generate({}).text
+    replies = iter([ProviderResult('{', ProviderUsage(100, 10, .003)),
+                    ProviderResult(text, ProviderUsage(110, 20, .004))])
+    provider.generate = lambda payload: next(replies)
+    client.post(path, headers=headers, json=request(meta))
+    result = client.get(path, headers=headers).json()
+    assert result['status'] == 'completed'
+    assert [a['estimated_cost_usd'] for a in result['attempts']] == [.003, .004]
+    assert result['attempts'][0]['error_code'] == 'COPY_SCHEMA_INVALID'
+
+def test_failure_receipt_is_explicit_and_unknown_is_not_zero(setup):
+    app, client, headers, meta, path, raw = setup
+    save(client, headers, path)
+    def timeout(payload):
+        raise CopyFailure('COPY_PROVIDER_TIMEOUT', usage=ProviderUsage(reserved_unknown_cost_usd=.012))
+    app.state.copy_store.provider.generate = timeout
+    client.post(path, headers=headers, json=request(meta))
+    result = client.get(path, headers=headers).json()
+    assert result['status'] == 'failed' and len(result['attempts']) == 1
+    assert result['attempts'][0]['estimated_cost_usd'] is None
+    assert result['attempts'][0]['reserved_unknown_cost_usd'] == .012
+
+def test_mock_factory_does_not_load_vendor_sdk_or_adapter():
+    import os
+    import subprocess
+    import sys
+    script = '''import builtins,json
+from types import SimpleNamespace
+real_import = builtins.__import__
+def guarded(name,*args,**kwargs):
+ if name == 'openai' or name.endswith('copy_openai'):
+  raise AssertionError('Mock must not load vendor dependencies')
+ return real_import(name,*args,**kwargs)
+builtins.__import__ = guarded
+from app.services.copy_provider import build_copy_provider
+provider = build_copy_provider(SimpleNamespace(copy_provider='mock'))
+result = provider.generate({})
+assert provider.name == 'mock' and len(json.loads(result.text)['variants']) == 4
+assert result.usage.input_tokens is None and result.usage.estimated_cost_usd is None
+provider.close()
+'''
+    env = os.environ.copy()
+    env['PYTHONPATH'] = str(Path(__file__).resolve().parents[2] / 'backend')
+    subprocess.run([sys.executable, '-c', script], env=env, check=True, capture_output=True, timeout=15)
+
+def test_openai_failure_receipt_does_not_reuse_previous_usage(tmp_path):
+    response = SimpleNamespace(usage=SimpleNamespace(input_tokens=10, output_tokens=20),
+                               status='completed', output_text=MockCopyProvider().generate({}).text)
+    responses = iter([response, SimpleNamespace(usage=None)])
+    client = SimpleNamespace(models=SimpleNamespace(retrieve=lambda model: None),
+                             responses=SimpleNamespace(create=lambda **kwargs: next(responses)))
+    provider = OpenAICopyProvider('gpt-5.4-mini-2026-03-17', 'test-key-not-real', True,
+                                 CopyBudget(tmp_path/'receipt-ledger.json'), client)
+    result = provider.generate({})
+    assert result.usage.input_tokens == 10
+    with pytest.raises(CopyFailure) as caught:
+        provider.generate({})
+    assert caught.value.code == 'COPY_USAGE_UNKNOWN'
+    assert caught.value.usage.input_tokens is None
+    assert caught.value.usage.reserved_unknown_cost_usd == MAX_COST
