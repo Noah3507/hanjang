@@ -117,3 +117,6 @@ feat/service-image-processing은 rembg/Pillow/OpenCV 전처리, 비교/선택 UI
 ## 2026-10-28 승인된 S4 사진 분석 범위
 
 feat/service-image-analysis는 선택 상품 사진의 CLIP zero-shot·K-means·비공개 POST/GET photo-analysis·UI를 구현합니다. expected_asset_id 불일치는409이며 원본/facts/선택을 변경하지 않습니다. 현재 사진과 다른 결과는 보존하되 is_current=false로 후속 LLM context에서 제외합니다. 기존 pending/processing/completed/failed 상태를 유지합니다. A 전용 .venv-analysis·offline worker만 사용하고 서비스 .venv/B .venv-ml 및 B ml/ 코드는 변경하지 않습니다. 공식 모델 최초 다운로드는 사용자 승인됐으며 런타임 다운로드는 금지합니다. 모델·사진·벤치마크는 Git 제외입니다. LLM·광고 생성·B ranking 구현은 이 범위에 포함하지 않습니다. 상세 계약/설정은 docs/IMAGE_ANALYSIS.md를 따릅니다.
+## 2026-10-28 승인된 S5a 카피 범위와 실제 호출 보류
+
+feat/service-copy는 draft 최상위 product_features(선택 500자/null)·use_address_for_copy(false), POST/GET copy-generation, 네 전략의 copy(headline60/body160/cta30), Mock UI와 테스트를 구현합니다. 기존 Facts/B 계약은 유지하며 PUT의 새 필드 생략은 기존값 보존, 명시적 null/false만 초기화합니다. 사진·입력·특징·주소 옵션/context snapshot으로 최신 여부를 검사하고 stale 카피를 보존하되 렌더링에서 제외합니다. OpenAI adapter 방향은 승인됐지만 **유료/실제 호출은 사용자 요청으로 보류**입니다. 기본 Mock·paid gate=false를 유지하고 새 승인 없이 실제 OpenAI나 무료 대안 API도 호출하지 않습니다. 사진/Instagram은 전송하지 않고 주소는 명시 옵션 true일 때만 전송합니다. 사용자 facts/특징을 CLIP보다 우선하며 실제 검증 미실행을 Mock 통과로 대체하지 않습니다. B 코드/모델·8단계 렌더링/ranking/편집/다운로드는 범위 밖입니다. COPY_GENERATION/COPY_PROVIDER_OPTIONS/COPY_TEST_REPORT를 따릅니다.

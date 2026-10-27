@@ -14,6 +14,8 @@ function restored(): UploadHandle | null {
 export default function ProductInput() {
   const [facts, setFacts] = useState<Facts>(empty)
   const [mood, setMood] = useState<Mood | ''>('')
+  const [features, setFeatures] = useState('')
+  const [useAddress, setUseAddress] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [handle, setHandle] = useState<UploadHandle | null>(restored)
   const needsUpload = useRef(false)
@@ -46,6 +48,7 @@ export default function ProductInput() {
       }
     }
     if (!mood) next.mood = '분위기를 선택해 주세요.'
+    if (features && (!features.trim() || [...features].length > 500 || /[\u0000-\u0009\u000b\u000c\u000e-\u001f\u007f-\u009f]/.test(features))) next.product_features = '상품 특징은 공백만 입력하지 말고 최대 500자로 작성해 주세요.'
     if (!file && (!handle || needsUpload.current)) next.photo = '상품 사진을 선택해 주세요.'
     return next
   }
@@ -62,7 +65,7 @@ export default function ProductInput() {
         try { sessionStorage.setItem(storageKey, JSON.stringify(current)) } catch { /* Saving is still available without tab storage. */ }
       }
       if (!current) throw new Error('사진을 다시 선택해 주세요.')
-      await saveInput(current, facts, mood as Mood)
+      await saveInput(current, facts, mood as Mood, { product_features: features === '' ? null : features, use_address_for_copy: useAddress })
       const result = await getInput(current) // Verify through the read endpoint, not the submitted object.
       setDraft(result); setStatus('saved'); setMessage('상품 정보와 원본 사진이 저장됐습니다. 광고 생성은 시작하지 않았습니다.')
     } catch (error) { fail(error) }
@@ -79,7 +82,7 @@ export default function ProductInput() {
     try {
       const result = await getInput(handle)
       const original = await getOriginal(handle)
-      setFacts(result.facts); setMood(result.mood); setDraft(result); setFile(null); needsUpload.current = false
+      setFacts(result.facts); setMood(result.mood); setFeatures(result.product_features ?? ''); setUseAddress(result.use_address_for_copy ?? false); setDraft(result); setFile(null); needsUpload.current = false
       setPreview(URL.createObjectURL(original)); setStatus('saved'); setMessage('서버에서 저장된 상품 정보와 원본 사진을 다시 조회했습니다.')
     } catch (error) { fail(error) }
   }
@@ -109,6 +112,13 @@ export default function ProductInput() {
             </select>{errors.mood && <p className="field-error">{errors.mood}</p>}
           </div>
         </div>
+        <label htmlFor="product_features">상품 특징·강조 포인트 (선택)</label>
+        <textarea id="product_features" value={features} rows={3} placeholder="직접 확인한 맛·식감·재료·상품 장점을 적어 주세요."
+          aria-invalid={!!errors.product_features} onChange={event => { setFeatures(event.target.value); setDraft(null); setStatus('idle'); setMessage('') }} />
+        <small>최대 500자. 사용자 제공 정보로 원문 저장하며, 사진 추정과 구분합니다.</small>
+        {errors.product_features && <p className="field-error">{errors.product_features}</p>}
+        <label><input type="checkbox" checked={useAddress} onChange={event => { setUseAddress(event.target.checked); setDraft(null); setStatus('idle'); setMessage('') }} /> 지역 홍보 카피에 주소 사용</label>
+        <small>기본은 주소 미전송입니다. 실제 LLM 모드를 승인해 켠 경우에만 가게명·상품명·가격·특징·분위기·현재 사진 단서가 전송됩니다. Instagram과 사진은 전송하지 않습니다.</small>
         <button type="submit">{status === 'saving' ? '저장 중…' : '상품 정보와 사진 저장'}</button>
         <button className="secondary" type="button" disabled={!handle} onClick={reload}>저장 정보 다시 조회</button>
       </fieldset>
@@ -118,9 +128,11 @@ export default function ProductInput() {
       <h3>서버에 저장된 입력</h3>
       <dl>{(Object.keys(labels) as (keyof Facts)[]).map((key) => <div key={key}><dt>{labels[key]}</dt><dd>{draft.facts[key] ?? '미입력'}</dd></div>)}</dl>
       <p>작업 상태: {draft.status} · 분위기: {draft.mood}</p>
+      <p style={{ whiteSpace: 'pre-wrap' }}>상품 특징: {draft.product_features ?? '미입력'}</p>
+      <p>주소 카피 활용: {draft.use_address_for_copy ? '사용' : '사용하지 않음'}</p>
       <p>만료: {new Date(draft.expires_at).toLocaleString('ko-KR')} · 사진/입력은 24시간 임시 저장됩니다.</p>
     </section>}
-    {draft && handle && <PhotoProcessing key={handle.upload.job_id} handle={handle} />}
+    {draft && handle && <PhotoProcessing key={handle.upload.job_id} handle={handle} draft={draft} />}
     <p className="help">이 탭의 세션으로 다시 조회할 수 있습니다. 서버 재시작·배포 시 작업 정보가 유실될 수 있습니다. 새 사진은 새 작업으로 저장되며 이전 사진도 만료 시 정리됩니다.</p>
   </section>
 }
