@@ -171,3 +171,6 @@ CLIP zero-shot/K-means 사진 분석, LLM copy, 실제 네 광고 renderer, Mock
 3. open_clip_torch 우선 방향을 유지하되 서비스·ML Pillow 충돌을 고려해 의존성/프로세스 격리를 결정합니다. encoder/가중치/입력 크기·정규화·padding·CPU 메모리/시간은 검증 후 결정합니다.
 4. 내부 분석 context와 새 API 필요 여부를 먼저 제안하고 계약 변경은 사용자 승인 후 적용합니다. B ranking feature/scaler/전처리를 복제하지 않습니다.
 5. 모델 다운로드/외부 비용은 opt-in으로 승인받고 권리 확인된 fixture를 준비합니다. fake CLIP과 고정 seed·합성 색 검증부터 시작하며 실제 추론 시험과 구분합니다.
+# 2026-10-28 추가 현황
+
+feat/service-image-analysis에서 S4(사용자 가이드 6단계) 상품 사진 CLIP zero-shot·K-means·비공개 POST/GET 분석·UI를 추가합니다. A 분석 .venv-analysis는 서비스/B 환경과 분리하며 B ml/은 변경하지 않습니다. 아래 2026-10-24 본문은 그 시점의 이력입니다. 최신 실행 범위·API는 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md), 실제/모의 테스트와 한계는 [IMAGE_ANALYSIS_TEST_REPORT](IMAGE_ANALYSIS_TEST_REPORT.md)를 따릅니다. LLM·광고 생성·ranking은 여전히 후속입니다.

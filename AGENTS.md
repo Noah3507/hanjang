@@ -114,3 +114,6 @@ B의 환경 준비는 docs/MODEL_DEVELOPMENT.md를 따릅니다. 모델 의존�
 ## 현재 승인된 S3 범위
 
 feat/service-image-processing은 rembg/Pillow/OpenCV 전처리, 비교/선택 UI, additive 사진 처리 POST/GET과 사진 선택 PUT을 구현합니다. 원본/facts 보존 및 실패/품질 경고 시 원본 선택을 유지합니다. 광고 재생성 PATCH, 생성/분석/LLM/ranking과 B 코드는 포함하지 않습니다. 모델은 명시적 다운로드만 허용하며 자동 다운로드는 금지합니다. docs/IMAGE_PROCESSING.md의 계약과 검증을 따릅니다.
+## 2026-10-28 승인된 S4 사진 분석 범위
+
+feat/service-image-analysis는 선택 상품 사진의 CLIP zero-shot·K-means·비공개 POST/GET photo-analysis·UI를 구현합니다. expected_asset_id 불일치는409이며 원본/facts/선택을 변경하지 않습니다. 현재 사진과 다른 결과는 보존하되 is_current=false로 후속 LLM context에서 제외합니다. 기존 pending/processing/completed/failed 상태를 유지합니다. A 전용 .venv-analysis·offline worker만 사용하고 서비스 .venv/B .venv-ml 및 B ml/ 코드는 변경하지 않습니다. 공식 모델 최초 다운로드는 사용자 승인됐으며 런타임 다운로드는 금지합니다. 모델·사진·벤치마크는 Git 제외입니다. LLM·광고 생성·B ranking 구현은 이 범위에 포함하지 않습니다. 상세 계약/설정은 docs/IMAGE_ANALYSIS.md를 따릅니다.

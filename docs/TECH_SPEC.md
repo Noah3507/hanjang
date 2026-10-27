@@ -112,3 +112,6 @@ A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합�
 ## 2026-10-24 모델 연동 계약 승인
 
 확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.
+# 2026-10-28 S4 구현 추가
+
+A 전용 `.venv-analysis`·고정 requirements에서 OpenCLIP ViT-B-32/OpenAI 로컬 가중치를 CPU QuickGELU로 실행합니다. 서비스 .venv/rembg와 B .venv-ml은 변경하지 않습니다. 장기 실행 단일 subprocess·text embedding cache·요청ID 검증·hard timeout·idle 종료를 사용합니다. K-means는 서비스의 기존 NumPy로 수행해 CLIP 환경이 없어도 동작합니다. 비공개 Job/asset snapshot·24h TTL·is_current gate와 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md)의 API/운영 경계를 따릅니다. 아래 광고 생성 파이프라인은 여전히 후속입니다.

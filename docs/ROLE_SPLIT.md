@@ -70,3 +70,6 @@ ml/, tests/ml/, 모델 의존성과 추론 코드는 아직 없습니다. [MODEL
 ## 2026-10-24 모델 연동 계약 승인
 
 확정된 출력/추론/예제와 미확정 bundle·배포 항목은 [RANKING_CONTRACT_V1_1](RANKING_CONTRACT_V1_1.md)을 따릅니다. PR 점검과 B 수정 요청·ML CI 계획은 [ML_PR_REVIEW](ML_PR_REVIEW.md)에 정리합니다. 이번은 문서·fixture·경량 검증이며 MockRanker 또는 실제 모델 기능을 구현하지 않습니다.
+# S4 구현 경계 추가 (2026-10-28 사용자 승인)
+
+A는 backend/app/services/analysis_*·api/analysis.py·frontend 사진 분석 UI·scripts/service_download_analysis_model.py를 소유합니다. schemas/analysis.py·API 문서와 backend/requirements-analysis.*은 이번 승인된 공동 설정 변경입니다. `.venv-analysis`는 A 상품 사진 분석 전용이며 서비스 .venv와 B .venv-ml을 변경하지 않습니다. B ml/의 전처리·feature·학습·평가를 import/수정하지 않습니다. CLIP 아키텍처가 같아도 B 광고 ranking과 역할·입력·전처리 버전은 별개입니다.

@@ -30,21 +30,25 @@ def main():
     print(f'Official source: {URL}\nExpected bytes: {SIZE}', flush=True)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_suffix('.download')
+    created = False
     try:
-        with urllib.request.urlopen(URL, timeout=120) as response, temporary.open('xb') as output:
-            print(f'Response Content-Length: {response.headers.get("Content-Length")}', flush=True)
-            total = 0
-            for chunk in iter(lambda: response.read(1024*1024), b''):
-                total += len(chunk)
-                if total > SIZE:
-                    raise RuntimeError('Artifact larger than expected')
-                output.write(chunk)
+        with temporary.open('xb') as output:
+            created = True
+            with urllib.request.urlopen(URL, timeout=120) as response:
+                print(f'Response Content-Length: {response.headers.get("Content-Length")}', flush=True)
+                total = 0
+                for chunk in iter(lambda: response.read(1024*1024), b''):
+                    total += len(chunk)
+                    if total > SIZE:
+                        raise RuntimeError('Artifact larger than expected')
+                    output.write(chunk)
         if total != SIZE or checksum(temporary) != CHECKSUM:
             raise RuntimeError('Size/checksum mismatch')
         temporary.rename(target)
         print(f'Verified {total} bytes, SHA256 {CHECKSUM}')
     finally:
-        temporary.unlink(missing_ok=True)
+        if created:
+            temporary.unlink(missing_ok=True)
 
 if __name__ == '__main__':
     main()
