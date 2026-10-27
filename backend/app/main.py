@@ -15,6 +15,10 @@ from app.services.uploads import PrivateUploadStore, UploadError
 from app.api.analysis import router as analysis_router
 from app.services.analysis_execution import AnalysisExecution
 from app.services.analysis_store import AnalysisStore
+from app.api.copy import router as copy_router
+from app.services.copy_store import CopyStore
+from app.services.copy_provider import MockCopyProvider, OpenAICopyProvider
+from app.services.copy_budget import CopyBudget
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -22,6 +26,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     storage = PrivateUploadStore(settings.upload_root)
     analysis_executor = AnalysisExecution(settings.analysis_python, settings.analysis_model_path,
         settings.analysis_timeout_seconds, settings.analysis_idle_seconds)
+    copy_provider = MockCopyProvider() if settings.copy_provider == 'mock' else OpenAICopyProvider(
+        settings.copy_model, settings.openai_api_key.get_secret_value() if settings.openai_api_key else None,
+        settings.copy_allow_paid, CopyBudget(settings.copy_budget_path))
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -34,6 +41,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            if hasattr(copy_provider, 'close'):
+                await asyncio.to_thread(copy_provider.close)
             await asyncio.to_thread(analysis_executor.close)
             task.cancel()
             try:
@@ -45,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.upload_store = storage
     application.state.analysis_executor = analysis_executor
     application.state.analysis_store = AnalysisStore(storage, analysis_executor)
+    application.state.copy_store = CopyStore(storage, application.state.analysis_store, copy_provider)
     application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
     application.add_exception_handler(UploadError, upload_error)
     application.add_exception_handler(RequestValidationError, validation_error)
@@ -60,6 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(upload_router, prefix="/api/v1")
     application.include_router(photo_router, prefix="/api/v1")
     application.include_router(analysis_router, prefix="/api/v1")
+    application.include_router(copy_router, prefix="/api/v1")
     # Requested local health path; same response as the versioned contract.
     application.include_router(health_router, include_in_schema=False)
     return application
