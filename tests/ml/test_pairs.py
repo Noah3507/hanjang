@@ -168,3 +168,67 @@ def test_duplicated_asset_ids_in_assets_are_an_error():
     rankings, assets = taste_tables()
     with pytest.raises(ValueError):
         taste_pairs(rankings, pd.concat([assets, assets.iloc[[0]]]), TASTE_CFG)
+
+
+@pytest.mark.parametrize(
+    "column, value",
+    [("pv", -1), ("clk", -1), ("clk", 10_000), ("pv", None), ("image", None)],
+)
+def test_invalid_creativeranking_rows_are_errors(column, value):
+    rows = cr_rows([("p1", "x.png", 1000, 80), ("p1", "y.png", 1000, 20)]).astype({"pv": "object", "clk": "object"})
+    rows.loc[0, column] = value
+    with pytest.raises(ValueError):
+        creativeranking_pairs(rows, CR_CFG, "train", salt="t")
+
+
+def _load_build_script():
+    import importlib.util
+
+    script = Path(__file__).resolve().parents[2] / "scripts" / "ml_build_pairs.py"
+    spec = importlib.util.spec_from_file_location("ml_build_pairs", script)
+    build = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(build)
+    return build
+
+
+def _write_raw(tmp_path, bad_test_split=False):
+    taste = tmp_path / "data/raw/taste"
+    taste.mkdir(parents=True, exist_ok=True)
+    rankings, assets = taste_tables()
+    rankings.to_parquet(taste / "rankings.parquet")
+    assets.to_parquet(taste / "assets.parquet")
+    cr = tmp_path / "data/raw/creativeranking/list/list"
+    cr.mkdir(parents=True, exist_ok=True)
+    for split in ("train", "val", "test"):
+        clicks = 2000 if (bad_test_split and split == "test") else 80  # clk > pv
+        cr_rows([("p1", "x.png", 1000, clicks), ("p1", "y.png", 1000, 20)]).to_csv(
+            cr / f"{split}_data_list.txt", sep="\t", header=False, index=False
+        )
+
+
+def test_failed_run_leaves_previous_results_untouched(tmp_path):
+    build = _load_build_script()
+    _write_raw(tmp_path)
+    build.main(["--config", str(CONFIG)], repo_root=tmp_path)
+    out = tmp_path / "data/processed/pairs"
+    before = {p.name: p.read_bytes() for p in out.iterdir()}
+
+    _write_raw(tmp_path, bad_test_split=True)  # the last step now fails
+    with pytest.raises(ValueError):
+        build.main(["--config", str(CONFIG)], repo_root=tmp_path)
+    assert {p.name: p.read_bytes() for p in out.iterdir()} == before
+    assert [p.name for p in out.parent.iterdir()] == ["pairs"]  # no temporary folders left
+
+
+def test_stats_record_code_and_input_checksums(tmp_path):
+    build = _load_build_script()
+    _write_raw(tmp_path)
+    (tmp_path / "data/raw/taste/provenance.json").write_text(json.dumps({"repo_id": "x/taste"}))
+    stats = build.main(["--config", str(CONFIG)], repo_root=tmp_path)
+    assert set(stats["code"]) == {"commit", "dirty"}
+    assert set(stats["inputs"]) == {
+        "taste_rankings", "taste_assets",
+        "creativeranking_train", "creativeranking_val", "creativeranking_test",
+    }
+    assert all(len(v["sha256"]) == 64 for v in stats["inputs"].values())
+    assert stats["sources"]["taste"] == {"repo_id": "x/taste"}

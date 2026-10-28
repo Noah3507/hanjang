@@ -5,6 +5,8 @@ Run from the repository root, inside .venv-ml:
 
 Reads data/raw/ (see ml/data/README.md), writes data/processed/pairs/
 (ignored by Git): taste.parquet, creativeranking.parquet, stats.json.
+The folder is replaced only when every step succeeds (no partial results).
+stats.json records the code commit and the SHA-256 of every input file.
 CreativeRanking rights are unverified; the output is for research only.
 """
 
@@ -22,6 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))  # allow "python scripts/..." from the repo root
 
+from ml.data.outputs import code_revision, describe_inputs, find_provenance, staged_output
 from ml.data.pairs import (
     creativeranking_pairs,
     load_config,
@@ -54,15 +57,26 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
         parser.error(str(error))
 
     cfg = load_config(args.config)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    stats = {"config_version": cfg["version"], "config": cfg}
+    data_root = repo_root / "data"
+    taste_files = {"taste_rankings": args.taste_dir / "rankings.parquet",
+                   "taste_assets": args.taste_dir / "assets.parquet"}
+    cr_files = {f"creativeranking_{s}": args.cr_dir / f"{s}_data_list.txt" for s in SPLITS}
+    stats = {
+        "config_version": cfg["version"],
+        "config": cfg,
+        "code": code_revision(repo_root),
+        "inputs": describe_inputs({**taste_files, **cr_files}, repo_root),
+        "sources": {"taste": find_provenance(args.taste_dir, data_root),
+                    "creativeranking": find_provenance(args.cr_dir, data_root)},
+    }
 
-    rankings = pd.read_parquet(args.taste_dir / "rankings.parquet")
-    assets = pd.read_parquet(args.taste_dir / "assets.parquet")
-    pairs, stats["taste"] = taste_pairs(rankings, assets, cfg["taste"])
-    pairs.to_parquet(out_dir / "taste.parquet", index=False)
+    # Build everything in memory first; nothing is written unless every step succeeds.
+    taste, stats["taste"] = taste_pairs(
+        pd.read_parquet(taste_files["taste_rankings"]),
+        pd.read_parquet(taste_files["taste_assets"]),
+        cfg["taste"],
+    )
     print("taste:", stats["taste"])
-
     parts, stats["creativeranking"] = [], {}
     for split in SPLITS:
         rows = read_creativeranking_split(args.cr_dir, split)
@@ -73,10 +87,13 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
         stats["creativeranking"][split] = split_stats
         print(f"creativeranking {split}:", split_stats)
         del rows
-    pd.concat(parts, ignore_index=True).to_parquet(out_dir / "creativeranking.parquet", index=False)
+    creativeranking = pd.concat(parts, ignore_index=True)
 
     stats["built_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    (out_dir / "stats.json").write_text(json.dumps(stats, indent=2, ensure_ascii=False) + "\n")
+    with staged_output(out_dir) as tmp:  # replaces out_dir only if all files are written
+        taste.to_parquet(tmp / "taste.parquet", index=False)
+        creativeranking.to_parquet(tmp / "creativeranking.parquet", index=False)
+        (tmp / "stats.json").write_text(json.dumps(stats, indent=2, ensure_ascii=False) + "\n")
     print(f"wrote {out_dir}")
     return stats
 

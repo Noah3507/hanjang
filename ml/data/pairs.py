@@ -126,10 +126,28 @@ def _hash_order(values: pd.Series, salt: str) -> pd.Series:
     return values.map(lambda v: hashlib.sha256(f"{salt}:{v}".encode()).hexdigest())
 
 
+def validate_creativeranking_rows(rows: pd.DataFrame) -> None:
+    """Fail before summing if any raw row is impossible (missing, negative, clk > pv)."""
+    pv = pd.to_numeric(rows["pv"], errors="coerce")
+    clk = pd.to_numeric(rows["clk"], errors="coerce")
+    problems = {
+        "missing_item_or_image": int(rows[["item_id", "image"]].isna().any(axis=1).sum()),
+        "pv_missing_or_not_numeric": int(pv.isna().sum()),
+        "clk_missing_or_not_numeric": int(clk.isna().sum()),
+        "pv_negative": int((pv < 0).sum()),
+        "clk_negative": int((clk < 0).sum()),
+        "clk_greater_than_pv": int((clk > pv).sum()),
+    }
+    bad = {name: count for name, count in problems.items() if count}
+    if bad:
+        raise ValueError(f"invalid CreativeRanking rows: {bad}")
+
+
 def creativeranking_pairs(
     rows: pd.DataFrame, cfg: dict, split: str, salt: str
 ) -> tuple[pd.DataFrame, dict]:
     """Within-product pairs whose CTR difference is clear (|z| >= min_z)."""
+    validate_creativeranking_rows(rows)
     images = aggregate_images(rows)
     eligible = images[images["pv"] >= cfg["min_pv"]]
     merged = eligible.merge(eligible, on="item_id", suffixes=("_1", "_2"))

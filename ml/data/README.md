@@ -62,6 +62,9 @@
 - CreativeRanking 결과도 여전히 권리 미확인 데이터입니다. 연구·검증용으로만 씁니다.
 - CreativeRanking 라벨은 관측 CTR에 기반한 상대 비교용 약한 라벨(weak label)입니다. |z| ≥ 1.96은 관측 CTR 차이가 통계적으로 구분된다는 뜻일 뿐, 노출 대상·시간대·캠페인 차이를 통제하지 않으므로 이미지가 CTR 차이의 원인이라는 증거가 아닙니다. 쌍마다 검정을 반복하므로 다중 비교에 따른 오탐도 일부 섞일 수 있습니다.
 - 재현: 같은 revision의 원본과 `pairs-v1` config로 실행하면 2026-10-27 맥북 기준 TASTE 4,770쌍(평가 795건, 제외 10건), CreativeRanking train 32,018 / val 7,068 / test 6,791쌍이 나옵니다. 실행마다 `stats.json`에 같은 통계가 기록됩니다.
+- 입력 검증: CreativeRanking 원본 행에 제품·이미지 값 누락, pv·clk 누락·숫자 아님·음수, clk > pv가 하나라도 있으면 합산 전에 오류로 멈춥니다.
+- 결과 저장: 모든 처리가 성공해야 `data/processed/pairs/`가 한 번에 바뀝니다. 중간에 실패하면 이전 결과가 그대로 남고 일부 파일만 바뀌지 않습니다.
+- 추적 정보: `stats.json`에 코드 커밋(`code.commit`, 수정 중이었는지 `code.dirty`), 입력 파일별 크기·SHA-256(`inputs`), 원본 다운로드 기록(`sources`, 각 `provenance.json`)을 남깁니다.
 
 ## 공통
 
