@@ -50,7 +50,21 @@
 
 - 제품당 이미지 중앙값 3, 최대 11. 이미지당 등장 일수 중앙값 8~9일. clk > pv 행은 0개.
 - split 간 제품 중복이 0이므로 원본 split을 그대로 사용합니다.
-- 라벨: `(item_id, image)`별로 pv·clk를 합산한 뒤 평활 CTR `(clk+α)/(pv+α+β)`를 씁니다. 비교는 같은 제품 안의 이미지끼리만 합니다. 최소 pv 기준과 α·β는 5단계에서 정합니다.
+- 라벨: `(item_id, image)`별로 pv·clk를 합산하고, 같은 제품 안의 두 이미지 CTR 차이를 두 비율 z 검정으로 판단합니다. 평활 CTR(α·β)은 쓰지 않습니다(아래 "비교 쌍" 참고).
+
+## 비교 쌍 (pairs-v1)
+
+`python scripts/ml_build_pairs.py`가 `data/raw/`를 읽어 `data/processed/pairs/`(Git 제외)에 `taste.parquet`, `creativeranking.parquet`, `stats.json`을 씁니다. 기준 숫자는 `ml/data/pair_config.json`에 있습니다.
+
+- 공통 열: `dataset`, `source_split`, `group_id`, `image_a`, `image_b`, `a_wins`. 항상 `image_a < image_b`(문자열 순)이고 `a_wins`는 1(A 선호) 또는 0입니다. 같은 이미지끼리의 쌍은 없습니다.
+- TASTE: `preference`의 평가 한 건(이미지 4장, rank 1 = 최선호)마다 6쌍. 평가 묶음은 행 4개, 서로 다른 `asset_id` 4개, 이미지 경로 4개(누락·중복 없음), 순위가 정확히 1·2·3·4일 때만 쓰고 나머지는 제외해 `stats.json`의 `dropped_by_reason`에 이유별로 셉니다. `assets`에 같은 `asset_id`가 두 번 있으면 오류로 멈춥니다. `source_split`은 비어 있고 6단계에서 4장 묶음 단위로 나눕니다. 평가자별 표를 합치지 않고 한 표를 한 행으로 둡니다.
+- CreativeRanking: 이미지별 합산 pv가 `min_pv`(100) 이상인 이미지만, 같은 제품 안에서만 짝짓습니다. 두 비율 z 검정의 |z|가 `min_z`(1.96) 이상인 쌍만 남기고 CTR이 높은 쪽이 이깁니다. 원본 split별로 쌍이 있는 제품을 해시 순서로 정해 train 14,000 / val 3,000 / test 3,000개만 씁니다(같은 config면 항상 같은 제품). `pv_a`, `clk_a`, `pv_b`, `clk_b`, `z`를 함께 저장해 방향을 직접 확인할 수 있습니다.
+- CreativeRanking 결과도 여전히 권리 미확인 데이터입니다. 연구·검증용으로만 씁니다.
+- CreativeRanking 라벨은 관측 CTR에 기반한 상대 비교용 약한 라벨(weak label)입니다. |z| ≥ 1.96은 관측 CTR 차이가 통계적으로 구분된다는 뜻일 뿐, 노출 대상·시간대·캠페인 차이를 통제하지 않으므로 이미지가 CTR 차이의 원인이라는 증거가 아닙니다. 쌍마다 검정을 반복하므로 다중 비교에 따른 오탐도 일부 섞일 수 있습니다.
+- 재현: 같은 revision의 원본과 `pairs-v1` config로 실행하면 2026-10-27 맥북 기준 TASTE 4,770쌍(평가 795건, 제외 10건), CreativeRanking train 32,018 / val 7,068 / test 6,791쌍이 나옵니다. 실행마다 `stats.json`에 같은 통계가 기록됩니다.
+- 입력 검증: CreativeRanking 원본 행에 제품·이미지 값 누락, pv·clk 누락·숫자 아님·음수, clk > pv가 하나라도 있으면 합산 전에 오류로 멈춥니다.
+- 결과 저장: 모든 처리가 성공해야 `data/processed/pairs/`가 한 번에 바뀝니다. 중간에 실패하면 이전 결과가 그대로 남고 일부 파일만 바뀌지 않습니다.
+- 추적 정보: `stats.json`에 코드 커밋(`code.commit`, 수정 중이었는지 `code.dirty`), 입력 파일별 크기·SHA-256(`inputs`), 원본 다운로드 기록(`sources`, 각 `provenance.json`)을 남깁니다.
 
 ## 공통
 
