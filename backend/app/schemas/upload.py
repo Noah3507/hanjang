@@ -29,6 +29,17 @@ class Facts(StrictModel):
 class InputDraft(StrictModel):
     facts: Facts
     mood: Literal["warm", "minimal", "vivid", "premium"]
+    product_features: str | None = Field(default=None, max_length=500)
+    use_address_for_copy: bool = False
+
+    @field_validator('product_features')
+    @classmethod
+    def feature_text(cls, value):
+        if value is not None and (not value.strip() or any(
+            unicodedata.category(c) in {'Cc', 'Cs'} and c not in '\r\n' for c in value
+        )):
+            raise ValueError('상품 특징은 공백만 입력하거나 제어 문자를 포함할 수 없습니다.')
+        return value
 
 
 class SessionResponse(BaseModel):
@@ -52,4 +63,6 @@ class DraftResponse(BaseModel):
     status: Literal["pending"] = "pending"
     facts: Facts
     mood: Literal["warm", "minimal", "vivid", "premium"]
+    product_features: str | None = None
+    use_address_for_copy: bool = False
     expires_at: datetime

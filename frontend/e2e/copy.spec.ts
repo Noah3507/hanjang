@@ -1,0 +1,72 @@
+import { test, expect } from './fixtures'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+const root = fileURLToPath(new URL('../..', import.meta.url))
+const python = process.env.PLAYWRIGHT_PYTHON || (process.platform === 'win32' ? `${root}/.venv/Scripts/python.exe` : 'python')
+async function saved(page: import('@playwright/test').Page) {
+  await page.goto('/')
+  const buffer = execFileSync(python, ['-c', "from PIL import Image;import io,sys;i=Image.new('RGB',(400,300),'orange');b=io.BytesIO();i.save(b,'PNG');sys.stdout.buffer.write(b.getvalue())"])
+  await page.getByLabel('상품 사진', { exact: true }).setInputFiles({ name: 'synthetic.png', mimeType: 'image/png', buffer })
+  await page.getByLabel('가게명', { exact: true }).fill('  테스트 가게  ')
+  await page.getByLabel('상품명', { exact: true }).fill('사용자 입력 상품')
+  await page.getByLabel('가격', { exact: true }).fill(' 10,500 원 ')
+  await page.getByLabel('광고 분위기').selectOption('warm')
+  await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('바삭한 식감\n사용자 제공 설명')
+  await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
+  await expect(page.getByRole('button', { name: '4전략 카피 생성' })).toBeEnabled()
+}
+
+test('actual local API with Mock provider: four copies, reload, stale features and regenerate', async ({ page }, info) => {
+  const errors: string[] = []
+  page.on('pageerror', e => errors.push(e.message))
+  page.on('console', e => { if (e.type() === 'error') errors.push(e.text()) })
+  await saved(page)
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  const panel = page.getByRole('region', { name: '4전략 광고 카피' })
+  await expect(panel.getByText('카피 상태: completed')).toBeVisible()
+  await expect(panel.getByRole('article')).toHaveCount(4)
+  await expect(panel.getByText(/Mock 데모/)).toBeVisible()
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  await expect(panel.getByText('카피 상태: completed')).toBeVisible()
+  await page.reload()
+  await page.getByRole('button', { name: '저장 정보 다시 조회' }).click()
+  await expect(page.getByLabel('상품 특징·강조 포인트 (선택)')).toHaveValue('바삭한 식감\n사용자 제공 설명')
+  await expect(panel.getByText('카피 상태: completed')).toBeVisible()
+  await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('고소한 식감')
+  await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
+  await expect(panel.getByRole('alert')).toContainText('이전 입력 또는 사진')
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  await expect(panel.getByRole('alert')).toHaveCount(0)
+  await expect(panel.getByText('카피 상태: completed')).toBeVisible()
+  await expect(page.getByLabel('가격', { exact: true })).toHaveValue(' 10,500 원 ')
+  await page.screenshot({ path: info.outputPath('copy-mock.png'), fullPage: true })
+  expect(errors).toEqual([])
+})
+
+test('simulated 409 conflict and malformed provider response are visible', async ({ page }) => {
+  await saved(page)
+  await page.route('**/copy-generation', async route => {
+    if (route.request().method() === 'POST') return route.fulfill({ status: 409, json: { error: { message: '저장된 입력이 변경됐습니다.' } } })
+    return route.continue()
+  })
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  const panel = page.getByRole('region', { name: '4전략 광고 카피' })
+  await expect(panel.getByRole('alert')).toBeVisible()
+  await expect(page.getByLabel('가격', { exact: true })).toHaveValue(' 10,500 원 ')
+  await page.unroute('**/copy-generation')
+  await page.route('**/copy-generation', route => route.fulfill({ json: { operation: 'copy_generation', status: 'completed', provider: 'mock', is_current: true, variants: [] } }))
+  await page.getByRole('button', { name: '카피 상태 다시 조회' }).click()
+  await expect(panel.getByRole('alert')).toContainText('응답 형식')
+})
+
+test('mobile optional feature limit and copy cards fit viewport', async ({ page }, info) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await saved(page)
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  await expect(page.getByRole('region', { name: '4전략 광고 카피' }).getByRole('article')).toHaveCount(4)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: info.outputPath('copy-mobile.png'), fullPage: true })
+  await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('가'.repeat(501))
+  await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
+  await expect(page.getByText('상품 특징은 공백만 입력하지 말고 최대 500자로 작성해 주세요.')).toBeVisible()
+})

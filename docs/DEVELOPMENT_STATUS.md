@@ -174,3 +174,6 @@ CLIP zero-shot/K-means 사진 분석, LLM copy, 실제 네 광고 renderer, Mock
 # 2026-10-28 추가 현황
 
 feat/service-image-analysis에서 S4(사용자 가이드 6단계) 상품 사진 CLIP zero-shot·K-means·비공개 POST/GET 분석·UI를 추가합니다. A 분석 .venv-analysis는 서비스/B 환경과 분리하며 B ml/은 변경하지 않습니다. 아래 2026-10-24 본문은 그 시점의 이력입니다. 최신 실행 범위·API는 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md), 실제/모의 테스트와 한계는 [IMAGE_ANALYSIS_TEST_REPORT](IMAGE_ANALYSIS_TEST_REPORT.md)를 따릅니다. LLM·광고 생성·ranking은 여전히 후속입니다.
+## 2026-10-28 S5a Mock 진행 현황
+
+feat/service-copy에서 상품 특징·주소 옵션, copy-generation, 네 전략 Mock 카드와 테스트를 추가합니다. 실제 OpenAI 결제·호출은 보류됐으므로 실제 모델 생성·품질·실측 사용 토큰·지연은 완료로 보고하지 않습니다. [COPY_GENERATION](COPY_GENERATION.md)과 [COPY_TEST_REPORT](COPY_TEST_REPORT.md)를 참고하세요. 기존 단계 이력과 구분하며 8단계 이미지 렌더링은 미구현입니다.

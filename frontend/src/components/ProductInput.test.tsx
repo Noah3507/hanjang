@@ -37,7 +37,7 @@ describe('product input', () => {
   it('preserves the exact facts and shows the server-read draft', async () => {
     render(<ProductInput />); fill()
     fireEvent.click(screen.getByRole('button', { name: '상품 정보와 사진 저장' }))
-    await waitFor(() => expect(saveInput).toHaveBeenCalledWith(handle, facts, 'warm'))
+    await waitFor(() => expect(saveInput).toHaveBeenCalledWith(handle, facts, 'warm', { product_features: null, use_address_for_copy: false }))
     await waitFor(() => expect(screen.getByRole('region', { name: '저장된 상품 정보' })).toBeInTheDocument())
     expect(getInput).toHaveBeenCalledWith(handle)
     expect(within(screen.getByRole('region', { name: '저장된 상품 정보' })).getByText('작업 상태: pending · 분위기: warm')).toBeInTheDocument()

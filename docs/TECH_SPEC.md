@@ -115,3 +115,6 @@ A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합�
 # 2026-10-28 S4 구현 추가
 
 A 전용 `.venv-analysis`·고정 requirements에서 OpenCLIP ViT-B-32/OpenAI 로컬 가중치를 CPU QuickGELU로 실행합니다. 서비스 .venv/rembg와 B .venv-ml은 변경하지 않습니다. 장기 실행 단일 subprocess·text embedding cache·요청ID 검증·hard timeout·idle 종료를 사용합니다. K-means는 서비스의 기존 NumPy로 수행해 CLIP 환경이 없어도 동작합니다. 비공개 Job/asset snapshot·24h TTL·is_current gate와 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md)의 API/운영 경계를 따릅니다. 아래 광고 생성 파이프라인은 여전히 후속입니다.
+## 2026-10-28 S5a 구현 추가
+
+CopyStore는 upload Record에 입력·사진·현재 CLIP payload·생성 설정의 fingerprint와 카피를 보관하고 기존 TTL과 소유권을 재사용합니다. 기본 Mock, Pydantic·사실 검사, 사진 분석 worker와 독립된 HTTP background 작업을 추가합니다. OpenAI SDK/Responses adapter는 준비했지만 실제 호출 gate는 false이며 계정 접근과 네트워크 성공은 미검증입니다. 서비스 requirements에 SDK를 추가하며 B·분석 환경은 변경하지 않습니다. [COPY_GENERATION](COPY_GENERATION.md)의 전송 제한·캐시·재시도·비용 원장·한계를 따릅니다. 사진 직접 전송은 미승인·미구현입니다.

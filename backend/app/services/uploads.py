@@ -67,6 +67,8 @@ class Record:
     derived: dict[str, Path] = field(default_factory=dict)
     analyses: dict = field(default_factory=dict)
     last_analysis: str | None = None
+    copies: dict = field(default_factory=dict)
+    last_copy: str | None = None
 
 
 class PrivateUploadStore:
@@ -135,7 +137,13 @@ class PrivateUploadStore:
     def save_draft(self, owner: str, job: str, draft: InputDraft) -> DraftResponse:
         with self.lock:
             record = self.get(owner, job)
-            record.draft = draft.model_copy(deep=True)
+            # Legacy clients do not know the optional S5a fields: omission preserves them.
+            updates = draft.model_dump()
+            if record.draft:
+                for name in ('product_features', 'use_address_for_copy'):
+                    if name not in draft.model_fields_set:
+                        updates[name] = getattr(record.draft, name)
+            record.draft = InputDraft.model_validate(updates)
             return self.get_draft(owner, job)
 
     def get_draft(self, owner: str, job: str) -> DraftResponse:

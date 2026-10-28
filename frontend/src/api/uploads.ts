@@ -13,6 +13,7 @@ export interface Upload {
 }
 export interface Draft {
   job_id: string; status: 'pending'; facts: Facts; mood: Mood; expires_at: string
+  product_features?: string | null; use_address_for_copy?: boolean
 }
 export interface UploadHandle { token: string; upload: Upload }
 export class ApiError extends Error {
@@ -36,10 +37,10 @@ export async function uploadPhoto(photo: File): Promise<UploadHandle> {
   const upload: Upload = await (await checked(await fetch(`${base()}/uploads`, { method: 'POST', headers: headers(session.session_token), body }))).json()
   return { token: session.session_token, upload }
 }
-export async function saveInput(handle: UploadHandle, facts: Facts, mood: Mood): Promise<Draft> {
+export async function saveInput(handle: UploadHandle, facts: Facts, mood: Mood, extras?: { product_features: string | null; use_address_for_copy: boolean }): Promise<Draft> {
   return (await checked(await fetch(`${base()}/jobs/${encodeURIComponent(handle.upload.job_id)}/input`, {
     method: 'PUT', headers: { ...headers(handle.token), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ facts, mood }),
+    body: JSON.stringify({ facts, mood, ...extras }),
   }))).json()
 }
 export async function getInput(handle: UploadHandle): Promise<Draft> {

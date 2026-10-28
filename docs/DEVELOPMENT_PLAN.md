@@ -116,3 +116,6 @@ flowchart LR
 # 2026-10-28 S4 현재 범위 추가
 
 사용자 가이드의 6단계=S4 사진 분석입니다. 선택 사진의 CLIP zero-shot·K-means·POST/GET 분석·UI를 이번 feat/service-image-analysis에서 구현합니다. 승인된 상세 범위는 [IMAGE_ANALYSIS](IMAGE_ANALYSIS.md), 실제 검증은 [IMAGE_ANALYSIS_TEST_REPORT](IMAGE_ANALYSIS_TEST_REPORT.md)를 따릅니다. 아래 2026-10-24 구현 현황은 과거 기준입니다. S5 LLM/copy·renderer·ranking은 시작하지 않습니다.
+## 2026-10-28 S5a / 사용자 7단계
+
+특징·주소 옵션을 지원하는 호환 draft, copy-generation API, 네 전략 Mock UI와 자동 테스트를 feat/service-copy에서 추가합니다. 사용자가 결제·호출을 보류했으므로 S5a의 실제 카피 품질과 모델 접근 검증은 후속 gate로 남깁니다. [COPY_TEST_REPORT](COPY_TEST_REPORT.md)와 [무료 대안 검토](COPY_PROVIDER_OPTIONS.md)를 따릅니다. S5b/사용자 8단계 renderer는 구현하지 않습니다.

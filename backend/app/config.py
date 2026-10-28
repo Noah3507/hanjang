@@ -3,7 +3,8 @@
 from pathlib import Path
 import os
 
-from pydantic import AnyHttpUrl, Field, field_validator
+from pydantic import AnyHttpUrl, Field, SecretStr, field_validator
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -31,6 +32,11 @@ class Settings(BaseSettings):
     analysis_model_path: Path = PROJECT_ROOT / 'artifacts/models/analysis/ViT-B-32.pt'
     analysis_timeout_seconds: float = Field(default=120, gt=0, le=300)
     analysis_idle_seconds: float = Field(default=300, gt=0, le=3600)
+    copy_provider: Literal['mock', 'openai'] = 'mock'
+    copy_model: str = 'gpt-5.4-mini-2026-03-17'
+    copy_allow_paid: bool = False
+    openai_api_key: SecretStr | None = Field(default=None, validation_alias='OPENAI_API_KEY')
+    copy_budget_path: Path = PROJECT_ROOT / 'artifacts/copy-usage/ledger.json'
     # Exact unprefixed name agreed with B. Optional until the real adapter exists.
     ranking_model_path: Path | None = Field(default=None, validation_alias="RANKING_MODEL_PATH")
 

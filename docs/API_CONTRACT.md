@@ -290,3 +290,64 @@ AnalysisResponse 예시(단일색 합성 예, CLIP 모델 부재로 부분 성�
 | 503 | ANALYSIS_BUSY: 다른 분석 실행 중. 큐에 넣거나 임의 성공 처리하지 않음 |
 
 warnings: ANALYSIS_MODEL_UNAVAILABLE, ANALYSIS_ENV_UNAVAILABLE, ANALYSIS_MODEL_INVALID, ANALYSIS_CLIP_FAILED, ANALYSIS_WORKER_FAILED, ANALYSIS_TIMEOUT, ANALYSIS_CLIP_UNAVAILABLE, ANALYSIS_NO_VISIBLE_PIXELS, ANALYSIS_FAILED. failed error.code는 ANALYSIS_FAILED 또는 ANALYSIS_UNAVAILABLE입니다. HTTP 오류 본문은 기존 ErrorBody를 따릅니다. 내부 경로·예외 stack·worker PID는 API에 반환하지 않습니다.
+## 2026-10-28 S5a 승인 추가: draft 특징·카피 전용 API
+
+기존 Facts 및 B Candidate/ranking v1.1은 변경하지 않습니다. 현재 실제 OpenAI 호출은 사용자 요청으로 보류이며 기본은Mock입니다. 상세는 [COPY_GENERATION](COPY_GENERATION.md)을 따릅니다. 기존 Copy의60/160/30자 제안값은 이번 사용자 승인으로 적용합니다.
+
+### Draft 확장
+
+PUT/GET `/api/v1/jobs/{job_id}/input`의 최상위에 product_features:string|null(최대500 Unicode code point, 기본null), use_address_for_copy:boolean(기본false)를 추가합니다. 기존 facts/mood는 그대로입니다. 기존 draft의 확장 필드가 PUT에서 생략되면 저장값을 유지하고 명시적null/false만 초기화합니다. 최초 저장 시 기본값을 적용합니다. features는 공백/개행 원문을 보존하고 공백만·허용하지 않은 제어 문자·타입/길이 오류를422로 거부합니다. 새 클라이언트는 예전 응답의 누락 필드를null/false로 해석합니다. 추가 응답 필드를 거부하는 외부 strict client까지 무조건 호환된다고 보장하지 않으며, 저장소의 기존 클라이언트/테스트 호환성을 검증합니다.
+
+### 새 카피 API
+
+| Method/path | 요청 | 성공 |
+| --- | --- | --- |
+| POST /api/v1/jobs/{job_id}/copy-generation | `{expected_asset_id, expected_input:{facts,mood,product_features,use_address_for_copy}}` | 202 CopyResponse, Location=status_url, Cache-Control:no-store |
+| GET 동일 경로 | 본문 없음 | 200 CopyResponse, Cache-Control:no-store |
+
+expected_asset_id는현재 선택 asset의32자리 소문자hex이며, expected_input은 서버 draft와 공백·가격·특징·주소옵션까지 정확히 일치해야 합니다. expected_input의 확장 필드 생략은null/false로 검증하며 **PUT의 생략 보존 동작과 다릅니다**. 다른 소유자404/인증401/만료410을 유지합니다. 추가 요청 필드는422, POST 본문은16KiB 제한입니다.
+
+요청 예시(합성 정보, 미입력 주소/Instagram):
+
+```json
+{
+  "expected_asset_id": "22222222222222222222222222222222",
+  "expected_input": {
+    "facts": {"store_name": "합성 가게", "product_name": "합성 상품", "price_text": " 10,500 원 ", "address": null, "instagram_handle": null},
+    "mood": "warm", "product_features": "바삭한 식감", "use_address_for_copy": false
+  }
+}
+```
+
+CopyResponse:
+
+| 필드 | 의미 |
+| --- | --- |
+| job_id, operation | 기존 upload job ID, 고정copy_generation |
+| status, status_url | pending(미요청)/processing/completed/failed, 같은GET 상대경로 |
+| source_asset_id, input_hash, is_current | 시작 snapshot 사진·원문 전체 draft SHA256·현재사진/입력/context/생성설정과 일치 여부 |
+| facts, mood, product_features, use_address_for_copy | 서버에 보존한 **생성 당시 snapshot 원문**, LLM에서 받지 않음 |
+| provider, model, prompt_version | mock 또는openai, mock-copy-v1 또는승인 model ID, copy-v1 |
+| analysis_used, review_required | 현재 사진의CLIP cue 사용 여부, 항상사용자 검토 필요 |
+| variants | completed일때정확히4개 `{strategy,copy:{headline,body,cta}}`, 다른상태는빈배열. 전략정렬emotional/price/visual/brand |
+| attempts | 각attempt/provider, input_tokens/output_tokens(모르면null), estimated_cost_usd(모르면null), reserved_unknown_cost_usd, latency_seconds, error_code |
+| warnings, error, expires_at | 안내코드목록, null 또는{code,message,retryable}, 업로드와같은24h TTL |
+
+카피 길이는headline1..60/body0..160/cta0..30, plain text/제어 문자 금지/unknown field 거부입니다. 네 전략 각각1개와 완전히 동일한 네 문구를 거부하며, 사실 token 치환 후에도 길이를 다시 검사합니다. facts와생성카피는별도입니다. Candidate/PNG/ranking을 포함하거나 후속 POST /jobs 완료로 표현하지 않습니다.
+
+동일 입력·사진·provider/model/prompt/context의processing/completed는호출없이재사용합니다. failed는명시적재시도가능하며, 입력·사진·특징·주소옵션·context/생성설정변경시이전결과를보존하고is_current=false로읽습니다. 같은 snapshot으로복귀하면캐시를사용합니다. context없는생성이가능하며stale CLIP단서를전송하지않습니다. 후속renderer gate는current+completed만허용합니다. 서버재시작시RAM결과는유실될수있으며영속idempotency를보장하지않습니다.
+
+| HTTP 오류 | 조건 |
+| --- | --- |
+| 409 INPUT_NOT_SAVED | 입력 미저장 |
+| 409 COPY_SOURCE_CHANGED | expected 입력/사진과서버snapshot 불일치 |
+| 409 PHOTO_PROCESSING_BUSY | 사진 처리 중 |
+| 422 COPY_INPUT_LIMIT | 보수 입력예산 상한 초과, 원문을 자동 축약하지 않음 |
+| 422 COPY_PRIVATE_INPUT | 제외 주소/Instagram이 다른 전송 필드에 반복됨 |
+| 422 INVALID_INPUT | 잘못된형식·필드·추가키 |
+| 413 FILE_TOO_LARGE | 요청16KiB 초과 |
+| 503 COPY_BUSY | 다른카피작업실행중 |
+
+작업failed error.code: COPY_SCHEMA_INVALID, COPY_FACTS_VIOLATION, COPY_PAID_DISABLED, COPY_KEY_MISSING, COPY_MODEL_NOT_APPROVED, COPY_MODEL_UNAVAILABLE, COPY_INPUT_LIMIT, COPY_BUDGET_BUSY, COPY_BUDGET_EXCEEDED, COPY_USAGE_UNKNOWN, COPY_PROVIDER_TIMEOUT, COPY_RATE_LIMIT, COPY_PROVIDER_UNAVAILABLE, COPY_OUTPUT_INCOMPLETE, COPY_PROVIDER_FAILED. SDK원문예외/키/내부경로는반환하지않습니다. 구조/사실/일부일시오류는최대1회재시도하며timeout/인증/모델/불완전응답등은자동재호출하지않습니다. 미래실제시험의6회/$0.10은현재보류입니다.
+
+warnings: MOCK_COPY_NOT_LLM, COPY_REVIEW_REQUIRED, COPY_WITHOUT_CLIP. Mock 고정예시를 실제LLM생성으로표시하지않고, 실패응답에임의문구나Mockfallback으로성공을꾸미지않습니다. 실제토큰/비용모름은null이며0으로왜곡하지않습니다. 사실보호검사는의미적허위전체를완전탐지하는보장이아닙니다.

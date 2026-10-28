@@ -73,3 +73,6 @@ ml/, tests/ml/, 모델 의존성과 추론 코드는 아직 없습니다. [MODEL
 # S4 구현 경계 추가 (2026-10-28 사용자 승인)
 
 A는 backend/app/services/analysis_*·api/analysis.py·frontend 사진 분석 UI·scripts/service_download_analysis_model.py를 소유합니다. schemas/analysis.py·API 문서와 backend/requirements-analysis.*은 이번 승인된 공동 설정 변경입니다. `.venv-analysis`는 A 상품 사진 분석 전용이며 서비스 .venv와 B .venv-ml을 변경하지 않습니다. B ml/의 전처리·feature·학습·평가를 import/수정하지 않습니다. CLIP 아키텍처가 같아도 B 광고 ranking과 역할·입력·전처리 버전은 별개입니다.
+## S5a 경계 추가 (2026-10-28)
+
+A는 copy provider/prompt/validation/CopyStore, 카피 UI와 tests/service를 담당합니다. 공동 승인으로 draft 최상위 확장과 카피 전용 API·의존성을 추가하되 Facts·B Candidate/ranking schema·ml/·tests/ml은 변경하지 않습니다. 서비스 .venv에 SDK를 추가하고 .venv-ml/.venv-analysis는 유지합니다. 실제 API 호출·사진 전송·대안 제공자 전환은 현재 집행하지 않으며 Mock으로 검증합니다.

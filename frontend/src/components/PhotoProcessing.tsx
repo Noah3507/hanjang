@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { UploadHandle } from '../api/uploads'
+import type { UploadHandle, Draft } from '../api/uploads'
 import { choosePhoto, photoBlob, photoState, type PhotoState } from '../api/photos'
 import PhotoAnalysis from './PhotoAnalysis'
+import CopyGeneration from './CopyGeneration'
 
 const warningText: Record<string, string> = {
   PHOTO_MODEL_UNAVAILABLE: '배경 제거 모델이 없습니다. 자동 다운로드 없이 원본을 사용합니다.',
@@ -10,7 +11,7 @@ const warningText: Record<string, string> = {
   PHOTO_MASK_INVALID: '유효한 배경 제거 마스크를 얻지 못했습니다. 원본을 사용합니다.',
   PHOTO_MASK_REVIEW_REQUIRED: '상품 일부가 손상됐을 수 있습니다. 원본과 비교해 주세요. 원본을 기본 선택했습니다.',
 }
-export default function PhotoProcessing({ handle }: { handle: UploadHandle }) {
+export default function PhotoProcessing({ handle, draft }: { handle: UploadHandle; draft?: Draft }) {
   const [state, setState] = useState<PhotoState | null>(null)
   const [original, setOriginal] = useState('')
   const [processed, setProcessed] = useState('')
@@ -88,5 +89,6 @@ export default function PhotoProcessing({ handle }: { handle: UploadHandle }) {
     <p>선택된 사진: {state?.photo_source === 'processed' ? '처리본' : '원본'}</p>
     <p className="help">자동 검사는 상품 손상을 모두 판별하지 못합니다. 윤곽·색·누락 여부를 직접 비교해 주세요. 원본과 처리본은 업로드 시점부터 24시간 후 삭제됩니다.</p>
     {state && <PhotoAnalysis handle={handle} disabled={busy || state.status === 'processing'} asset={state.photo_source === 'processed' && state.processed ? state.processed.asset_id : state.original.asset_id} />}
+    {state && draft && <CopyGeneration handle={handle} draft={draft} disabled={busy || state.status === 'processing'} asset={state.photo_source === 'processed' && state.processed ? state.processed.asset_id : state.original.asset_id} />}
   </section>
 }
