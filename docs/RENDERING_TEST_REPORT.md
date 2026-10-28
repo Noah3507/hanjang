@@ -51,6 +51,8 @@ git diff --check
 
 로컬 실제 음식 PNG는 `artifacts/renderer/coffee/emotional.png`, `price.png`, `visual.png`, `brand.png`, DOM 계측은 같은 폴더의 `measurements.json`입니다. 이전 단계의 scikit-image coffee 검증 사진을 사용했고 네 장을 직접 열어 확인했습니다. contain 여백으로 상품 전체 frame을 보존합니다. 첫 수동 PowerShell fixture는 기본 인코딩으로 한글이?로 변환돼 UTF-8을 명시하고 다시 생성했습니다. UTF-8 소스 기반 pytest/E2E에서는 이 문제가 없었습니다.
 
+추가 시각 검토에서 프레임 비율과 정확히 같은 사진의 모서리가 둥근 프레임에 가려질 가능성을 발견해 사진 레이어 clipping을 제거했습니다. 기존 normal 경계값에 프레임 일치 사진과 모서리 픽셀 보존 검사를 추가했고 네 전략이 통과했습니다(별도1 passed,6.04초). 테스트 개수는 늘리지 않았습니다.
+
 스크린샷·로그·trace·HTML 보고서는 `artifacts/playwright/`에 있습니다. PNG·metadata·사용자 사진은 Git에 포함하지 않습니다. 픽셀/bbox 검증은 완전한 가독성·OCR 일치·상품 마스크 품질·모든 Unicode 지원의 보증이 아닙니다. 미지원 글꼴 fallback은 명시적으로 실패하며 OS간 pixel-perfect 일치는 미검증입니다.
 
 ## 직접 확인·한계

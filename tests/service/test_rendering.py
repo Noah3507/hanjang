@@ -207,6 +207,7 @@ def test_actual_browser_boundaries(case,tmp_path):
         text={'headline':'바'*60,'body':'사'*160,'cta':'아'*30}
     variants=[SimpleNamespace(strategy=s,ad_copy=SimpleNamespace(model_dump=lambda:text)) for s in ORDERS]
     source=png('RGBA')
+    if case=='normal': source=png('RGB',size=(972,600))
     if case=='transparent':
         from PIL import ImageDraw
         image=Image.new('RGBA',(400,300),(0,0,0,0));ImageDraw.Draw(image).rectangle((30,30,370,270),fill='orange')
@@ -228,6 +229,10 @@ def test_actual_browser_boundaries(case,tmp_path):
         for b in m['text']:
             assert not b['overflow'] and b['font_size_px']>=32
             assert all(f['isCustomFont'] for f in b['actual_fonts'])
-        assert m['product']['width']/m['product']['height']==pytest.approx(4/3)
+        assert m['product']['width']/m['product']['height']==pytest.approx(972/600 if case=='normal' else 4/3)
+        if case=='normal':
+            # A frame-matching image must retain its corner pixels (no rounded clipping).
+            with Image.open(BytesIO(r['png'])) as im:
+                p=m['product'];assert im.getpixel((int(p['x'])+2,int(p['y'])+2))==(255,165,0)
         (tmp_path/(r['strategy']+'.png')).write_bytes(r['png'])
     assert len({json.dumps(f,sort_keys=True) for f in frames})>=3
