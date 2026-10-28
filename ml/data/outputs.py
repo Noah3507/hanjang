@@ -66,8 +66,10 @@ def describe_inputs(files: dict[str, Path], repo_root: Path) -> dict:
 def staged_output(out_dir: Path) -> Iterator[Path]:
     """Yield a temporary folder; replace out_dir with it only if the block succeeds.
 
-    On any error the temporary folder is removed and the previous out_dir is
-    left exactly as it was, so a failed run never leaves partial results.
+    On any error, including a failed final rename, the temporary folder is
+    removed and the previous out_dir is restored, so a failed run never leaves
+    partial results. (A hard kill between the two renames can still leave the
+    previous results only in the hidden .old- folder next to out_dir.)
     """
     out_dir = Path(out_dir)
     out_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -80,7 +82,16 @@ def staged_output(out_dir: Path) -> Iterator[Path]:
         shutil.rmtree(tmp, ignore_errors=True)
         raise
     old = out_dir.parent / f".{out_dir.name}.old-{token}"
-    if out_dir.exists():
-        out_dir.rename(old)
-    tmp.rename(out_dir)
+    moved_old = False
+    try:
+        if out_dir.exists():
+            out_dir.rename(old)
+            moved_old = True
+        tmp.rename(out_dir)
+    except BaseException:
+        # The swap failed: put the previous results back where they were.
+        if moved_old and not out_dir.exists():
+            old.rename(out_dir)
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
     shutil.rmtree(old, ignore_errors=True)
