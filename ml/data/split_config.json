@@ -1,0 +1,10 @@
+{
+  "version": "split-v1",
+  "taste": {
+    "fractions": {
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    }
+  }
+}
