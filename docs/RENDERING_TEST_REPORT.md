@@ -40,7 +40,7 @@ git diff --check
 - 원문·copy_key 유지, 세 expected 불일치409, stale 카피 차단, 렌더링 도중 입력/사진 변경 시 stale 보존.
 - 네 Candidate의 같은 revision/facts·고유ID·기존JSON Schema 호환, 같은 snapshot 재사용·다른 snapshot 새 결과.
 - 인증401/타 소유자404/만료410·body16KiB·path traversal·TTL 파일 정리·부분 저장 실패 정리·timeout/worker 실패와 재시도.
-- 실제 Chromium18사례×네 전략: 일반, 카피 최대 길이, 공백 없는/있는 한글, 긴 영어 단어, 혼합, 빈body/CTA/둘다, 긴 가게명/상품명/가격, 주소만/Instagram만/둘다, HTML 유사facts, 투명 이미지, 전체 필드 극단값.
+- 실제 Chromium 정상출력17사례를 네 전략 모두 검사하고, 별도 극단값1사례는 명시 실패를 확인했습니다. 일반, 카피 최대 길이, 공백 없는/있는 한글, 긴 영어 단어, 혼합, 빈body/CTA/둘다, 긴 가게명/상품명/가격, 주소만/Instagram만/둘다, HTML 유사facts, 투명 이미지, 전체 필드 극단값을 포함합니다.
 - PNG decode·1080×1350·RGB 불투명·contain 비율·안전 여백·text bbox/overflow/겹침·최소32px·CDP 실제 글꼴·전략별 geometry 차이.
 - 극단적인 모든 필드 동시 최대값은 RENDER_LAYOUT_OVERFLOW를 기대하는 테스트입니다. 이를 PNG 성공으로 보고하지 않습니다. Facts/Copy의 기존 줄바꿈 금지422도 유지합니다. 특징의 허용 줄바꿈은 저장되며 직접 광고에 출력하지 않습니다.
 
@@ -53,6 +53,8 @@ git diff --check
 스크린샷·로그·trace·HTML 보고서는 `artifacts/playwright/`에 있습니다. PNG·metadata·사용자 사진은 Git에 포함하지 않습니다. 픽셀/bbox 검증은 완전한 가독성·OCR 일치·상품 마스크 품질·모든 Unicode 지원의 보증이 아닙니다. 미지원 글꼴 fallback은 명시적으로 실패하며 OS간 pixel-perfect 일치는 미검증입니다.
 
 ## 직접 확인·한계
+
+첫 Ubuntu CI는 렌더러 실행 전 pytest --basetemp의 부모 artifacts/renderer가 없는 새 checkout에서32개 fixture setup 오류로 실패했습니다(3개 통과). CI에 부모 폴더 명시 생성을 추가했습니다. 로컬에 이미 있던 폴더에 의존한 CI 설정 오류이며 제품 렌더링 오류와 구분합니다. 수정 후 최신 CI 결과를 PR에서 확인합니다.
 
 최종 확인 서버: React http://127.0.0.1:5183 / Swagger http://127.0.0.1:8013/docs. Mock/paid=false·loopback으로 유지하며 재부팅 이후 유지나 서버 메모리 작업 복구는 보장하지 않습니다.
 

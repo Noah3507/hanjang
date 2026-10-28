@@ -81,7 +81,9 @@ jobs:
         working-directory: .
         env:
           RUN_RENDER_TESTS: '1'
-        run: python -m pytest tests/service/test_rendering.py -q --basetemp artifacts/renderer/ci
+        run: |
+          python -c "from pathlib import Path; Path('artifacts/renderer').mkdir(parents=True, exist_ok=True)"
+          python -m pytest tests/service/test_rendering.py -q --basetemp artifacts/renderer/ci
       - run: npm run test:e2e
       - name: Retain synthetic upload screenshots for review
         if: success()
