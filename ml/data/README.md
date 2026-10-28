@@ -62,7 +62,8 @@
 `python scripts/ml_split_pairs.py`가 `data/processed/pairs/`를 읽어 `data/processed/splits/split-v1/`(Git 제외)에 `taste.parquet`, `creativeranking.parquet`, `stats.json`을 씁니다. 비율은 `ml/data/split_config.json`에 있습니다.
 
 - 결과에 `split`(train/val/test)과 `split_group`(함께 움직이는 묶음) 열이 추가됩니다.
-- TASTE: 이미지를 하나라도 공유하는 디자인 요청은 한 묶음으로 합친 뒤, 묶음 단위로 70/15/15를 해시 순서로 나눕니다. 같은 config면 항상 같은 결과입니다.
-- CreativeRanking: 원본 split을 그대로 씁니다(제품 겹침 0). 다만 같은 이미지 파일을 다른 split의 제품이 함께 쓰는 경우가 있어, 그런 이미지는 가장 앞선 split(train → val → test)에만 남기고 뒤 split에서 그 이미지가 들어간 쌍은 뺍니다. 개수는 `stats.json`의 `cross_split_images`, `dropped_cross_split_pairs`에 기록합니다.
+- TASTE: 이미지를 하나라도 공유하는 디자인 요청은 한 묶음으로 합친 뒤, 묶음 단위로 70/15/15를 해시 순서로 나눕니다. 같은 config면 항상 같은 결과입니다. 비율은 쌍 개수가 아니라 **묶음 개수** 기준이라, 묶음마다 쌍 수가 다르면 쌍 비율은 70/15/15에서 벗어날 수 있습니다(현재 데이터는 묶음마다 6쌍×평가자 수가 같아 쌍 비율도 3,330/720/720으로 맞습니다).
+- CreativeRanking: 원본 split을 그대로 씁니다(제품 겹침 0). 다만 같은 이미지 파일을 다른 split의 제품이 함께 쓰는 경우가 있어, 그런 이미지는 가장 앞선 split(train → val → test)에만 남기고 뒤 split에서 그 이미지가 들어간 쌍은 뺍니다. 개수는 `stats.json`의 `cross_split_images`, `dropped_cross_split_pairs`, 쌍이 모두 빠져 사라진 제품 수 `groups_emptied_by_dedup`에 기록합니다. 이미지를 빼기 전에 같은 제품(`group_id`)이 두 원본 split에 들어 있으면 바로 오류로 멈춥니다.
 - 누수 검사: 한 묶음이나 한 이미지가 두 split에 나타나면 스크립트가 오류로 멈춥니다. 결과는 `stats.json`에 기록합니다.
+- 결과 저장: 모든 split과 누수 검사가 성공해야 `split-v1/`이 한 번에 바뀝니다. 중간에 실패하면 이전 결과가 그대로 남습니다. `stats.json`에 코드 커밋(`code`)과 입력 파일 SHA-256(`inputs`)을 남깁니다.
 - test는 최종 평가 때까지 보지 않습니다. 모델 선택과 설정 조정은 val만 씁니다.

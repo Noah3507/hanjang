@@ -74,13 +74,23 @@ def split_taste(pairs: pd.DataFrame, cfg: dict, salt: str) -> pd.DataFrame:
 def split_creativeranking(pairs: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     """Keep the original split; drop pairs whose image already lives in an earlier split.
 
+    First the original data is checked: a product (group_id) must belong to
+    exactly one source_split, otherwise this fails before anything is removed.
     Products never overlap across the original splits, but the same image
     file can be reused by products in different splits. Such an image is kept
     only in its earliest split (train, then val, then test), and pairs using
-    it in a later split are removed and counted.
+    it in a later split are removed. Removed pairs and products that lost all
+    their pairs are counted per split.
     """
     if not pairs["source_split"].isin(SPLITS).all():
         raise ValueError("CreativeRanking pairs need source_split train/val/test")
+    splits_per_group = pairs.groupby("group_id")["source_split"].nunique()
+    crossing = splits_per_group[splits_per_group > 1]
+    if len(crossing):
+        raise ValueError(
+            f"{len(crossing)} CreativeRanking groups appear in several source splits, "
+            f"e.g. {list(crossing.index[:3])}"
+        )
     out = pairs.assign(split_group=pairs["group_id"], split=pairs["source_split"])
     order = out["split"].map({s: i for i, s in enumerate(SPLITS)})
     images = pd.concat([
@@ -89,11 +99,17 @@ def split_creativeranking(pairs: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     ])
     first = images.groupby("image")["order"].min()
     keep = (out["image_a"].map(first) == order) & (out["image_b"].map(first) == order)
+    kept = out[keep].reset_index(drop=True)
+    groups_before = out.groupby("split")["split_group"].nunique()
+    groups_after = kept.groupby("split")["split_group"].nunique()
     info = {
         "cross_split_images": int((images.groupby("image")["order"].nunique() > 1).sum()),
         "dropped_cross_split_pairs": {s: int((~keep & (out["split"] == s)).sum()) for s in SPLITS},
+        "groups_emptied_by_dedup": {
+            s: int(groups_before.get(s, 0) - groups_after.get(s, 0)) for s in SPLITS
+        },
     }
-    return out[keep].reset_index(drop=True), info
+    return kept, info
 
 
 def leakage_report(pairs: pd.DataFrame) -> dict:

@@ -121,3 +121,81 @@ def test_split_script_writes_outputs_under_data(tmp_path):
     assert json.loads((out / "stats.json").read_text())["taste"]["images_in_several_splits"] == 0
     with pytest.raises(SystemExit):
         split_script.main(["--config", str(CONFIG), "--out", "ml"], repo_root=tmp_path)
+
+
+def _cr(rows):
+    return pd.DataFrame(
+        [("creativeranking", split, group, a, b, 1) for split, group, a, b in rows],
+        columns=["dataset", "source_split", "group_id", "image_a", "image_b", "a_wins"],
+    )
+
+
+def test_creativeranking_group_in_several_source_splits_is_an_error():
+    pairs = _cr([("train", "cr:p1", "a.png", "b.png"), ("val", "cr:p1", "c.png", "d.png")])
+    with pytest.raises(ValueError):
+        split_creativeranking(pairs)
+
+
+def test_creativeranking_train_val_shared_image_is_dropped_from_val():
+    pairs = _cr([
+        ("train", "cr:p1", "a.png", "b.png"),
+        ("val", "cr:p2", "a.png", "c.png"),  # shares a.png with train
+        ("val", "cr:p2", "c.png", "d.png"),
+    ])
+    kept, info = split_creativeranking(pairs)
+    assert info["dropped_cross_split_pairs"] == {"train": 0, "val": 1, "test": 0}
+    assert info["groups_emptied_by_dedup"] == {"train": 0, "val": 0, "test": 0}
+    assert check_no_leakage(kept)["images_in_several_splits"] == 0
+
+
+def test_creativeranking_pair_with_both_images_shared_and_emptied_group():
+    pairs = _cr([
+        ("train", "cr:p1", "a.png", "b.png"),
+        ("val", "cr:p2", "c.png", "d.png"),
+        ("test", "cr:p3", "a.png", "d.png"),  # both images live in earlier splits
+    ])
+    kept, info = split_creativeranking(pairs)
+    assert info["cross_split_images"] == 2
+    assert info["dropped_cross_split_pairs"] == {"train": 0, "val": 0, "test": 1}
+    assert info["groups_emptied_by_dedup"] == {"train": 0, "val": 0, "test": 1}
+    assert "test" not in set(kept["split"])
+    assert check_no_leakage(kept)["images_in_several_splits"] == 0
+
+
+def _load_split_script():
+    script = Path(__file__).resolve().parents[2] / "scripts" / "ml_split_pairs.py"
+    spec = importlib.util.spec_from_file_location("ml_split_pairs", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_failed_split_leaves_previous_results_untouched(tmp_path):
+    split_script = _load_split_script()
+    pairs_dir = tmp_path / "data/processed/pairs"
+    pairs_dir.mkdir(parents=True)
+    taste_pairs(20).to_parquet(pairs_dir / "taste.parquet")
+    cr_pairs().to_parquet(pairs_dir / "creativeranking.parquet")
+    stats = split_script.main(["--config", str(CONFIG)], repo_root=tmp_path)
+    out = tmp_path / "data/processed/splits" / stats["config_version"]
+    before = {p.name: p.read_bytes() for p in out.iterdir()}
+
+    _cr([("train", "cr:p1", "a.png", "b.png"), ("test", "cr:p1", "c.png", "d.png")]).to_parquet(
+        pairs_dir / "creativeranking.parquet"
+    )  # CreativeRanking now fails after TASTE succeeded
+    with pytest.raises(ValueError):
+        split_script.main(["--config", str(CONFIG)], repo_root=tmp_path)
+    assert {p.name: p.read_bytes() for p in out.iterdir()} == before
+    assert [p.name for p in out.parent.iterdir()] == [stats["config_version"]]
+
+
+def test_split_stats_record_code_and_input_checksums(tmp_path):
+    split_script = _load_split_script()
+    pairs_dir = tmp_path / "data/processed/pairs"
+    pairs_dir.mkdir(parents=True)
+    taste_pairs(20).to_parquet(pairs_dir / "taste.parquet")
+    cr_pairs().to_parquet(pairs_dir / "creativeranking.parquet")
+    stats = split_script.main(["--config", str(CONFIG)], repo_root=tmp_path)
+    assert set(stats["code"]) == {"commit", "dirty"}
+    assert set(stats["inputs"]) == {"taste_pairs", "creativeranking_pairs"}
+    assert all(len(v["sha256"]) == 64 for v in stats["inputs"].values())

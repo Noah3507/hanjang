@@ -5,7 +5,9 @@ Run from the repository root, inside .venv-ml, after scripts/ml_build_pairs.py:
 
 Reads data/processed/pairs/, writes data/processed/splits/<version>/
 (ignored by Git): taste.parquet, creativeranking.parquet, stats.json.
-Stops with an error if any group or image appears in two splits.
+Stops with an error if any group or image appears in two splits. The output
+folder is replaced only when every step and check succeeds (no partial
+results). stats.json records the code commit and the SHA-256 of the inputs.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))  # allow "python scripts/..." from the repo root
 
+from ml.data.outputs import code_revision, describe_inputs, staged_output
 from ml.data.split import check_no_leakage, load_config, split_creativeranking, split_taste
 
 
@@ -44,21 +47,31 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
         out_dir = inside_data(args.out, repo_root) / cfg["version"]
     except ValueError as error:
         parser.error(str(error))
-    out_dir.mkdir(parents=True, exist_ok=True)
 
-    stats = {"config_version": cfg["version"], "config": cfg}
-    taste = split_taste(pd.read_parquet(args.pairs / "taste.parquet"), cfg["taste"], cfg["version"])
+    inputs = {"taste_pairs": args.pairs / "taste.parquet",
+              "creativeranking_pairs": args.pairs / "creativeranking.parquet"}
+    if (args.pairs / "stats.json").exists():
+        inputs["pairs_stats"] = args.pairs / "stats.json"
+    stats = {
+        "config_version": cfg["version"],
+        "config": cfg,
+        "code": code_revision(repo_root),
+        "inputs": describe_inputs(inputs, repo_root),
+    }
+
+    # Split and check everything in memory first; nothing is written unless all succeed.
+    taste = split_taste(pd.read_parquet(inputs["taste_pairs"]), cfg["taste"], cfg["version"])
     stats["taste"] = check_no_leakage(taste)
-    taste.to_parquet(out_dir / "taste.parquet", index=False)
     print("taste:", stats["taste"])
-
-    cr, cr_info = split_creativeranking(pd.read_parquet(args.pairs / "creativeranking.parquet"))
+    cr, cr_info = split_creativeranking(pd.read_parquet(inputs["creativeranking_pairs"]))
     stats["creativeranking"] = {**check_no_leakage(cr), **cr_info}
-    cr.to_parquet(out_dir / "creativeranking.parquet", index=False)
     print("creativeranking:", stats["creativeranking"])
 
     stats["built_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    (out_dir / "stats.json").write_text(json.dumps(stats, indent=2, ensure_ascii=False) + "\n")
+    with staged_output(out_dir) as tmp:  # replaces out_dir only if all files are written
+        taste.to_parquet(tmp / "taste.parquet", index=False)
+        cr.to_parquet(tmp / "creativeranking.parquet", index=False)
+        (tmp / "stats.json").write_text(json.dumps(stats, indent=2, ensure_ascii=False) + "\n")
     print(f"wrote {out_dir}")
     return stats
 
