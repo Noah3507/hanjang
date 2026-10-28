@@ -12,7 +12,7 @@ OpenAI adapter/요청 구조는 fake client로만 시험했습니다. 실제 API
 
 | 검사 | 결과 |
 | --- | --- |
-| 전체 서비스·계약 pytest | 150 passed, 기존 AnyIO deprecation1건 |
+| 전체 서비스·계약 pytest | 155 passed, 기존 AnyIO deprecation1건 |
 | 신규 copy 테스트 | 38개 포함: 호환 필드 생략/명시 초기화·검증·네 전략·원문/hash 보존·가격 표기·캐시·snapshot/진행 중 변경·stale·인증·만료·요청 제한·비용/paid gate·fake SDK |
 | 기존 B 연동 계약 테스트 | 전체 pytest에38개 포함, Facts/Candidate schema 변경 없음 |
 | Vitest | 22 passed (신규 카피4개 포함) |
