@@ -69,6 +69,7 @@ React http://127.0.0.1:5173 / Swagger http://127.0.0.1:8000/docs. 이번 검증 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest
 $env:RUN_RENDER_TESTS='1'
+New-Item -ItemType Directory -Force artifacts/renderer | Out-Null
 .\.venv\Scripts\python.exe -m pytest tests/service/test_rendering.py -q --basetemp artifacts/renderer/actual
 npm.cmd --prefix frontend run typecheck
 npm.cmd --prefix frontend run test:ci

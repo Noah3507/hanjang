@@ -20,6 +20,7 @@
 Python3.12.10 서비스 .venv, Node24.20.0, Playwright1.64.0, 설치된 Windows Chrome channel입니다. Jinja2 3.1.6/MarkupSafe3.0.4를 추가했고 rembg/Pillow 버전과 A .venv-analysis/B .venv-ml은 변경하지 않았습니다. CI는 고정 Playwright Chromium을 사용하므로 Ubuntu 결과와 Windows 결과를 구분합니다.
 
 ```powershell
+New-Item -ItemType Directory -Force artifacts/renderer | Out-Null
 .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp artifacts/renderer/final-regression
 $env:RUN_RENDER_TESTS='1'
 $env:HANJANG_RENDER_CHANNEL='chrome'
