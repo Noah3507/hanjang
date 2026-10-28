@@ -64,3 +64,6 @@ UI 대비 목표는 일반 text 4.5:1, 큰 text 3:1을 제안합니다. 광고 r
 A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합니다. 선택 구현 시 210×297mm 별도 print layout, 10mm 여백 제안, 한 페이지·한글 font·사실 동일성·사진 비율·PDF 출력 확인을 추가합니다. 정확한 인쇄 DPI·bleed는 원본에 없으므로 합의합니다.
 
 완료 기준: 같은 입력의 네 후보에서 geometry 차이를 사람이 확인, 원본 상품 형태·내용과 factual 문자열 동일, 긴 이름·사진 배경·투명 PNG·한국어 검사, metadata와 실제 screenshot 일치. 사용자 승인 전 이 표를 완성된 디자인 시스템으로 취급하지 않습니다.
+## 2026-10-28 구현된 S5b 기준
+
+1080×1350·54px 여백·네 전략 geometry·로컬 Noto Sans KR2.004를 적용합니다. normal의 주요 정보 계층을 유지하되 긴 입력은 compact/dense 대체 layout과32px 최소 글꼴을 사용합니다. 실제 폰트 glyph 높이 때문에 line-height1.5를 적용했으며 그래도 넘치면 RENDER_LAYOUT_OVERFLOW입니다. 주소/Instagram은 값이 있으면 원문 표시하고 없으면 요소를 숨깁니다. 실제 규격/측정은 [RENDERING](RENDERING.md)을 따르며 아래 미구현 UI(ranking/edit/export)는 후속 제안입니다.

@@ -1,5 +1,7 @@
 # 작은 단계별 개발 계획 초안
 
+2026-10-28 최신: PR #24·#25가 main에 병합됐으며 S4 사진 분석과 S5a Mock 카피가 기반입니다. 현재 feat/service-renderer는 S5b(사용자8단계) 네 전략 HTML/CSS·Jinja2/Playwright PNG·metadata·미리보기를 추가합니다. 범위와 설치는 [RENDERING](RENDERING.md), 검증은 [RENDERING_TEST_REPORT](RENDERING_TEST_REPORT.md)를 따릅니다. 아래 과거 미구현 설명은 해당 날짜 이력입니다. 다음 S5c/S6 ranking·편집·다운로드와 실제 LLM 검증은 포함하지 않습니다.
+
 근거: P19, R5·6·10·12·13. 단계 분해는 설계 제안입니다. 2026-10-24 main에는 기본 뼈대·입력/업로드·사진 전처리/선택·모델 경로 정책·계약 fixture/검증이 구현됐습니다. 실제 완료 범위와 테스트는 [DEVELOPMENT_STATUS](DEVELOPMENT_STATUS.md)를 따릅니다. 이후 단계도 사용자 요청에 따라 독립 PR·테스트·완료 증거를 남깁니다.
 
 확정 우선순위: **상품 이미지 업로드 → AI 광고 4종 생성 → 선호도 순위 표시 → 문구 수정 → PNG 다운로드**. 자료 충돌 시 최종 발표본을 적용합니다. D01·D04·D07·D08은 사용자 승인 완료이며 A4는 PNG MVP 이후 OPTIONAL, 최종 필수 완료 조건 제외입니다.

@@ -77,6 +77,11 @@ jobs:
       - run: python -m pip install -r ../backend/requirements.txt
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Verify real renderer boundary cases
+        working-directory: .
+        env:
+          RUN_RENDER_TESTS: '1'
+        run: python -m pytest tests/service/test_rendering.py -q --basetemp artifacts/renderer/ci
       - run: npm run test:e2e
       - name: Retain synthetic upload screenshots for review
         if: success()
@@ -86,6 +91,7 @@ jobs:
           path: |
             artifacts/playwright/results/**/upload-*.png
             artifacts/playwright/results/**/photo-processing.png
+            artifacts/playwright/results/**/render-*.png
           retention-days: 7
           if-no-files-found: ignore
       - name: Retain failure diagnostics
