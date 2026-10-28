@@ -1,5 +1,6 @@
 import { ApiError, type UploadHandle, type Draft, type Facts } from './uploads'
 export interface CopyState {
+  copy_key?: string | null
   job_id: string; operation: 'copy_generation'; status: 'pending' | 'processing' | 'completed' | 'failed'
   source_asset_id: string; input_hash: string; is_current: boolean; provider: 'mock' | 'openai'; model: string
   facts: Facts; product_features: string | null; mood: string; use_address_for_copy: boolean; analysis_used: boolean
