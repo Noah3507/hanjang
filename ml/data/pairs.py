@@ -36,19 +36,48 @@ def _orient(df: pd.DataFrame, first: str, second: str, first_wins: pd.Series) ->
     return out
 
 
-def taste_pairs(rankings: pd.DataFrame, assets: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
-    """One row per evaluator vote: 4 ranked images -> 6 pairs (rank 1 = best)."""
-    rows = rankings[rankings["dimension"] == cfg["dimension"]]
-    sizes = rows.groupby(["prompt_id", "evaluator_id"])["asset_id"].transform("size")
-    ranks = rows.groupby(["prompt_id", "evaluator_id"])["rank"].transform("nunique")
-    valid = rows[(sizes == cfg["group_size"]) & (ranks == cfg["group_size"])]
-    dropped_groups = rows.groupby(["prompt_id", "evaluator_id"]).ngroups - valid.groupby(
-        ["prompt_id", "evaluator_id"]
-    ).ngroups
+def _taste_vote_checks(rows: pd.DataFrame, size: int) -> pd.Series:
+    """Reason a vote group is invalid ('' when valid), checked in this order."""
+    expected_ranks = set(range(1, size + 1))
+    checks = rows.groupby(["prompt_id", "evaluator_id"]).agg(
+        n_rows=("asset_id", "size"),
+        n_assets=("asset_id", "nunique"),
+        missing_image=("image", lambda s: bool(s.isna().any())),
+        n_images=("image", "nunique"),
+        ranks_ok=("rank", lambda s: set(s.tolist()) == expected_ranks),
+    )
+    reason = pd.Series("", index=checks.index)
+    rules = [
+        ("wrong_row_count", checks["n_rows"] != size),
+        ("duplicate_asset", checks["n_assets"] != size),
+        ("missing_image_path", checks["missing_image"]),
+        ("duplicate_image_path", checks["n_images"] != size),
+        ("ranks_not_1_to_n", ~checks["ranks_ok"]),
+    ]
+    for name, failed in reversed(rules):  # the first failing rule wins
+        reason[failed] = name
+    return reason
 
-    paths = assets.set_index("asset_id")["image_path"]
-    valid = valid.assign(image=valid["asset_id"].map(paths))
+
+def taste_pairs(rankings: pd.DataFrame, assets: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
+    """One row per evaluator vote: 4 different images ranked exactly 1..4 -> 6 pairs.
+
+    A vote group is kept only if it has exactly group_size rows, group_size
+    different asset_ids, an image path for every asset, group_size different
+    paths, and ranks exactly {1, ..., group_size} (rank 1 = best). Every other
+    group is dropped and counted by reason in the stats.
+    """
+    if assets["asset_id"].duplicated().any():
+        raise ValueError("assets has duplicated asset_id; cannot map image paths")
     keys = ["prompt_id", "evaluator_id"]
+    rows = rankings[rankings["dimension"] == cfg["dimension"]]
+    paths = assets.set_index("asset_id")["image_path"]
+    rows = rows.assign(image=rows["asset_id"].map(paths))
+
+    reason = _taste_vote_checks(rows, cfg["group_size"])
+    valid_keys = reason[reason == ""].index
+    valid = rows.set_index(keys).loc[lambda df: df.index.isin(valid_keys)].reset_index()
+
     merged = valid.merge(valid, on=keys, suffixes=("_1", "_2"))
     merged = merged[merged["image_1"] < merged["image_2"]]
     oriented = _orient(merged, "image_1", "image_2", merged["rank_1"] < merged["rank_2"])
@@ -62,9 +91,14 @@ def taste_pairs(rankings: pd.DataFrame, assets: pd.DataFrame, cfg: dict) -> tupl
         "prompt_id": oriented["prompt_id"],
         "evaluator_id": oriented["evaluator_id"],
     }).reset_index(drop=True)
+    expected_pairs = len(valid_keys) * cfg["group_size"] * (cfg["group_size"] - 1) // 2
+    if len(pairs) != expected_pairs:
+        raise ValueError(f"expected {expected_pairs} TASTE pairs, built {len(pairs)}")
+    dropped = reason[reason != ""]
     stats = {
-        "votes": int(valid.groupby(keys).ngroups),
-        "dropped_vote_groups": int(dropped_groups),
+        "votes": int(len(valid_keys)),
+        "dropped_vote_groups": int(len(dropped)),
+        "dropped_by_reason": {k: int(v) for k, v in dropped.value_counts().sort_index().items()},
         "pairs": len(pairs),
         "prompts": int(pairs["prompt_id"].nunique()),
         "images": int(pd.concat([pairs["image_a"], pairs["image_b"]]).nunique()),

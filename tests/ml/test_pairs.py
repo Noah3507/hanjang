@@ -137,3 +137,34 @@ def test_build_script_writes_outputs_under_data(tmp_path):
     assert json.loads((out / "stats.json").read_text())["config_version"] == stats["config_version"]
     with pytest.raises(SystemExit):
         build.main(["--config", str(CONFIG), "--out", "ml"], repo_root=tmp_path)
+
+
+def test_taste_drops_invalid_vote_groups_by_reason():
+    rankings, assets = taste_tables()
+    # asset 5 shares asset 4's image path; asset 99 has no image row
+    assets = pd.concat([assets, pd.DataFrame({"asset_id": [5], "image_path": ["images/d.png"]})])
+    bad = [
+        (20, [1, 1, 2, 3], [1, 2, 3, 4]),   # the same asset twice
+        (21, [1, 2, 3, 4], [2, 3, 4, 5]),   # ranks not exactly 1..4
+        (22, [1, 2, 3, 99], [1, 2, 3, 4]),  # asset without an image path
+        (23, [1, 2, 4, 5], [1, 2, 3, 4]),   # two assets, one image path
+    ]
+    rows = [("preference", prompt, asset, "e9", rank)
+            for prompt, ids, ranks in bad for asset, rank in zip(ids, ranks)]
+    rankings = pd.concat([rankings, pd.DataFrame(rows, columns=rankings.columns)], ignore_index=True)
+    pairs, stats = taste_pairs(rankings, assets, TASTE_CFG)
+    assert stats["votes"] == 2 and len(pairs) == 12
+    assert stats["dropped_by_reason"] == {
+        "duplicate_asset": 1,
+        "duplicate_image_path": 1,
+        "missing_image_path": 1,
+        "ranks_not_1_to_n": 1,
+        "wrong_row_count": 1,
+    }
+    assert set(pairs["prompt_id"]) == {10}
+
+
+def test_duplicated_asset_ids_in_assets_are_an_error():
+    rankings, assets = taste_tables()
+    with pytest.raises(ValueError):
+        taste_pairs(rankings, pd.concat([assets, assets.iloc[[0]]]), TASTE_CFG)
