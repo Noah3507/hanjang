@@ -54,11 +54,13 @@ def test_fetch_writes_only_needed_images_and_resumes(local_zip, tmp_path):
     fs, path, index = local_zip
     out = tmp_path / "out"
     first = fetch.fetch_zip_images(fs, path, index, ["a.png", "b.png"], out, workers=2)
-    assert first == {"needed": 2, "skipped_existing": 0, "fetched": 2}
+    assert first == {"needed": 2, "skipped_existing": 0, "fetched": 2,
+                     "refetched_damaged": 0, "duplicate_names_in_zip": 0}
     assert (out / "b.png").read_bytes() == FILES["images/b.png"]
     assert not (out / "c.png").exists()
     again = fetch.fetch_zip_images(fs, path, index, ["a.png", "b.png"], out, workers=2)
-    assert again == {"needed": 2, "skipped_existing": 2, "fetched": 0}
+    assert again == {"needed": 2, "skipped_existing": 2, "fetched": 0,
+                     "refetched_damaged": 0, "duplicate_names_in_zip": 0}
 
 
 def test_missing_name_and_corrupt_crc_are_errors(local_zip, tmp_path):
@@ -69,6 +71,35 @@ def test_missing_name_and_corrupt_crc_are_errors(local_zip, tmp_path):
     bad.loc[bad["name"] == "a.png", "crc"] = 0
     with pytest.raises(ValueError):
         fetch.fetch_zip_images(fs, path, bad, ["a.png"], tmp_path / "bad", retries=1)
+
+
+def test_existing_file_with_same_size_but_wrong_bytes_is_fetched_again(local_zip, tmp_path):
+    fs, path, index = local_zip
+    out = tmp_path / "out"
+    fetch.fetch_zip_images(fs, path, index, ["a.png", "b.png"], out, workers=2)
+    good = FILES["images/a.png"]
+    (out / "a.png").write_bytes(b"X" + good[1:])  # same size, damaged content
+    again = fetch.fetch_zip_images(fs, path, index, ["a.png", "b.png"], out, workers=2)
+    assert again["refetched_damaged"] == 1 and again["fetched"] == 1 and again["skipped_existing"] == 1
+    assert (out / "a.png").read_bytes() == good
+
+
+def test_needed_name_under_two_zip_paths_is_an_error(tmp_path):
+    fs = fsspec.filesystem("file")
+    path = tmp_path / "dup.zip"
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("images/x/a.png", b"first")
+        z.writestr("images/y/a.png", b"second")
+        z.writestr("images/x/c.png", b"unneeded")
+        z.writestr("images/y/c.png", b"unneeded too")
+        z.writestr("images/b.png", b"unique")
+    index = fetch.zip_index(fs, str(path))
+    with pytest.raises(ValueError, match="several zip paths"):
+        fetch.fetch_zip_images(fs, str(path), index, ["a.png"], tmp_path / "out")
+    assert not (tmp_path / "out" / "a.png").exists()
+    # a duplicate that no pair needs is counted, not fatal
+    report = fetch.fetch_zip_images(fs, str(path), index, ["b.png"], tmp_path / "out2")
+    assert report["fetched"] == 1 and report["duplicate_names_in_zip"] == 2
 
 
 def test_main_uses_split_files_and_stays_inside_data(local_zip, tmp_path):

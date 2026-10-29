@@ -7,8 +7,10 @@ Run from the repository root, inside .venv-ml, after scripts/ml_split_pairs.py:
 - CreativeRanking: reads the central directory of images.zip once (cached as
   data/raw/creativeranking/zip_index.parquet), then fetches each needed image
   with one HTTP range request, checks its CRC32 and writes it to
-  data/raw/creativeranking/images/. Existing correct files are skipped, so an
-  interrupted run can simply be started again.
+  data/raw/creativeranking/images/. Existing files are skipped only when their
+  size and CRC32 match the zip index (damaged ones are fetched again), so an
+  interrupted run can simply be started again. A needed file name that appears
+  under two zip paths is an error (the choice would be ambiguous).
 Both use pinned revisions. Nothing is uploaded; data/ is ignored by Git.
 """
 
@@ -102,16 +104,38 @@ def fetch_member(read, row) -> bytes:
     return data
 
 
+def file_crc32(path: Path, chunk: int = 1024 * 1024) -> int:
+    crc = 0
+    with open(path, "rb") as handle:
+        while block := handle.read(chunk):
+            crc = zlib.crc32(block, crc)
+    return crc & 0xFFFFFFFF
+
+
+def is_intact(path: Path, row) -> bool:
+    """True when an existing file has the size and CRC32 recorded in the zip index."""
+    return (path.exists() and path.stat().st_size == int(row["file_size"])
+            and file_crc32(path) == int(row["crc"]))
+
+
 def fetch_zip_images(fs, zip_path: str, index: pd.DataFrame, names: list[str], out_dir: Path,
                      workers: int = 8, retries: int = 5) -> dict:
-    rows = index.set_index("name", drop=False)
+    counts = index["name"].value_counts()
+    ambiguous = sorted(n for n in set(names) if counts.get(n, 0) > 1)
+    if ambiguous:
+        paths = index.loc[index["name"] == ambiguous[0], "path"].tolist()
+        raise ValueError(f"{len(ambiguous)} needed image names appear under several zip paths, "
+                         f"e.g. {ambiguous[0]}: {paths}")
+    rows = index.drop_duplicates("name", keep=False).set_index("name", drop=False)
     missing = sorted(set(names) - set(rows.index))
     if missing:
         raise ValueError(f"{len(missing)} needed images are not in the zip, e.g. {missing[:3]}")
     out_dir.mkdir(parents=True, exist_ok=True)
     read = range_reader(fs, zip_path)
-    todo = [rows.loc[n] for n in names
-            if not ((out_dir / n).exists() and (out_dir / n).stat().st_size == rows.loc[n, "file_size"])]
+    todo = [rows.loc[n] for n in names if not is_intact(out_dir / n, rows.loc[n])]
+    damaged = sum(1 for row in todo if (out_dir / row["name"]).exists())  # wrong size or CRC32
+    if damaged:
+        print(f"  {damaged} existing images failed the size/CRC32 check and will be fetched again", flush=True)
 
     def one(row):
         for attempt in range(retries):
@@ -135,7 +159,9 @@ def fetch_zip_images(fs, zip_path: str, index: pd.DataFrame, names: list[str], o
                 rate = done / max(time.time() - start, 1e-9)
                 print(f"  {done}/{len(todo)} images, {rate:.1f}/s, "
                       f"about {(len(todo) - done) / max(rate, 1e-9) / 60:.0f} min left", flush=True)
-    return {"needed": len(names), "skipped_existing": len(names) - len(todo), "fetched": len(todo)}
+    return {"needed": len(names), "skipped_existing": len(names) - len(todo), "fetched": len(todo),
+            "refetched_damaged": damaged,
+            "duplicate_names_in_zip": int((counts > 1).sum())}  # none of them needed
 
 
 def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT, fs=None) -> dict:
