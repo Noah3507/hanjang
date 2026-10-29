@@ -1,5 +1,9 @@
 # Hanjang Codex 개발 규칙
 
+## 최신 승인 S5b (사용자 8단계)
+
+feat/service-renderer는 Jinja2/Playwright 네 전략1080×1350 RGB 불투명 PNG·metadata·비공개 미리보기를 구현합니다. 승인된 POST/GET rendering과 additive copy_key를 사용하며 expected 사진/입력/카피 불일치는409입니다. 완료/조회 시에도 snapshot을 검사하고 stale 결과를 최신으로 사용하지 않습니다. 주소/Instagram은 입력됐으면 원문 표시하며 use_address_for_copy의 LLM 전송 조건과 분리합니다. Candidate/B fixture는 유지하고 추가 계측은 별도 envelope에 둡니다. B 코드/환경·.venv-rank·랭킹·편집·다운로드·실제 LLM은 구현하지 않습니다. 과거 단계 범위 기록과 구분하며 docs/RENDERING.md를 따릅니다.
+
 ## 기준과 현재 범위
 
 현재 추가 승인 범위는 feat/service-upload의 상품 정보 입력·이미지 업로드·원본 보존·24시간 비공개 임시 저장·draft 저장/조회입니다. PUT /api/v1/jobs/{job_id}/input은 사용자 승인된 입력 전용 API이며 GET 조회를 분리합니다. 광고 생성 POST /jobs·이미지 변환·LLM·ranking·B ml/ 코드는 이번 작업에 포함하지 않습니다.

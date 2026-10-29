@@ -76,3 +76,6 @@ A는 backend/app/services/analysis_*·api/analysis.py·frontend 사진 분석 UI
 ## S5a 경계 추가 (2026-10-28)
 
 A는 copy provider/prompt/validation/CopyStore, 카피 UI와 tests/service를 담당합니다. 공동 승인으로 draft 최상위 확장과 카피 전용 API·의존성을 추가하되 Facts·B Candidate/ranking schema·ml/·tests/ml은 변경하지 않습니다. 서비스 .venv에 SDK를 추가하고 .venv-ml/.venv-analysis는 유지합니다. 실제 API 호출·사진 전송·대안 제공자 전환은 현재 집행하지 않으며 Mock으로 검증합니다.
+## S5b 렌더링 소유권과 추후 추론 환경
+
+A는 templates/**·services/render_*·api/rendering.py·프론트 미리보기·tests/service와 E2E를 담당합니다. 공동 승인된 copy_key/렌더링 envelope는 기존 Candidate/B 계약을 유지하며 추가 계측을 분리합니다. 서비스 .venv에는 torch/open_clip을 넣지 않고 상품 분석은 .venv-analysis, B 학습/개발은 .venv-ml을 유지합니다. 향후 순위 추론은 별도 .venv-rank에서 실행하며 manifest와 맞는 정확한 의존성을 B가 추론 패키지 단계에서 제공합니다. 이번 단계에서는 .venv-rank 생성·랭킹 실행·B 코드 수정을 하지 않습니다.

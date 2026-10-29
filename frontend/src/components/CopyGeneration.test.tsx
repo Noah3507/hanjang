@@ -39,3 +39,4 @@ it('rejects a duplicate strategy response', async () => {
   render(<CopyGeneration handle={handle} draft={draft} asset="asset" disabled={false} />)
   expect(await screen.findByRole('alert')).toHaveTextContent('응답 형식')
 })
+vi.mock('./AdRendering', () => ({ default: () => null }))

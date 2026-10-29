@@ -4,6 +4,7 @@ from hashlib import sha256
 import json
 from threading import RLock
 import time
+import uuid
 from app.schemas.copy import CopyResponse, CopyError, Attempt
 from app.services.copy_prompt import provider_payload, PROMPT_VERSION, input_bound
 from app.services.copy_validation import validate_copy
@@ -74,6 +75,7 @@ class CopyStore:
             if input_bound(payload) > 6000:
                 raise UploadError(422, 'COPY_INPUT_LIMIT', '입력과 분석 단서가 요청 한도를 초과했습니다. 상품 특징을 줄여 주세요.')
             response = self.blank(job, record, asset, draft, payload, hash_input)
+            response.copy_key = uuid.uuid4().hex
             response.status = 'processing'
             response.warnings = ['MOCK_COPY_NOT_LLM'] if self.provider.name == 'mock' else ['COPY_REVIEW_REQUIRED']
             if not payload['visual_hints']:
@@ -137,7 +139,7 @@ class CopyStore:
         metric.reserved_unknown_cost_usd = usage.reserved_unknown_cost_usd
 
     def current_for_render(self, owner, job):
-        """Future renderer must not use a stale snapshot. No rendering implemented here."""
+        """Renderer entry gate: completed copy from the current snapshot only."""
         result = self.get(owner, job)
         if result.is_current and result.status == 'completed':
             return result

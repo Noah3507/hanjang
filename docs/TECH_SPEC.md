@@ -118,3 +118,6 @@ A 전용 `.venv-analysis`·고정 requirements에서 OpenCLIP ViT-B-32/OpenAI �
 ## 2026-10-28 S5a 구현 추가
 
 CopyStore는 upload Record에 입력·사진·현재 CLIP payload·생성 설정의 fingerprint와 카피를 보관하고 기존 TTL과 소유권을 재사용합니다. 기본 Mock, Pydantic·사실 검사, 사진 분석 worker와 독립된 HTTP background 작업을 추가합니다. OpenAI SDK/Responses adapter는 준비했지만 실제 호출 gate는 false이며 계정 접근과 네트워크 성공은 미검증입니다. 서비스 requirements에 SDK를 추가하며 B·분석 환경은 변경하지 않습니다. [COPY_GENERATION](COPY_GENERATION.md)의 전송 제한·캐시·재시도·비용 원장·한계를 따릅니다. 사진 직접 전송은 미승인·미구현입니다.
+## 2026-10-28 S5b 실행 구조
+
+기존 서비스 .venv에 Jinja2/MarkupSafe를 추가하며 Node24와 frontend에 고정된 Playwright Chromium을 subprocess에서 재사용합니다. torch/open_clip/B 환경은 변경하지 않습니다. 서버가 trusted 템플릿·폰트·현재 asset bytes를 바인딩하고 네 PNG를 atomic publish합니다. 추가 측정은 Candidate 외부 envelope, 진단 수치는unavailable/null입니다. 상세 보안·timeout·snapshot·설치는 [RENDERING](RENDERING.md)을 따릅니다.

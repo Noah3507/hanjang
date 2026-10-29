@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { copyState, type CopyState } from '../api/copy'
 import type { Draft, UploadHandle } from '../api/uploads'
+import AdRendering from './AdRendering'
 const labels = { emotional: '감성', price: '가격', visual: '비주얼', brand: '브랜드' }
 
 export default function CopyGeneration({ handle, draft, asset, disabled }: { handle: UploadHandle; draft: Draft; asset: string; disabled: boolean }) {
@@ -34,7 +35,7 @@ export default function CopyGeneration({ handle, draft, asset, disabled }: { han
   }
   return <section aria-label="4전략 광고 카피" className="copy-generation">
     <h3>4전략 광고 카피 초안</h3>
-    <p>이미지·순위·편집·다운로드는 생성하지 않습니다. 모든 문구는 사용자 검토가 필요합니다.</p>
+    <p>카피를 확인한 뒤 별도 버튼으로 광고 이미지를 만듭니다. 모든 문구는 사용자 검토가 필요합니다.</p>
     <p>{state?.provider === 'openai' ? `OpenAI 모드 · ${state.model}` : 'Mock 데모 · 고정 예시이며 실제 LLM 생성·품질 검증 결과가 아닙니다.'}</p>
     <button type="button" disabled={disabled || busy} onClick={() => void update(true)}>4전략 카피 생성</button>{' '}
     <button type="button" disabled={busy} onClick={() => void update(false)}>카피 상태 다시 조회</button>
@@ -51,5 +52,6 @@ export default function CopyGeneration({ handle, draft, asset, disabled }: { han
       </article>)}</div>
     </>}
     {state?.attempts.map(a => <p key={a.attempt}>시도 {a.attempt}: {a.latency_seconds.toFixed(3)}초 · 입력/출력 토큰 {a.input_tokens ?? '미측정'}/{a.output_tokens ?? '미측정'} · 비용 {a.estimated_cost_usd == null ? '미측정 (Mock은 API 호출 없음)' : `$${a.estimated_cost_usd.toFixed(6)}`}</p>)}
+    <AdRendering handle={handle} draft={draft} asset={asset} copy={state} disabled={disabled} />
   </section>
 }

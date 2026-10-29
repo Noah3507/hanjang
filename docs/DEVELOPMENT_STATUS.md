@@ -177,3 +177,6 @@ feat/service-image-analysis에서 S4(사용자 가이드 6단계) 상품 사진 
 ## 2026-10-28 S5a Mock 진행 현황
 
 feat/service-copy에서 상품 특징·주소 옵션, copy-generation, 네 전략 Mock 카드와 테스트를 추가합니다. 실제 OpenAI 결제·호출은 보류됐으므로 실제 모델 생성·품질·실측 사용 토큰·지연은 완료로 보고하지 않습니다. [COPY_GENERATION](COPY_GENERATION.md)과 [COPY_TEST_REPORT](COPY_TEST_REPORT.md)를 참고하세요. 기존 단계 이력과 구분하며 8단계 이미지 렌더링은 미구현입니다.
+# 2026-10-28 S5b 최신 현황
+
+PR #25가 main(9fee198)에 병합된 뒤 feat/service-renderer에서 네 전략 실제 PNG·metadata·인증 미리보기를 추가합니다. 기존 업로드/전처리/사진 분석/Mock 카피를 유지하며 실제 LLM·ranking·편집·다운로드는 미구현입니다. [렌더링 구조/Windows 설치](RENDERING.md), [검증 결과](RENDERING_TEST_REPORT.md)를 기준으로 보세요. 아래 이전 날짜의 미구현·포트·테스트 수는 과거 기록입니다.
