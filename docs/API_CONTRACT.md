@@ -1,5 +1,9 @@
 # API와 Ranking 계약 초안
 
+## 최신 S5b 구현 범위 (2026-10-28)
+
+아래 과거 광고 전체 생성/Ranking/편집 초안과 구분합니다. 사용자 승인으로 POST/GET `/jobs/{job_id}/rendering`과 copy-generation 응답의 불변 `copy_key`를 추가합니다. 요청은 `{expected_asset_id, expected_input:{facts,mood,product_features,use_address_for_copy}, expected_copy_key}`이며 불일치는409입니다. POST202/Location, GET200, 기존 네 상태·세션·TTL·asset 조회를 유지합니다. 응답은 `{job_id,operation:"rendering",status,status_url,source_asset_id,copy_key,revision,is_current,mock_copy,candidates,measurements,warnings,error,expires_at}`입니다. Candidate/B 계약은 변경하지 않으며 ranking 없는 렌더링 전용 응답입니다. 상세 schema·상태·오류·캐시·계측은 [RENDERING](RENDERING.md)을 기준으로 합니다.
+
 S3 사용자 승인 additive 사진 전처리 POST/GET 및 사진 선택 PUT 계약은 [IMAGE_PROCESSING](IMAGE_PROCESSING.md)에 정의합니다. 기존 광고 재생성 PATCH와 InputDraft/B ranking 계약은 변경하지 않습니다.
 
 

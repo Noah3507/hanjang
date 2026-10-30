@@ -4,7 +4,9 @@
 
 ## 현재 구현 범위
 
-상품 입력·원본 업로드·draft 조회·rembg 배경 제거·사진 선택·CLIP/K-means 분석에 더해, `feat/service-copy`는 **상품 특징 입력과 네 전략의 Mock 카피 생성·조회**를 추가합니다. 실제 OpenAI 결제/호출은 보류돼 실제 생성 품질은 미검증입니다. 원본과 입력 사실, 비공개 세션·24시간 정리를 유지합니다. 광고 이미지 렌더링·순위·편집·다운로드는 미구현입니다. [카피 실행 방법](docs/COPY_GENERATION.md), [테스트 결과](docs/COPY_TEST_REPORT.md), [무료 대안 비교](docs/COPY_PROVIDER_OPTIONS.md)를 확인하세요. 사진 분석은 [IMAGE_ANALYSIS](docs/IMAGE_ANALYSIS.md)를 따릅니다.
+8단계 `feat/service-renderer`는 최신 Mock 카피·선택 사진·사용자 원문으로 네 전략의 **1080×1350 RGB PNG 생성과 비공개 미리보기**를 추가합니다. [렌더링 설치·구조·API](docs/RENDERING.md)와 [검증 결과](docs/RENDERING_TEST_REPORT.md)를 참고하세요. 새 PC에서는 기존 Python 설치에 더해 `npm.cmd --prefix frontend ci`와 `npm.cmd --prefix frontend exec -- playwright install chromium`이 필요합니다. 폰트는 저장소에 포함되며 API 키·CLIP/rembg 모델 없이도 원본 사진+Mock 카피로 렌더링할 수 있습니다. 아래의 과거 단계 설명과 구분하며 ranking·편집·다운로드·실제 LLM 호출은 후속입니다.
+
+상품 입력·원본 업로드·draft 조회·rembg 배경 제거·사진 선택·CLIP/K-means 분석과 **상품 특징 입력·네 전략 Mock 카피 생성·조회**를 유지합니다. 실제 OpenAI 결제/호출은 보류돼 실제 생성 품질은 미검증입니다. 원본과 입력 사실, 비공개 세션·24시간 정리를 유지합니다. 순위·편집·다운로드는 미구현입니다. [카피 실행 방법](docs/COPY_GENERATION.md), [테스트 결과](docs/COPY_TEST_REPORT.md), [무료 대안 비교](docs/COPY_PROVIDER_OPTIONS.md)를 확인하세요. 사진 분석은 [IMAGE_ANALYSIS](docs/IMAGE_ANALYSIS.md)를 따릅니다.
 
 승인된 제품 우선순위는 **업로드 → AI 광고 4종 생성 → 선호 순위 → 문구 수정 → PNG 다운로드**입니다. A4는 PNG MVP 이후 OPTIONAL이며 최종 필수 완료 조건에서 제외합니다. 원본 보존·배경 제거·비율 유지 resize만 허용하고 상품 색상/채도/명도 보정은 보류합니다. 처리 실패·품질 저하 시 원본 사용 경로를 제공합니다.
 

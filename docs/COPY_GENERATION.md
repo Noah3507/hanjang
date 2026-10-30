@@ -4,7 +4,7 @@
 
 ## 현재 범위
 
-상품 정보 저장 → 현재 사진/입력/context snapshot → 명시적 카피 요청 → Mock 네 전략 → 상태 조회/원문 facts와 카피 분리 표시입니다. LLM은 render-ready Candidate/PNG/rank를 반환하지 않습니다. 8단계 렌더링·선호 순위·편집·다운로드와 B ml/은 수정/구현하지 않습니다.
+상품 정보 저장 → 현재 사진/입력/context snapshot → 명시적 카피 요청 → Mock 네 전략 → 상태 조회/원문 facts와 카피 분리 표시입니다. LLM은 render-ready Candidate/PNG/rank를 반환하지 않습니다. 후속 S5b 렌더링은 [RENDERING](RENDERING.md)에서 별도 구현하며, 이 카피 단계에서는 선호 순위·편집·다운로드와 B ml/을 구현하지 않습니다. copy-generation 응답의 additive copy_key는 렌더링 요청에서 완성 카피 결과를 검증하는 불변 식별자입니다.
 
 | 전략 | 목적 | Mock 예시 headline |
 | --- | --- | --- |
