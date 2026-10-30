@@ -53,7 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.upload_store = storage
     application.state.analysis_executor = analysis_executor
     application.state.analysis_store = AnalysisStore(storage, analysis_executor)
-    application.state.copy_store = CopyStore(storage, application.state.analysis_store, copy_provider)
+    application.state.copy_store = CopyStore(storage, application.state.analysis_store, copy_provider, settings.copy_max_retries)
     application.state.render_store = RenderStore(storage, application.state.copy_store, RenderExecution())
     application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
     application.add_exception_handler(UploadError, upload_error)

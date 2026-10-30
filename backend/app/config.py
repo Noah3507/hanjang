@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     copy_provider: Literal['mock', 'openai'] = 'mock'
     copy_model: str = 'gpt-5.4-mini-2026-03-17'
     copy_allow_paid: bool = False
+    copy_max_requests: int = Field(default=6, ge=0, le=6)
+    copy_budget_usd: float = Field(default=.1, ge=0, le=.1, allow_inf_nan=False)
+    copy_max_retries: int = Field(default=1, ge=0, le=1)
     openai_api_key: SecretStr | None = Field(default=None, validation_alias='OPENAI_API_KEY')
     copy_budget_path: Path = PROJECT_ROOT / 'artifacts/copy-usage/ledger.json'
     # Exact unprefixed name agreed with B. Optional until the real adapter exists.

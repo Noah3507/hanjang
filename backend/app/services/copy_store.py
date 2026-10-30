@@ -8,6 +8,7 @@ import uuid
 from app.schemas.copy import CopyResponse, CopyError, Attempt
 from app.services.copy_prompt import provider_payload, PROMPT_VERSION, input_bound
 from app.services.copy_validation import validate_copy
+from app.services.copy_glyphs import POLICY_VERSION, supported_codepoints
 from app.services.copy_contract import CopyFailure, CopyProvider, ProviderUsage
 from app.services.uploads import UploadError
 
@@ -15,10 +16,11 @@ def digest(value):
     return sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 class CopyStore:
-    def __init__(self, uploads, analysis, provider: CopyProvider):
+    def __init__(self, uploads, analysis, provider: CopyProvider, max_retries=1):
         self.uploads, self.analysis, self.provider = uploads, analysis, provider
         self.lock = RLock()
         self.active = False
+        self.max_retries = max_retries
 
     @contextmanager
     def locked(self):
@@ -39,7 +41,7 @@ class CopyStore:
             raise UploadError(422, 'COPY_PRIVATE_INPUT', '전송 제외된 주소나 Instagram이 다른 입력에 포함돼 있습니다. 상품 특징을 확인해 주세요.') from None
         hash_input = digest(draft.model_dump(mode='json'))
         key = digest({'asset': asset.asset_id, 'input': hash_input, 'payload': payload,
-                      'provider': self.provider.name, 'model': self.provider.model, 'prompt': PROMPT_VERSION})
+                      'provider': self.provider.name, 'model': self.provider.model, 'prompt': PROMPT_VERSION, 'glyphs': POLICY_VERSION})
         return record, photo, asset, draft, payload, hash_input, key
 
     def blank(self, job, record, asset, draft, payload, hash_input):
@@ -47,6 +49,7 @@ class CopyStore:
             source_asset_id=asset.asset_id, input_hash=hash_input, is_current=True,
             facts=draft.facts.model_copy(deep=True), mood=draft.mood, product_features=draft.product_features,
             use_address_for_copy=draft.use_address_for_copy, provider=self.provider.name, model=self.provider.model,
+            prompt_version=PROMPT_VERSION,
             analysis_used=bool(payload['visual_hints']), expires_at=record.upload.expires_at)
 
     def get(self, owner, job):
@@ -74,6 +77,10 @@ class CopyStore:
                 raise UploadError(503, 'COPY_BUSY', '다른 카피 작업이 진행 중입니다. 잠시 후 다시 시도해 주세요.')
             if input_bound(payload) > 6000:
                 raise UploadError(422, 'COPY_INPUT_LIMIT', '입력과 분석 단서가 요청 한도를 초과했습니다. 상품 특징을 줄여 주세요.')
+            try:
+                supported_codepoints()
+            except Exception:
+                raise UploadError(503, 'COPY_FONT_UNAVAILABLE', '광고 글꼴을 확인할 수 없습니다. 서버 설정을 확인해 주세요.') from None
             response = self.blank(job, record, asset, draft, payload, hash_input)
             response.copy_key = uuid.uuid4().hex
             response.status = 'processing'
@@ -88,7 +95,7 @@ class CopyStore:
         key, draft, payload = task
         attempts = []
         try:
-            for attempt in (1, 2):
+            for attempt in range(1, self.max_retries+2):
                 started = time.perf_counter()
                 metric = Attempt(attempt=attempt, provider=self.provider.name, latency_seconds=0)
                 try:
@@ -106,9 +113,9 @@ class CopyStore:
                 finally:
                     metric.latency_seconds = round(time.perf_counter()-started, 4)
                     attempts.append(metric)
-                if error is None or not error.retryable or attempt == 2:
+                if error is None or not error.retryable or attempt == self.max_retries+1:
                     break
-                time.sleep(.1)
+                time.sleep(1)
             with self.locked():
                 record = self.uploads.get(owner, job)  # no publication after expiry
                 response = record.copies[key]

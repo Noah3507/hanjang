@@ -25,5 +25,5 @@ def build_copy_provider(settings) -> CopyProvider:
     return OpenAICopyProvider(
         settings.copy_model,
         settings.openai_api_key.get_secret_value() if settings.openai_api_key else None,
-        settings.copy_allow_paid, CopyBudget(settings.copy_budget_path),
+        settings.copy_allow_paid, CopyBudget(settings.copy_budget_path, settings.copy_max_requests, settings.copy_budget_usd),
     )

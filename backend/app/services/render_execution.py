@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from PIL import Image, ImageOps
+from app.services.copy_glyphs import font_text_supported
 
 ROOT = Path(__file__).resolve().parents[3]
 VERSION = 'four-layouts-v1'
@@ -36,6 +37,9 @@ class RenderExecution:
         self.timeout = timeout
 
     def __call__(self, draft, copy, photo):
+        # Never rewrite user facts. Stop before launching Chromium with a safe error.
+        if any(value and not font_text_supported(value) for value in draft.facts.model_dump().values()):
+            raise RenderFailure('RENDER_UNSUPPORTED_GLYPH')
         font = (ROOT/'templates/fonts/NotoSansKR-Regular.otf').read_bytes()
         if sha256(font).hexdigest() != FONT_HASH:
             raise RenderFailure('RENDER_FONT_UNAVAILABLE')

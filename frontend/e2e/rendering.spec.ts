@@ -59,3 +59,17 @@ test('simulated render failure keeps saved input and retry available', async ({ 
   await expect(panel.getByRole('alert')).toContainText('worker')
   await expect(page.getByLabel('가격', { exact: true })).toHaveValue(' 10,500 원 ')
 })
+
+test('actual unsupported user fact is preserved and renderer explains font failure', async ({ page }) => {
+  await save(page)
+  await page.getByLabel('가게명', { exact: true }).fill('원문 가게 🍜')
+  await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  await expect(page.getByText('카피 상태: completed')).toBeVisible()
+  const panel = page.getByRole('region', { name: '4전략 광고 이미지' })
+  await panel.getByRole('button', { name: '광고 4장 렌더링' }).click()
+  await expect(panel.getByText('렌더링 상태: failed')).toBeVisible()
+  await expect(panel.getByRole('alert')).toContainText('지원하지 않는 문자')
+  await expect(page.getByLabel('가게명', { exact: true })).toHaveValue('원문 가게 🍜')
+  await expect(page.getByLabel('가격', { exact: true })).toHaveValue(' 10,500 원 ')
+})

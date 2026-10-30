@@ -272,7 +272,7 @@ def test_openai_adapter_with_fake_client_only(tmp_path):
     p=OpenAICopyProvider('gpt-5.4-mini-2026-03-17','test-key-not-real',True,CopyBudget(tmp_path/'ledger'),client)
     payload=provider_payload(InputDraft.model_validate(draft()),None)
     p.generate(payload);p.generate(payload)
-    assert len(metadata)==1 and len(calls)==2
+    assert len(metadata)==0 and len(calls)==2  # no uncounted metadata requests
     assert calls[0]['store'] is False and calls[0]['max_output_tokens']==2048
     assert calls[0]['reasoning']=={'effort':'none'}
     assert calls[0]['text']['format']['strict']
