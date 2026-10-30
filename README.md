@@ -1,5 +1,7 @@
 # Hanjang
 
+Windows의 기존 모델·가상환경을 별도 worktree에서 재사용하고 반복 실행하는 방법은 [LAPTOP_SETUP](LAPTOP_SETUP.md)을 따릅니다. OpenAI 보완 통합과 검증은 [OPENAI_VALIDATION](docs/OPENAI_VALIDATION.md), [HARDENING_TEST_REPORT](docs/HARDENING_TEST_REPORT.md)에 기록합니다.
+
 소규모 음식점·카페·식품 매장을 위한 광고 제작 웹서비스입니다. 실제 사진 한 장과 가게명·상품명·가격·분위기로 emotional/price/visual/brand 광고 4종을 만들고 상대 선호 순위를 제공하는 것이 목표입니다. 상품 사진을 AI로 재생성하지 않고 입력 사실을 그대로 유지합니다. preference는 구매율·매출·CTR 예측이 아닙니다.
 
 ## 현재 구현 범위

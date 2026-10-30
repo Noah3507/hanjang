@@ -4,7 +4,7 @@
 
 최신 main `e114d7d` 기반 `feat/service-results`에서 결과 확대·MockRanker·Ranking API를 추가한다. 기존 rendering API, Candidate 및 B v1.1 계약을 유지한다. 실제 ML·편집·다운로드·가독성 진단·배포·Figma/타이포그래피 기능은 포함하지 않는다.
 
-기존 `feat/service-openai-validation`의 `3f4eea7`은 main 미반영 상태로 별도 보존했다. OpenAI 예산/오류/글리프 보완과 노트북 복원 기록을 자동 이식하거나 merge/rebase하지 않았다. 이 브랜치가 해당 보완을 포함한다고 주장하지 않는다. 실제 API 호출 없이 Mock/paid=false로 검증한다.
+9단계 PR #39 당시에는 `feat/service-openai-validation`의 `3f4eea7`을 main 미반영 상태로 별도 보존했다. 후속 OpenAI 보완 통합은 [OPENAI_VALIDATION](OPENAI_VALIDATION.md)을 따른다. 결과 화면·Ranking 계약과 기존 브랜치는 유지하며 실제 API 호출 없이 Mock/paid=false로 검증한다.
 
 ## 사용자 흐름
 

@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from PIL import Image, ImageOps
+from app.services.copy_glyphs import font_text_supported
 
 ROOT = Path(__file__).resolve().parents[3]
 VERSION = 'four-layouts-v1'
@@ -36,9 +37,18 @@ class RenderExecution:
         self.timeout = timeout
 
     def __call__(self, draft, copy, photo):
-        font = (ROOT/'templates/fonts/NotoSansKR-Regular.otf').read_bytes()
-        if sha256(font).hexdigest() != FONT_HASH:
-            raise RenderFailure('RENDER_FONT_UNAVAILABLE')
+        # Never rewrite user facts. Stop before launching Chromium with a safe error.
+        try:
+            font = (ROOT/'templates/fonts/NotoSansKR-Regular.otf').read_bytes()
+            if sha256(font).hexdigest() != FONT_HASH:
+                raise ValueError('Invalid font')
+            # The cmap reader validates the same pinned artifact.
+            from app.services.copy_glyphs import supported_codepoints
+            supported_codepoints()
+        except Exception:
+            raise RenderFailure('RENDER_FONT_UNAVAILABLE') from None
+        if any(value and not font_text_supported(value) for value in draft.facts.model_dump().values()):
+            raise RenderFailure('RENDER_UNSUPPORTED_GLYPH')
         css = (ROOT/'templates/tokens.css').read_text(encoding='utf-8')
         css += "@font-face{font-family:HanjangNoto;src:url(data:font/otf;base64,"+base64.b64encode(font).decode()+");font-weight:100 900;font-display:block}"
         # EXIF orientation is display interpretation; never mutate stored original.

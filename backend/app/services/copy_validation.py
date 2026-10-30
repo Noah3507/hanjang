@@ -2,6 +2,7 @@
 import re
 from app.schemas.copy import Variants, Copy, STRATEGIES
 from app.services.copy_contract import CopyFailure
+from app.services.copy_glyphs import supported_text
 
 CLAIMS = re.compile(
     r'할인|이벤트|특가|무료|증정|쿠폰|한정|국산|국내산|수입산|원산지|유기농|무첨가|저당|'
@@ -22,6 +23,8 @@ def validate_copy(raw: str, draft):
     for variant in body.variants:
         values = {}
         for field, text in variant.ad_copy.model_dump().items():
+            if not supported_text(text):
+                raise CopyFailure('COPY_GLYPH_UNSUPPORTED', True)
             # Names/prices can be bound verbatim without asking the model to rewrite them.
             for key, value in allowed.items():
                 text = text.replace('[['+key+']]', value)
