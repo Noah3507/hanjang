@@ -10,3 +10,4 @@
 - test split은 읽지 않는다. 최종 평가는 10단계에서 한 번만 한다.
 - 저장 파일: `model.safetensors`(weights, scaler_mean, scaler_std; pickle 아님), `model_config.json`(feature 열 순서, CLIP·통계·전처리 버전, 선택된 설정), `training_report.json`(모든 설정의 train/val 결과, 8단계 baseline 비교, 코드 커밋, 입력 SHA-256).
 - v2 MLP는 Logistic보다 val에서 분명히 좋을 때만 검토한다.
+- TASTE 디자인 선호 모델(10/30 A와 합의, 9-7 결과): `python scripts/ml_train_taste.py`가 `ml/training/taste_config.json`대로 TASTE train+val을 l2=30으로 학습해 `artifacts/models/ranking/bt-taste-v1/`에 같은 형식으로 저장한다. 서비스 기본 순위에는 쓰지 않고 별도 참고 지표로만 쓴다. 모델 폴더는 `load_model()`로 읽으며 크기·유한값을 검사한다.

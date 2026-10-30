@@ -150,3 +150,19 @@ def log_loss(score_a: np.ndarray, score_b: np.ndarray, a_wins: np.ndarray) -> fl
     logits = torch.from_numpy(np.asarray(score_a - score_b, dtype=np.float64))
     target = torch.from_numpy(np.asarray(a_wins, dtype=np.float64))
     return float(torch.nn.functional.binary_cross_entropy_with_logits(logits, target))
+
+
+def load_model(model_dir: Path) -> tuple[dict, Scaler, np.ndarray]:
+    """Read model.safetensors and model_config.json from a model folder and check them."""
+    from safetensors.numpy import load_file
+
+    model_dir = Path(model_dir)
+    config = json.loads((model_dir / "model_config.json").read_text())
+    tensors = load_file(str(model_dir / "model.safetensors"))
+    n = len(config["feature_columns"])
+    for name in ("weights", "scaler_mean", "scaler_std"):
+        if tensors[name].shape != (n,) or not np.isfinite(tensors[name]).all():
+            raise ValueError(f"{model_dir.name}: {name} must be {n} finite numbers")
+    if (tensors["scaler_std"] <= 0).any():
+        raise ValueError(f"{model_dir.name}: scaler_std must be positive")
+    return config, Scaler(tensors["scaler_mean"], tensors["scaler_std"]), tensors["weights"]
