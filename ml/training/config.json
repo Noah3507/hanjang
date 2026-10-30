@@ -1,0 +1,18 @@
+{
+  "version": "bt-logistic-v1",
+  "feature_version": "ViT-B-32-openai-qg-pad-square-v1-stats-v1",
+  "split_version": "split-v1",
+  "training_sets": {
+    "taste": ["taste"],
+    "creativeranking": ["creativeranking"],
+    "joint": ["taste", "creativeranking"]
+  },
+  "l2": [0.0001, 0.001, 0.01, 0.1],
+  "max_iter": 500,
+  "selection": {
+    "primary": "creativeranking",
+    "secondary": "taste",
+    "rule": "highest creativeranking val pairwise accuracy; ties -> higher taste val accuracy -> larger l2",
+    "decided": "2026-10-30 with A, before any test evaluation; TASTE is reported as a secondary result"
+  }
+}
