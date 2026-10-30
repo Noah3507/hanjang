@@ -54,3 +54,8 @@ small { display: block; margin-top: 8px; color: #555c50; }
 textarea { display: block; width: 100%; box-sizing: border-box; font: inherit; padding: .6rem; margin: .4rem 0; }
 input[type="checkbox"] { width: auto; }
 @media (max-width: 600px) { .copy-cards { grid-template-columns: 1fr; } }
+.ad-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.ad-cards article{min-width:0;padding:12px;border:1px solid #d4d8dc;border-radius:12px}
+.ad-cards img{display:block;width:100%;height:auto;aspect-ratio:4/5}
+.ad-rendering{margin-top:24px;border-top:1px solid #d4d8dc;padding-top:16px}
+@media(max-width:767px){.ad-cards{grid-template-columns:minmax(0,1fr)}}

@@ -1,0 +1,9 @@
+<!doctype html><html lang="ko"><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; font-src data:; style-src 'unsafe-inline'; script-src 'none'">
+<style>{{ css | safe }}</style>
+<body><main class="ad {{ strategy }} {{ mood }}">
+{% for field in order %}
+{% if field == 'photo' %}<div class="photo"><img alt="" src="{{ photo }}"></div>
+{% elif texts.get(field) %}<div data-field="{{ field }}" class="text {{ field }}">{{ texts[field] }}</div>{% endif %}
+{% endfor %}
+</main></body></html>

@@ -54,6 +54,7 @@ class Attempt(StrictModel):
     error_code: str | None = None
 
 class CopyResponse(StrictModel):
+    copy_key: str | None = None
     job_id: str
     operation: Literal['copy_generation'] = 'copy_generation'
     status: Literal['pending', 'processing', 'completed', 'failed']

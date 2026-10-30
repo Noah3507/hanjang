@@ -69,6 +69,8 @@ class Record:
     last_analysis: str | None = None
     copies: dict = field(default_factory=dict)
     last_copy: str | None = None
+    renders: dict = field(default_factory=dict)
+    last_render: str | None = None
 
 
 class PrivateUploadStore:

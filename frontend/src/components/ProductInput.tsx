@@ -118,6 +118,7 @@ export default function ProductInput() {
         <small>최대 500자. 사용자 제공 정보로 원문 저장하며, 사진 추정과 구분합니다.</small>
         {errors.product_features && <p className="field-error">{errors.product_features}</p>}
         <label><input type="checkbox" checked={useAddress} onChange={event => { setUseAddress(event.target.checked); setDraft(null); setStatus('idle'); setMessage('') }} /> 지역 홍보 카피에 주소 사용</label>
+        <small>이 옵션은 LLM 전송 여부입니다. 저장한 주소와 Instagram은 광고의 별도 정보 영역에 표시되며, 입력하지 않으면 숨깁니다.</small>
         <small>기본은 주소 미전송입니다. 실제 LLM 모드를 승인해 켠 경우에만 가게명·상품명·가격·특징·분위기·현재 사진 단서가 전송됩니다. Instagram과 사진은 전송하지 않습니다.</small>
         <button type="submit">{status === 'saving' ? '저장 중…' : '상품 정보와 사진 저장'}</button>
         <button className="secondary" type="button" disabled={!handle} onClick={reload}>저장 정보 다시 조회</button>

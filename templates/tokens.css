@@ -1,0 +1,16 @@
+*{box-sizing:border-box;animation:none!important;transition:none!important}
+html,body{margin:0;width:1080px;height:1350px;background:#f7f1e7}
+.ad{width:1080px;height:1350px;padding:54px;display:flex;flex-direction:column;gap:12px;color:#242521;background:#f7f1e7;font-family:HanjangNoto;font-size:36px;line-height:1.5}
+.text{flex-shrink:0;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;font-weight:400}
+.headline{font-size:56px;font-weight:700;letter-spacing:-1px}
+.product_name{font-size:56px;font-weight:700}.price_text{font-size:44px;font-weight:700}
+.store_name{font-size:40px;font-weight:700}.address,.instagram_handle{font-size:32px}
+.cta{font-weight:700}.photo{height:450px;flex-shrink:0;min-height:0;display:flex;align-items:center;justify-content:center;background:#ffffff;border-radius:20px;overflow:visible}
+.photo img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.emotional .photo{width:82%;align-self:flex-end;height:480px}.emotional .headline{max-width:88%;font-size:64px}
+.price .price_text{font-size:100px;padding:16px 24px;background:#242521;color:#ffffff;border-radius:16px}.price .photo{height:420px}
+.visual{text-align:center}.visual .photo{height:600px}.visual .headline{font-size:40px}.visual .product_name{font-size:48px}
+.brand .store_name{font-size:80px;border-bottom:4px solid #242521;padding-bottom:12px}.brand .photo{height:420px;width:88%;align-self:center}
+.minimal{background:#f4f4f0}.vivid{background:#fff2d1}.premium{background:#e8e7df}
+.compact{gap:8px;font-size:32px}.compact .photo{height:300px}.compact .headline,.compact .product_name{font-size:40px}.compact .store_name{font-size:36px}.compact.price .price_text{font-size:64px}.compact.brand .store_name{font-size:54px}
+.dense{gap:4px;font-size:32px;line-height:1.5}.dense .text{font-size:32px;letter-spacing:0;max-width:100%;padding:0;border:0}.dense .photo{height:180px;border-radius:8px}.dense.price .price_text{font-size:40px;padding:4px 12px}.dense.brand .store_name{font-size:40px}.dense.emotional .photo{width:80%;align-self:flex-end}.dense.visual .photo{height:200px}
