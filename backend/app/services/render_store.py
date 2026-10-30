@@ -108,6 +108,8 @@ class RenderStore:
                 response = record.renders[key]
                 response.status = 'failed'
                 response.error = RenderError(code=error.code if isinstance(error, RenderFailure) else 'RENDER_FAILED',
-                    message='광고를 렌더링하지 못했습니다. 입력·사진·카피는 유지됩니다.')
+                    message='입력에 광고 글꼴이 지원하지 않는 문자 또는 이모지가 있습니다. 가게명·상품명·연락처를 확인해 주세요. 원문은 유지됩니다.'
+                    if isinstance(error, RenderFailure) and error.code == 'RENDER_UNSUPPORTED_GLYPH'
+                    else '광고를 렌더링하지 못했습니다. 입력·사진·카피는 유지됩니다.')
         finally:
             with self.lock: self.active = False
