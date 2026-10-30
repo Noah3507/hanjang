@@ -1,0 +1,10 @@
+{
+  "version": "bt-taste-v1",
+  "feature_version": "ViT-B-32-openai-qg-pad-square-v1-stats-v1",
+  "split_version": "split-v1",
+  "train_splits": ["train", "val"],
+  "l2": 30.0,
+  "max_iter": 500,
+  "role": "secondary design-preference reference; not used for the service ranking",
+  "decided": "2026-10-30 with A after step 9-7 (nested CV 0.573, flat for l2 >= 30); test not read"
+}
