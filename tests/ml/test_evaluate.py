@@ -88,6 +88,23 @@ def _write(root: Path, seed=0):
         "model_version": "bt-logistic-v1", "feature_version": VERSION, "feature_columns": columns}))
     config = json.loads((ROOT / "ml/training/taste_config.json").read_text())
     (root / "taste_config.json").write_text(json.dumps(config))
+    _record_step8(root)
+
+
+def _record_step8(root: Path, override: dict | None = None):
+    """Write the step 8 record the way scripts/ml_baselines.py names the rule."""
+    from ml.training.bt_logistic import ImageFeatures
+
+    evaluate = _load("ml_evaluate")
+    datasets = {}
+    for ds in ("creativeranking", "taste"):
+        features = ImageFeatures.load(root / "data/features" / VERSION, ds, VERSION)
+        pairs = pd.read_parquet(root / "data/processed/splits/split-v1" / f"{ds}.parquet")
+        rule = (override or {}).get(ds) or evaluate.train_rule(pairs[pairs["split"] == "train"], features)
+        datasets[ds] = {"accuracy": {"random": 0.5, f"rule ({rule}, chosen on train)": 0.55}}
+    path = root / "data/evaluation/baselines-v1/results.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"datasets": datasets}))
 
 
 def test_taste_model_is_trained_on_train_and_val_only(tmp_path):
@@ -160,15 +177,17 @@ def test_check_only_reads_no_labels_and_writes_nothing(tmp_path, monkeypatch):
     asked = []
 
     def spy(path, *args, **kwargs):
-        asked.append(kwargs.get("columns"))
+        asked.append((kwargs.get("columns"), kwargs.get("filters")))
         return real_read(path, *args, **kwargs)
 
     monkeypatch.setattr(evaluate.pd, "read_parquet", spy)
     result = evaluate.main(["--skip-laion", "--check-only"], repo_root=tmp_path)
-    split_reads = [c for c in asked if c is not None]
-    assert split_reads and all("a_wins" not in c for c in split_reads)
+    split_reads = [(c, f) for c, f in asked if c is not None]
+    assert split_reads
+    # labels are read only together with a filter that keeps train rows (for the step 8 rule check)
+    assert all("a_wins" not in c or f == [("split", "==", "train")] for c, f in split_reads)
     assert result["taste"]["test_pairs"] == 6 * 12 and result["taste"]["split_group_matches_components"] is True
-    assert not (tmp_path / "data/evaluation").exists()
+    assert not (tmp_path / "data/evaluation/final-test-v1").exists()
 
 
 def test_taste_groups_that_do_not_match_image_components_stop_the_run(tmp_path):
@@ -181,3 +200,55 @@ def test_taste_groups_that_do_not_match_image_components_stop_the_run(tmp_path):
     pairs.to_parquet(path)
     with pytest.raises(ValueError, match="split_group does not match"):
         _load("ml_evaluate").main(["--skip-laion", "--check-only"], repo_root=tmp_path)
+
+
+def _ready(tmp_path):
+    _write(tmp_path)
+    _load("ml_train_taste").main(["--config", str(tmp_path / "taste_config.json")], repo_root=tmp_path)
+    return _load("ml_evaluate"), tmp_path / "data/evaluation"
+
+
+def test_a_rule_that_differs_from_the_step8_record_stops_the_run(tmp_path):
+    evaluate, _ = _ready(tmp_path)
+    actual = evaluate.step8_rules(tmp_path / evaluate.STEP8)["taste"]  # written from the same train choice
+    other = "brightness-" if actual != "brightness-" else "brightness+"
+    _record_step8(tmp_path, {"taste": other})
+    with pytest.raises(ValueError, match="step 8 record"):
+        evaluate.main(["--skip-laion", "--check-only"], repo_root=tmp_path)
+
+
+def test_an_error_during_the_evaluation_leaves_no_results(tmp_path, monkeypatch):
+    evaluate, out = _ready(tmp_path)
+    monkeypatch.setattr(evaluate, "evaluate_dataset", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    with pytest.raises(RuntimeError):
+        evaluate.main(["--skip-laion"], repo_root=tmp_path)
+    assert sorted(p.name for p in out.iterdir()) == ["baselines-v1"]  # no results, no hidden temporary folder
+
+
+def test_an_error_while_writing_leaves_no_results(tmp_path, monkeypatch):
+    evaluate, out = _ready(tmp_path)
+    real = Path.write_text
+
+    def failing(self, *args, **kwargs):
+        if self.name == "results.json.sha256":
+            raise OSError("disk full")
+        return real(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", failing)
+    with pytest.raises(OSError):
+        evaluate.main(["--skip-laion"], repo_root=tmp_path)
+    assert sorted(p.name for p in out.iterdir()) == ["baselines-v1"]
+
+
+def test_saved_results_survive_a_printing_error_and_block_a_rerun(tmp_path, monkeypatch):
+    import hashlib
+
+    evaluate, out = _ready(tmp_path)
+    monkeypatch.setattr(evaluate, "print_summary", lambda report: (_ for _ in ()).throw(RuntimeError("print")))
+    with pytest.raises(RuntimeError):
+        evaluate.main(["--skip-laion"], repo_root=tmp_path)
+    folder = out / "final-test-v1"
+    digest = hashlib.sha256((folder / "results.json").read_bytes()).hexdigest()
+    assert (folder / "results.json.sha256").read_text() == f"{digest}  results.json\n"
+    with pytest.raises(SystemExit, match="only once"):
+        evaluate.main(["--skip-laion"], repo_root=tmp_path)

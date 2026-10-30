@@ -14,20 +14,26 @@ ml/evaluation/README.md):
 - pairwise accuracy with 95% cluster bootstrap intervals; clusters are connected
   components of test pairs that share an image (TASTE: checked to equal the
   step 6 split_group), 2000 resamples, seed 0
-- the primary model minus each baseline (random, train-chosen rule, LAION) with
-  the same paired cluster bootstrap; the rule is the pre-declared strongest
-  baseline (best on val for both datasets in step 8)
+- the primary model minus each baseline (random, image-statistic rule, LAION)
+  with the same paired cluster bootstrap; the rule is the pre-declared strongest
+  baseline (best of the three on val for both datasets in step 8). Its statistic
+  and direction are pinned to the step 8 record (baselines-v1/results.json); the
+  run stops if the same train-only choice would now give a different rule
 - Top-1 and Kendall's tau per ranking group, accuracy by score gap (val for the
   close-call threshold, test for confirmation), designer agreement (TASTE)
 - center-crop sensitivity: the same padding-trained models with center-crop CLIP
   features of the test images (image statistics unchanged); not a retrained model
-The results file is written once. If it exists the script stops; a rerun needs
-A's approval, a written reason, and moving the old folder by hand.
+The results folder (results.json + results.json.sha256) is written once, all
+or nothing: an error before or while writing leaves no folder, so the run can
+simply be repeated; once the folder exists the script stops (also when only the
+printing failed). A rerun after that needs A's approval, a written reason, and
+moving the old folder by hand.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -62,6 +68,7 @@ PRIMARY = {"creativeranking": "creativeranking_model", "taste": "taste_model"}
 FEATURES = "data/features/ViT-B-32-openai-qg-pad-square-v1-stats-v1"
 SPLITS = "data/processed/splits/split-v1"
 LAION = "data/raw/laion/sa_0_4_vit_b_32_linear.pth"
+STEP8 = "data/evaluation/baselines-v1/results.json"
 VERSION = "final-test-v1"
 SEED, REPS = 0, 2000
 STRUCTURE = ["image_a", "image_b", "group_id", "split", "split_group"]  # no labels
@@ -87,6 +94,27 @@ def center_crop_matrix(feature_dir: Path, dataset: str, features: ImageFeatures)
             for i, (image, r) in enumerate(zip(index["image"], rows))}
 
 
+def step8_rules(path: Path) -> dict:
+    """Rule name (statistic + direction) per dataset as recorded by scripts/ml_baselines.py."""
+    saved = json.loads(path.read_text())
+    rules = {}
+    for ds in DATASETS:
+        keys = [k for k in saved["datasets"][ds]["accuracy"] if k.startswith("rule (")]
+        if len(keys) != 1:
+            raise ValueError(f"{path}: no single rule baseline recorded for {ds}")
+        rules[ds] = keys[0][len("rule ("):].split(",")[0]
+    return rules
+
+
+def train_rule(train: pd.DataFrame, features: ImageFeatures) -> str:
+    """The step 8 procedure: best single-statistic rule on train pairs (labels of train only)."""
+    clip_dim = sum(c.startswith("clip_") for c in features.columns)
+    stats, stat_names = features.matrix[:, clip_dim:], features.columns[clip_dim:]
+    tr_a, tr_b = features.rows(train["image_a"]), features.rows(train["image_b"])
+    accuracies = rule_accuracies(stats[tr_a], stats[tr_b], train["a_wins"].to_numpy(), stat_names)
+    return max(sorted(accuracies), key=lambda k: accuracies[k])
+
+
 def prepare(repo_root: Path, model_root: Path, skip_laion: bool) -> dict:
     """Load and check everything the test run needs, without reading any test label."""
     feature_dir, split_dir = repo_root / FEATURES, repo_root / SPLITS
@@ -96,8 +124,13 @@ def prepare(repo_root: Path, model_root: Path, skip_laion: bool) -> dict:
         if config["feature_version"] != Path(FEATURES).name or config["feature_columns"] != features["taste"].columns:
             raise ValueError(f"{name}: feature version or column order differs from the feature cache")
     laion = None if skip_laion else load_laion_linear(repo_root / LAION, 512)
+    pinned = step8_rules(repo_root / STEP8)
     data = {}
     for ds in DATASETS:
+        train = pd.read_parquet(split_dir / f"{ds}.parquet", columns=["image_a", "image_b", "a_wins", "split"],
+                                filters=[("split", "==", "train")])
+        if train_rule(train, features[ds]) != pinned[ds]:
+            raise ValueError(f"{ds}: the train-chosen rule differs from the step 8 record {pinned[ds]!r}")
         structure = pd.read_parquet(split_dir / f"{ds}.parquet", columns=STRUCTURE)
         test = structure[structure["split"] == "test"].reset_index(drop=True)
         wrong = test["image_a"].map(dict(zip(features[ds].images, features[ds].splits))).ne("test") | \
@@ -109,12 +142,14 @@ def prepare(repo_root: Path, model_root: Path, skip_laion: bool) -> dict:
         if missing:
             raise ValueError(f"{ds}: {len(missing)} test images have no center-crop features")
         clusters = test_clusters(test, ds)
-        data[ds] = {"crop": crop, "summary": {
+        data[ds] = {"crop": crop, "rule": pinned[ds], "summary": {
+            "rule_from_step8": pinned[ds],
             "test_pairs": int(len(test)), "groups": int(test["group_id"].nunique()),
             "clusters": int(pd.Series(clusters).nunique()),
             "split_group_matches_components": ds == "taste" or None}}
     inputs = {f"{ds}_split_pairs": split_dir / f"{ds}.parquet" for ds in DATASETS}
     inputs["feature_manifest"] = feature_dir / "manifest.json"
+    inputs["step8_baselines"] = repo_root / STEP8
     for name, version in MODELS.items():
         inputs[f"{name}_weights"] = model_root / version / "model.safetensors"
         inputs[f"{name}_config"] = model_root / version / "model_config.json"
@@ -123,13 +158,9 @@ def prepare(repo_root: Path, model_root: Path, skip_laion: bool) -> dict:
     return {"models": models, "features": features, "laion": laion, "data": data, "inputs": inputs}
 
 
-def baseline_credits(pairs, features, test, ra, rb, y, laion) -> dict:
+def baseline_credits(features, rule, ra, rb, y, laion) -> dict:
     clip_dim = sum(c.startswith("clip_") for c in features.columns)
     stats, stat_names = features.matrix[:, clip_dim:], features.columns[clip_dim:]
-    train = pairs[pairs["split"] == "train"]
-    tr_a, tr_b = features.rows(train["image_a"]), features.rows(train["image_b"])
-    train_rules = rule_accuracies(stats[tr_a], stats[tr_b], train["a_wins"].to_numpy(), stat_names)
-    rule = max(sorted(train_rules), key=lambda k: train_rules[k])
     col, sign = stat_names.index(rule[:-1]), (1.0 if rule.endswith("+") else -1.0)
     guess_a = np.random.default_rng(SEED).random(len(y)) < 0.5
     credits = {"random": (guess_a == y.astype(bool)).astype(float),
@@ -138,7 +169,7 @@ def baseline_credits(pairs, features, test, ra, rb, y, laion) -> dict:
         weight, bias = laion
         clip = features.matrix[:, : len(weight)]
         credits["laion_aesthetic"] = correct(clip[ra] @ weight + bias, clip[rb] @ weight + bias, y)
-    return credits, rule
+    return credits
 
 
 def decide(ds: str, primary: dict) -> dict:
@@ -154,16 +185,16 @@ def decide(ds: str, primary: dict) -> dict:
             "report only: not shown in the service"}
 
 
-def evaluate_dataset(ds, pairs, features, crop, models, laion) -> dict:
+def evaluate_dataset(ds, pairs, features, crop, rule, models, laion) -> dict:
     test = pairs[pairs["split"] == "test"].reset_index(drop=True)
     pair_set(pairs, features, "test", ds)  # every test image must be a test image in the cache
     ra, rb = features.rows(test["image_a"]), features.rows(test["image_b"])
     y, clusters = test["a_wins"].to_numpy(), test_clusters(test, ds)
     images = sorted(set(test["image_a"]) | set(test["image_b"]))
-    base, rule = baseline_credits(pairs, features, test, ra, rb, y, laion)
+    base = baseline_credits(features, rule, ra, rb, y, laion)
     out = {"pairs": int(len(test)), "clusters": int(pd.Series(clusters).nunique()), "models": {},
            "baselines": {k: cluster_bootstrap(v, clusters, REPS, SEED) for k, v in base.items()},
-           "rule_chosen_on_train": rule}
+           "rule_from_step8": rule}
 
     for name, (config, scaler, weights) in models.items():
         s = scores(features.matrix, scaler, weights)
@@ -225,23 +256,32 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
     for ds in DATASETS:
         pairs = pd.read_parquet(split_dir / f"{ds}.parquet")
         report["datasets"][ds] = evaluate_dataset(ds, pairs, ready["features"][ds], ready["data"][ds]["crop"],
-                                                  ready["models"], ready["laion"])
+                                                  ready["data"][ds]["rule"], ready["models"], ready["laion"])
     cr_pairs = pd.read_parquet(split_dir / "creativeranking.parquet")
     report["creativeranking_val_score_gaps"] = val_score_gaps(cr_pairs, ready["features"]["creativeranking"],
                                                               ready["models"]["creativeranking_model"])
     report.update({"device": "cpu", "torch": torch.__version__, "code": code_revision(repo_root),
                    "inputs": describe_inputs(ready["inputs"], repo_root),
                    "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
-    with staged_output(out_dir) as tmp:
-        (tmp / "results.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
+    body = (json.dumps(report, indent=2, ensure_ascii=False) + "\n").encode()
+    digest = hashlib.sha256(body).hexdigest()
+    with staged_output(out_dir) as tmp:  # all or nothing: no folder unless both files are written
+        (tmp / "results.json").write_bytes(body)
+        (tmp / "results.json.sha256").write_text(f"{digest}  results.json\n")
+    report["results_sha256"] = digest
+    print_summary(report)
+    return report
 
+
+def print_summary(report: dict) -> None:
+    """Printing only; the results are already saved, so an error here never allows a rerun."""
     fmt = lambda r: f"{r['mean']:+.4f} [{r['ci95'][0]:+.4f}, {r['ci95'][1]:+.4f}]"  # noqa: E731
     acc = lambda r: f"{r['mean']:.4f} [{r['ci95'][0]:.4f}, {r['ci95'][1]:.4f}]"  # noqa: E731
     bins = lambda b: ", ".join(f"{x['gap_from']}-{x['gap_to'] or 'inf'}: "  # noqa: E731
                                + (f"{x['accuracy']:.3f}" if x["accuracy"] is not None else "-") + f" ({x['pairs']})"
                                for x in b)
     for ds, res in report["datasets"].items():
-        print(f"\n{ds} test: {res['pairs']} pairs, {res['clusters']} clusters, rule = {res['rule_chosen_on_train']}")
+        print(f"\n{ds} test: {res['pairs']} pairs, {res['clusters']} clusters, rule = {res['rule_from_step8']}")
         for name, m in res["models"].items():
             mark = "  <- primary" if PRIMARY[ds] == name else ""
             print(f"  {name:22s} acc {acc(m['accuracy'])}  top1 {m['ranking']['top1']:.3f} "
@@ -257,8 +297,7 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
         print(f"  decision: {res['decision']}")
     print(f"\ncreativeranking model by score gap (val, for the close-call threshold): "
           f"{bins(report['creativeranking_val_score_gaps'])}")
-    print(f"\nwrote data/evaluation/{VERSION}/results.json")
-    return report
+    print(f"\nwrote data/evaluation/{VERSION}/results.json (sha256 {report['results_sha256']})")
 
 
 if __name__ == "__main__":
