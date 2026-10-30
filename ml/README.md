@@ -51,3 +51,16 @@
 - 1.52 GB는 Mac 측정 프로세스의 최대 메모리이며 배포 서버 전체 RAM 요구량이 아니다(FastAPI·이미지 처리 등은 별도).
 - 배포 서버 CPU에서는 측정하지 않았다. 측정 JSON은 `artifacts/benchmarks/`(Git 제외)에 있다.
 - 테스트: `python -m pytest tests/ml -q` → 28 passed (2026-10-27).
+
+## feature cache (7단계, 2026-10-29)
+
+`python scripts/ml_extract_features.py`가 split 결과(`data/processed/splits/split-v1/`)의 모든 이미지를 한 번 계산해 `data/features/<feature_version>/`(Git 제외)에 저장한다. 학습·평가는 이 파일만 읽는다.
+
+- 이미지 받기: `python scripts/ml_fetch_images.py`. TASTE `images/`와 CreativeRanking `images.zip`에서 필요한 이미지(56,663장, 약 5.1 GB)만 range 요청으로 받는다. revision 고정, CRC32 검사, 이어 받기 지원. 107.7 GB zip 전체는 받지 않는다.
+- CLIP: ViT-B-32 / openai, QuickGELU, CPU(서비스 순위 worker와 같은 장치), 입력 224, open_clip 기본 정규화, `pad-square-v1`(흰색) 후 L2 정규화한 float32.
+- 이미지 통계(`stats-v1`): brightness, contrast, saturation, n_colors(16단계×3채널 색 중 나타난 비율). 패딩 전 원본 이미지 기준, 모두 0~1.
+- 투명 이미지: 투명 부분을 패딩 색(흰색)으로 채운 뒤 계산한다. 개수는 manifest의 `alpha_flattened`.
+- center crop: 평가(10단계)의 패딩 vs crop 비교용으로 val·test 이미지만 따로 계산한다. 학습·서비스 기본은 패딩이다.
+- 파일: `<dataset>_index.parquet`(row, image, split, had_alpha)의 row 순서가 `<dataset>_clip.npy`, `<dataset>_stats.npy`의 행 순서와 같다. `manifest.json`에 모델·버전·열 순서·개수·코드 커밋·입력 SHA-256을 기록한다. pickle은 쓰지 않는다.
+- 모든 이미지가 성공하고 값이 모두 유한할 때만 폴더가 한 번에 바뀐다.
+- 속도 확인: `--time-only 200`은 200장만 계산해 속도와 전체 예상 시간을 출력하고 아무것도 쓰지 않는다.
