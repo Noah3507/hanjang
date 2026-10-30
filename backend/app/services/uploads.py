@@ -71,6 +71,8 @@ class Record:
     last_copy: str | None = None
     renders: dict = field(default_factory=dict)
     last_render: str | None = None
+    rankings: dict = field(default_factory=dict)
+    last_ranking: str | None = None
 
 
 class PrivateUploadStore:

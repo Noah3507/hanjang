@@ -1,0 +1,110 @@
+import { test, expect } from './fixtures'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+const root = fileURLToPath(new URL('../..', import.meta.url))
+const python = process.env.PLAYWRIGHT_PYTHON || (process.platform === 'win32' ? `${root}/.venv/Scripts/python.exe` : 'python')
+
+async function ready(page: import('@playwright/test').Page) {
+  await page.goto('/')
+  const buffer = execFileSync(python, ['-c', "from PIL import Image,ImageDraw;import io,sys;i=Image.new('RGB',(480,360),'#f3ead5');d=ImageDraw.Draw(i);d.ellipse((80,40,400,320),fill='#c65b25');b=io.BytesIO();i.save(b,'PNG');sys.stdout.buffer.write(b.getvalue())"])
+  await page.getByLabel('상품 사진', { exact: true }).setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer })
+  await page.getByLabel('가게명', { exact: true }).fill('테스트 한잔')
+  await page.getByLabel('상품명', { exact: true }).fill('한글 상품')
+  await page.getByLabel('가격', { exact: true }).fill(' 3,000 원 ')
+  await page.getByLabel('광고 분위기').selectOption('warm')
+  await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
+  await page.getByRole('button', { name: '4전략 카피 생성' }).click()
+  await expect(page.getByText('카피 상태: completed')).toBeVisible()
+  await page.getByRole('button', { name: '광고 4장 렌더링' }).click()
+  await expect(page.getByText('렌더링 상태: completed')).toBeVisible({ timeout: 45000 })
+}
+
+test('actual API: four PNGs, accessible zoom, mock ranking, reload, stale and new revision', async ({ page }, info) => {
+  test.setTimeout(120000)
+  const errors: string[]=[]
+  page.on('console',e=>{if(e.type()==='error')errors.push(e.text())})
+  await ready(page)
+  const ads=page.getByRole('region',{name:'4전략 광고 이미지'})
+  const ranks=page.getByRole('region',{name:'광고 임시 순위'})
+  await expect(ads.getByRole('img')).toHaveCount(4)
+  const zoom=page.getByRole('button',{name:'비주얼 광고 확대 보기'})
+  await zoom.focus();await page.keyboard.press('Enter')
+  const dialog=page.getByRole('dialog',{name:'비주얼 광고 확대'})
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('img')).toHaveJSProperty('naturalWidth',1080)
+  await expect(dialog.getByRole('img')).toHaveJSProperty('naturalHeight',1350)
+  await page.keyboard.press('Tab')
+  expect(await page.evaluate(()=>document.activeElement?.closest('dialog')!==null)).toBe(true)
+  await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(zoom).toBeFocused()
+  await zoom.click();await page.getByRole('button',{name:'확대 화면 닫기 · 비주얼'}).click();await expect(zoom).toBeFocused()
+  await ranks.getByRole('button',{name:'임시 순위 확인'}).click()
+  await expect(ranks.getByRole('listitem')).toHaveCount(4)
+  await expect(ranks.getByRole('listitem').first()).toHaveText('1위 · 비주얼 · visual')
+  await expect(ranks.getByText('시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다')).toBeVisible()
+  expect(await ranks.getByRole('list').innerText()).not.toMatch(/0\.8|0\.6|%/)
+  await page.screenshot({path:info.outputPath('results-desktop.png'),fullPage:true})
+  await page.reload();await page.getByRole('button',{name:'저장 정보 다시 조회'}).click()
+  await expect(ranks.getByRole('listitem')).toHaveCount(4)
+  await page.getByLabel('가격',{exact:true}).fill(' 4,000 원 ')
+  await expect(ranks).toHaveCount(0) // Unsaved input cannot keep a visible old ranking.
+  await page.getByRole('button',{name:'상품 정보와 사진 저장'}).click()
+  await expect(ads.getByText(/최신 결과가 아닙니다/)).toBeVisible()
+  await expect(ranks.getByRole('list')).toHaveCount(0)
+  await expect(ranks.getByRole('button',{name:'임시 순위 확인'})).toBeDisabled()
+  await page.getByRole('button',{name:'4전략 카피 생성'}).click()
+  await expect(page.getByText('카피 상태: completed')).toBeVisible()
+  await ads.getByRole('button',{name:'광고 4장 렌더링'}).click()
+  await expect(ads.getByText('렌더링 상태: completed')).toBeVisible({timeout:45000})
+  await expect(ranks.getByRole('list')).toHaveCount(0)
+  await ranks.getByRole('button',{name:'임시 순위 확인'}).click()
+  await expect(ranks.getByRole('listitem')).toHaveCount(4)
+  await page.setViewportSize({width:375,height:812})
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+  await zoom.click();await expect(dialog).toBeVisible()
+  expect(await dialog.evaluate(e=>e.getBoundingClientRect().width<=innerWidth)).toBe(true)
+  await page.keyboard.press('Escape')
+  await page.screenshot({path:info.outputPath('results-mobile.png'),fullPage:true})
+  expect(errors).toEqual([])
+})
+
+test('simulated ranking failure and asset permission failure recover without losing PNGs', async ({ page }) => {
+  test.setTimeout(90000)
+  await ready(page)
+  const ranks=page.getByRole('region',{name:'광고 임시 순위'})
+  await page.route('**/ranking',r=>r.request().method()==='POST'
+    ? r.fulfill({status:503,json:{error:{message:'임시 순위 처리 오류'}}}) : r.continue())
+  await ranks.getByRole('button',{name:'임시 순위 확인'}).click()
+  await expect(ranks.getByRole('alert')).toContainText('임시 순위 처리 오류')
+  await expect(page.getByRole('region',{name:'4전략 광고 이미지'}).getByRole('img')).toHaveCount(4)
+  await page.unroute('**/ranking')
+  await ranks.getByRole('button',{name:'임시 순위 확인'}).click()
+  await expect(ranks.getByRole('listitem')).toHaveCount(4)
+  await page.route('**/api/v1/assets/**',r=>r.fulfill({status:410,json:{error:{message:'만료'}}}))
+  await page.reload();await page.getByRole('button',{name:'저장 정보 다시 조회'}).click()
+  await expect(page.getByRole('alert').filter({hasText:'만료'})).toBeVisible()
+  await page.unroute('**/api/v1/assets/**')
+  await page.getByRole('button',{name:'저장 정보 다시 조회'}).click()
+  await expect(page.getByRole('region',{name:'4전략 광고 이미지'}).getByRole('img')).toHaveCount(4)
+})
+
+test('simulated delayed ranking cannot publish onto a changed input', async ({ page }) => {
+  test.setTimeout(90000)
+  await ready(page)
+  let release!:()=>void
+  const gate=new Promise<void>(resolve=>{release=resolve})
+  let started!:()=>void
+  const captured=new Promise<void>(resolve=>{started=resolve})
+  await page.route('**/ranking',async route=>{
+    if(route.request().method()!=='POST')return route.continue()
+    const response=await route.fetch();started();await gate
+    await route.fulfill({response}).catch(()=>{}) // The old component may already be unmounted.
+  })
+  await page.getByRole('button',{name:'임시 순위 확인'}).click()
+  await captured
+  await page.getByLabel('상품명',{exact:true}).fill('바뀐 상품')
+  release()
+  await expect(page.getByRole('region',{name:'광고 임시 순위'})).toHaveCount(0)
+  await page.getByRole('button',{name:'상품 정보와 사진 저장'}).click()
+  await expect(page.getByText(/최신 결과가 아닙니다/)).toBeVisible()
+  await expect(page.getByRole('region',{name:'광고 임시 순위'}).getByRole('list')).toHaveCount(0)
+})

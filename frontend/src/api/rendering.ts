@@ -21,8 +21,9 @@ export async function rendering(handle: UploadHandle, start?: { asset: string; d
   if (!body || body.operation !== 'rendering' || !['pending', 'processing', 'completed', 'failed'].includes(body.status)
     || typeof body.is_current !== 'boolean' || typeof body.mock_copy !== 'boolean' || !Array.isArray(body.candidates)
     || (body.status === 'completed' && (body.candidates.length !== 4 || new Set(body.candidates.map((c: RenderCandidate) => c.strategy)).size !== 4
+      || new Set(body.candidates.map((c: RenderCandidate) => c.candidate_id)).size !== 4
       || body.candidates.some((c: RenderCandidate) => !['emotional', 'price', 'visual', 'brand'].includes(c.strategy)
-        || !c.png || !/^[a-f0-9]{32}$/.test(c.png.asset_id) || c.png.width !== 1080 || c.png.height !== 1350 || c.png.revision !== body.revision)))) throw new Error('광고 응답 형식이 올바르지 않습니다.')
+        || !c.candidate_id || c.revision !== body.revision || !c.png || !/^[a-f0-9]{32}$/.test(c.png.asset_id) || c.png.width !== 1080 || c.png.height !== 1350 || c.png.revision !== body.revision)))) throw new Error('광고 응답 형식이 올바르지 않습니다.')
   return body
 }
 export async function preview(handle: UploadHandle, asset: string) {

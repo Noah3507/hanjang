@@ -1,5 +1,9 @@
 # API와 Ranking 계약 초안
 
+## 최신 9단계 결과·Mock Ranking 구현
+
+사용자 Phase A/B 승인으로 `POST/GET /api/v1/jobs/{job_id}/ranking`을 추가했다. POST는 `{expected_render_revision, expected_candidate_ids[4]}`, 응답은 상태 envelope와 기존 v1.1 Ranking이다. Candidate 및 rendering API는 변경하지 않는다. source=mock/model_version=mock-v1/feature_version=null/pairwise=null이며 score는 fixture 고정 시험값으로 UI에 표시하지 않는다. 세션·TTL·revision·asset snapshot·stale·오류와 호환성 영향은 [RESULTS](RESULTS.md)를 따른다. 아래 과거 전체 GenerationResult 초안을 신규 통합 API 구현으로 해석하지 않는다.
+
 ## 최신 S5b 구현 범위 (2026-10-28)
 
 아래 과거 광고 전체 생성/Ranking/편집 초안과 구분합니다. 사용자 승인으로 POST/GET `/jobs/{job_id}/rendering`과 copy-generation 응답의 불변 `copy_key`를 추가합니다. 요청은 `{expected_asset_id, expected_input:{facts,mood,product_features,use_address_for_copy}, expected_copy_key}`이며 불일치는409입니다. POST202/Location, GET200, 기존 네 상태·세션·TTL·asset 조회를 유지합니다. 응답은 `{job_id,operation:"rendering",status,status_url,source_asset_id,copy_key,revision,is_current,mock_copy,candidates,measurements,warnings,error,expires_at}`입니다. Candidate/B 계약은 변경하지 않으며 ranking 없는 렌더링 전용 응답입니다. 상세 schema·상태·오류·캐시·계측은 [RENDERING](RENDERING.md)을 기준으로 합니다.
