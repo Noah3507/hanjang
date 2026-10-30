@@ -26,21 +26,34 @@ SPLITS = ("train", "val", "test")
 class ImageFeatures:
     """One dataset of the step 7 cache. Row order of index == row order of the arrays."""
     images: pd.Series
+    splits: pd.Series  # split of each image, as recorded by step 7
     matrix: np.ndarray  # [n_images, clip_dim + n_stats], float64
     columns: list[str]
 
     @classmethod
-    def load(cls, feature_dir: Path, dataset: str) -> "ImageFeatures":
+    def load(cls, feature_dir: Path, dataset: str, expected_version: str) -> "ImageFeatures":
+        """Load and check one cache; any mismatch stops training before a model is fitted."""
         feature_dir = Path(feature_dir)
         manifest = json.loads((feature_dir / "manifest.json").read_text())
+        if manifest.get("feature_version") != expected_version:
+            raise ValueError(f"feature cache is {manifest.get('feature_version')!r}, config expects {expected_version!r}")
         index = pd.read_parquet(feature_dir / f"{dataset}_index.parquet")
         clip = np.load(feature_dir / f"{dataset}_clip.npy", allow_pickle=False)
         stats = np.load(feature_dir / f"{dataset}_stats.npy", allow_pickle=False)
         if not (len(index) == len(clip) == len(stats)) or not (index["row"] == np.arange(len(index))).all():
             raise ValueError(f"{dataset}: index and arrays do not line up")
-        columns = [f"clip_{i}" for i in range(clip.shape[1])] + list(manifest["stats"]["columns"])
+        if index["image"].duplicated().any():
+            raise ValueError(f"{dataset}: an image appears twice in the feature index")
+        if clip.ndim != 2 or clip.shape[1] != int(manifest["clip"]["embedding_dim"]):
+            raise ValueError(f"{dataset}: CLIP width {clip.shape[1:]} != manifest embedding_dim")
+        stat_names = list(manifest["stats"]["columns"])
+        if stats.ndim != 2 or stats.shape[1] != len(stat_names):
+            raise ValueError(f"{dataset}: stats width {stats.shape[1:]} != manifest columns {stat_names}")
+        columns = [f"clip_{i}" for i in range(clip.shape[1])] + stat_names
         matrix = np.concatenate([clip, stats], axis=1).astype(np.float64)
-        return cls(index["image"].reset_index(drop=True), matrix, columns)
+        if not np.isfinite(matrix).all():
+            raise ValueError(f"{dataset}: features contain NaN or infinite values")
+        return cls(index["image"].reset_index(drop=True), index["split"].reset_index(drop=True), matrix, columns)
 
     def rows(self, images: pd.Series) -> np.ndarray:
         lookup = pd.Series(np.arange(len(self.images)), index=self.images.to_numpy())
@@ -63,9 +76,13 @@ class PairSet:
 def pair_set(pairs: pd.DataFrame, features: ImageFeatures, split: str, dataset: str) -> PairSet:
     part = pairs[pairs["split"] == split]
     n = len(part)
+    rows_a, rows_b = features.rows(part["image_a"]), features.rows(part["image_b"])
+    wrong = (features.splits.to_numpy()[rows_a] != split) | (features.splits.to_numpy()[rows_b] != split)
+    if wrong.any():
+        raise ValueError(f"{dataset} {split}: {int(wrong.sum())} pairs use images the feature cache puts in another split")
     return PairSet(
-        a=features.matrix[features.rows(part["image_a"])],
-        b=features.matrix[features.rows(part["image_b"])],
+        a=features.matrix[rows_a],
+        b=features.matrix[rows_b],
         y=part["a_wins"].to_numpy().astype(np.float64),
         weight=np.full(n, 1.0 / max(n, 1)),  # every dataset counts equally in a joint fit
         dataset=np.full(n, dataset),

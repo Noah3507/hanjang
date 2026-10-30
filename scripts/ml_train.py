@@ -4,8 +4,9 @@ Run from the repository root, inside .venv-ml, after scripts/ml_extract_features
   python scripts/ml_train.py
 
 Fits every (training set x L2) setting in ml/training/config.json on TRAIN
-pairs only (scaler fit on train images only), picks the setting with the best
-mean val pairwise accuracy over both datasets, and writes
+pairs only (scaler fit on train images only), picks the setting by the config's
+"selection" rule (primary dataset's val accuracy, then the secondary one's, then
+the larger L2), and writes
 artifacts/models/ranking/<version>/ (ignored by Git):
   model.safetensors    weights [n_features], scaler mean/std (float64, no pickle)
   model_config.json    feature order and versions needed to score a new image
@@ -54,6 +55,12 @@ def evaluate(sets: dict, scaler: Scaler, weights: np.ndarray) -> dict:
     return result
 
 
+def choose_best(runs: list[dict], selection: dict) -> dict:
+    """Highest primary val accuracy; ties -> higher secondary val accuracy -> larger L2 (simpler model)."""
+    primary, secondary = selection["primary"], selection["secondary"]
+    return max(runs, key=lambda r: (r["val"][primary]["accuracy"], r["val"][secondary]["accuracy"], r["l2"]))
+
+
 def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", type=Path, default=Path("ml/training/config.json"))
@@ -65,7 +72,11 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
     split_dir = repo_root / "data/processed/splits" / cfg["split_version"]
     torch.set_num_threads(max(1, torch.get_num_threads()))
 
-    features = {ds: ImageFeatures.load(feature_dir, ds) for ds in DATASETS}
+    features = {ds: ImageFeatures.load(feature_dir, ds, cfg["feature_version"]) for ds in DATASETS}
+    if features["taste"].columns != features["creativeranking"].columns:
+        raise ValueError("taste and creativeranking features have different columns or order")
+    if {cfg["selection"]["primary"], cfg["selection"]["secondary"]} != set(DATASETS):
+        raise ValueError("selection must name both datasets")
     pairs = {ds: pd.read_parquet(split_dir / f"{ds}.parquet") for ds in DATASETS}
     train = {ds: pair_set(pairs[ds], features[ds], "train", ds) for ds in DATASETS}
     val = {ds: pair_set(pairs[ds], features[ds], "val", ds) for ds in DATASETS}
@@ -90,7 +101,7 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
             print(f"{name:16s} l2={l2:<7g} val acc " + "  ".join(
                 f"{ds} {val_result[ds]['accuracy']:.4f}" for ds in DATASETS) + f"  mean {mean_acc:.4f}", flush=True)
 
-    best = max(runs, key=lambda r: (r["mean_val_accuracy"], -r["l2"]))
+    best = choose_best(runs, cfg["selection"])
     scaler, weights = best["_model"]
     columns = features[DATASETS[0]].columns
     baselines_path = repo_root / "data/evaluation/baselines-v1/results.json"
@@ -133,7 +144,8 @@ def main(argv: list[str] | None = None, repo_root: Path = REPO_ROOT) -> dict:
                   str(tmp / "model.safetensors"), metadata={"model_version": cfg["version"]})
         (tmp / "model_config.json").write_text(json.dumps(model_config, indent=2, ensure_ascii=False) + "\n")
         (tmp / "training_report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
-    print(f"chosen: {best['training_set']} l2={best['l2']} mean val accuracy {best['mean_val_accuracy']:.4f}")
+    print(f"chosen: {best['training_set']} l2={best['l2']} (by {cfg['selection']['primary']} val accuracy) "
+          + "  ".join(f"{ds} {best['val'][ds]['accuracy']:.4f}" for ds in DATASETS))
     print(f"wrote {out_dir}")
     return report
 
