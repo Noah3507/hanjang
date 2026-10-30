@@ -21,6 +21,8 @@ from app.services.copy_provider import build_copy_provider
 from app.api.rendering import router as render_router
 from app.services.render_store import RenderStore
 from app.services.render_execution import RenderExecution
+from app.api.ranking import router as ranking_router
+from app.services.ranking_store import RankingStore
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -55,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.analysis_store = AnalysisStore(storage, analysis_executor)
     application.state.copy_store = CopyStore(storage, application.state.analysis_store, copy_provider)
     application.state.render_store = RenderStore(storage, application.state.copy_store, RenderExecution())
+    application.state.ranking_store = RankingStore(storage, application.state.render_store)
     application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
     application.add_exception_handler(UploadError, upload_error)
     application.add_exception_handler(RequestValidationError, validation_error)
@@ -72,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(analysis_router, prefix="/api/v1")
     application.include_router(copy_router, prefix="/api/v1")
     application.include_router(render_router, prefix="/api/v1")
+    application.include_router(ranking_router, prefix="/api/v1")
     # Requested local health path; same response as the versioned contract.
     application.include_router(health_router, include_in_schema=False)
     return application
