@@ -7,7 +7,8 @@ score the CreativeRanking model, the TASTE model and the baselines.
   CreativeRanking products), because pairs inside a group are not independent
 - Top-1 and Kendall's tau per ranking group (one TASTE vote of 4 images, one product)
 - designer agreement: how often a vote agrees with the majority of its image pair
-- accuracy by predicted confidence: for the "close call" threshold in the service
+  (a reference for rater consistency, not an independent human ceiling)
+- accuracy by score gap |s_A - s_B|: the gap is not a calibrated probability
 """
 
 from __future__ import annotations
@@ -101,20 +102,32 @@ def creativeranking_product_groups(pairs: pd.DataFrame, image_score: dict) -> di
     return groups
 
 
+def same_partition(first: np.ndarray, second: np.ndarray) -> bool:
+    """True when two labelings group the same items together (label names may differ)."""
+    table = pd.DataFrame({"a": np.asarray(first), "b": np.asarray(second)}).drop_duplicates()
+    return bool(table["a"].is_unique and table["b"].is_unique)
+
+
 def designer_agreement(pairs: pd.DataFrame) -> float:
-    """Share of votes that agree with the majority vote of the same image pair (even split = 0.5)."""
+    """Share of votes that agree with the majority vote of the same image pair (even split = 0.5).
+
+    The majority includes the vote itself, so this is a reference for rater consistency,
+    not an independent upper bound on what a model can reach."""
     share = pairs.groupby(["image_a", "image_b"])["a_wins"].transform("mean")
     agree = np.where(share == 0.5, 0.5, np.where(share > 0.5, pairs["a_wins"] == 1, pairs["a_wins"] == 0))
     return float(np.mean(agree))
 
 
-def accuracy_by_confidence(diff: np.ndarray, credit: np.ndarray,
-                           edges: tuple = (0.5, 0.55, 0.6, 0.7, 0.8, 1.0)) -> list[dict]:
-    """Accuracy of pairs grouped by the predicted probability of the favored image, max(p, 1-p)."""
-    p = 1.0 / (1.0 + np.exp(-np.abs(np.asarray(diff, float))))
+def accuracy_by_score_gap(diff: np.ndarray, credit: np.ndarray,
+                          edges: tuple = (0.0, 0.2, 0.4, 0.8, 1.4, np.inf)) -> list[dict]:
+    """Accuracy of pairs grouped by the model score gap |s_A - s_B|.
+
+    sigmoid(gap) is the model's output, but its calibration is not verified, so the
+    bins are reported as score gaps, not as predicted probabilities."""
+    gap = np.abs(np.asarray(diff, float))
     out = []
     for low, high in zip(edges[:-1], edges[1:]):
-        mask = (p >= low) & ((p < high) if high < 1.0 else (p <= high))
-        out.append({"p_from": low, "p_to": high, "pairs": int(mask.sum()),
+        mask = (gap >= low) & (gap < high)
+        out.append({"gap_from": low, "gap_to": None if np.isinf(high) else high, "pairs": int(mask.sum()),
                     "accuracy": float(credit[mask].mean()) if mask.any() else None})
     return out

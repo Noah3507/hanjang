@@ -58,8 +58,8 @@ def _write(root: Path, seed=0):
                 for b in range(a + 1, 4):
                     ia, ib = imgs[a], imgs[b]
                     win = int((x[ia] - x[ib]) @ true_w + 0.3 * rng.normal() > 0)
-                    rows.append((names[ia], names[ib], win, g, f"e{vote}", split_of(g), f"comp{g}"))
-    pd.DataFrame(rows, columns=["image_a", "image_b", "a_wins", "prompt_id", "evaluator_id", "split",
+                    rows.append((names[ia], names[ib], win, g, f"e{vote}", f"taste:{g}", split_of(g), f"comp{g}"))
+    pd.DataFrame(rows, columns=["image_a", "image_b", "a_wins", "prompt_id", "evaluator_id", "group_id", "split",
                                 "split_group"]).to_parquet(split_dir / "taste.parquet")
 
     # CreativeRanking: 30 products of 3 images; products 0-19 train, 20-24 val, 25-29 test
@@ -116,13 +116,19 @@ def test_evaluation_reports_everything_once(tmp_path):
     cr, taste = report["datasets"]["creativeranking"], report["datasets"]["taste"]
     assert cr["pairs"] == 5 * 3 and taste["pairs"] == 6 * 12  # test pairs only
     primary = cr["models"]["creativeranking_model"]
-    assert primary["accuracy"]["mean"] > 0.7 and primary["accuracy"]["groups"] == 5
-    assert primary["ranking"]["groups"] == 5 and set(primary) >= {"center_crop_accuracy", "padding_minus_center_crop"}
+    assert primary["accuracy"]["mean"] > 0.7 and primary["accuracy"]["groups"] == 5 == cr["clusters"]
+    assert primary["ranking"]["groups"] == 5
+    assert set(primary["center_crop_sensitivity"]) == {"note", "accuracy", "padding_minus_center_crop"}
+    assert set(primary["difference_vs_baselines"]) == {"random", "rule"}
     assert set(taste["models"]) == {"creativeranking_model", "taste_model"}
-    assert 0.5 <= taste["designer_agreement"] <= 1.0
-    assert {"random"} < set(taste["baselines"]) and any(k.startswith("rule") for k in taste["baselines"])
+    assert 0.5 <= taste["designer_agreement_reference"] <= 1.0
+    assert set(taste["baselines"]) == {"random", "rule"}
+    assert set(cr["decision"]) == {"creativeranking_model"} and set(taste["decision"]) == {"taste_model"}
+    assert len(report["creativeranking_val_score_gaps"]) == 5
     with pytest.raises(SystemExit, match="only once"):
         evaluate.main(["--skip-laion"], repo_root=tmp_path)
+    with pytest.raises(SystemExit, match="only once"):
+        evaluate.main(["--skip-laion", "--check-only"], repo_root=tmp_path)
 
 
 def test_evaluation_refuses_a_model_with_other_feature_columns(tmp_path):
@@ -144,3 +150,34 @@ def test_load_model_rejects_wrong_shapes(tmp_path):
     (out / "model_config.json").write_text(json.dumps({"feature_columns": ["a", "b"]}))
     with pytest.raises(ValueError, match="finite numbers"):
         load_model(out)
+
+
+def test_check_only_reads_no_labels_and_writes_nothing(tmp_path, monkeypatch):
+    _write(tmp_path)
+    _load("ml_train_taste").main(["--config", str(tmp_path / "taste_config.json")], repo_root=tmp_path)
+    evaluate = _load("ml_evaluate")
+    real_read = pd.read_parquet
+    asked = []
+
+    def spy(path, *args, **kwargs):
+        asked.append(kwargs.get("columns"))
+        return real_read(path, *args, **kwargs)
+
+    monkeypatch.setattr(evaluate.pd, "read_parquet", spy)
+    result = evaluate.main(["--skip-laion", "--check-only"], repo_root=tmp_path)
+    split_reads = [c for c in asked if c is not None]
+    assert split_reads and all("a_wins" not in c for c in split_reads)
+    assert result["taste"]["test_pairs"] == 6 * 12 and result["taste"]["split_group_matches_components"] is True
+    assert not (tmp_path / "data/evaluation").exists()
+
+
+def test_taste_groups_that_do_not_match_image_components_stop_the_run(tmp_path):
+    _write(tmp_path)
+    _load("ml_train_taste").main(["--config", str(tmp_path / "taste_config.json")], repo_root=tmp_path)
+    path = tmp_path / "data/processed/splits/split-v1/taste.parquet"
+    pairs = pd.read_parquet(path)
+    test_rows = pairs.index[pairs["split"] == "test"]
+    pairs.loc[test_rows[:3], "split_group"] = "comp-wrong"  # part of one component gets another group
+    pairs.to_parquet(path)
+    with pytest.raises(ValueError, match="split_group does not match"):
+        _load("ml_evaluate").main(["--skip-laion", "--check-only"], repo_root=tmp_path)

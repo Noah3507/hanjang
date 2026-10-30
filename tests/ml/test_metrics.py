@@ -5,12 +5,13 @@ import pandas as pd
 import pytest
 
 from ml.evaluation.metrics import (
-    accuracy_by_confidence,
+    accuracy_by_score_gap,
     cluster_bootstrap,
     correct,
     creativeranking_product_groups,
     designer_agreement,
     ranking_metrics,
+    same_partition,
     taste_vote_groups,
 )
 
@@ -66,8 +67,14 @@ def test_designer_agreement_against_the_pair_majority():
     assert designer_agreement(pairs) == pytest.approx((3 + 0.5 * 2) / 6)
 
 
-def test_accuracy_by_confidence_bins():
+def test_accuracy_by_score_gap_bins():
     diff = np.array([0.0, 0.1, 3.0, -3.0])
-    bins = accuracy_by_confidence(diff, np.array([0.5, 1.0, 1.0, 0.0]))
-    assert bins[0]["pairs"] == 2 and bins[0]["accuracy"] == pytest.approx(0.75)
-    assert bins[-1]["pairs"] == 2 and bins[-1]["accuracy"] == pytest.approx(0.5)
+    bins = accuracy_by_score_gap(diff, np.array([0.5, 1.0, 1.0, 0.0]))
+    assert bins[0]["gap_from"] == 0.0 and bins[0]["pairs"] == 2 and bins[0]["accuracy"] == pytest.approx(0.75)
+    assert bins[-1]["gap_to"] is None and bins[-1]["pairs"] == 2 and bins[-1]["accuracy"] == pytest.approx(0.5)
+
+
+def test_same_partition_ignores_label_names():
+    assert same_partition(np.array(["x", "x", "y"]), np.array([1, 1, 2]))
+    assert not same_partition(np.array(["x", "x", "y"]), np.array([1, 2, 2]))
+    assert not same_partition(np.array(["x", "y", "y"]), np.array([1, 1, 1]))
