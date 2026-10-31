@@ -156,6 +156,17 @@ def test_pdf_completion_checks_current_snapshot_and_busy(service):
     assert c.get(url,headers=h).status_code==409
     assert not app.state.upload_store.records[m['job_id']].exports
 
+def test_expiry_during_edit_releases_renderer_without_publication(service):
+    app,c,h,m,b,_,_=service;r,edit=prepared(service)
+    from app.schemas.editing import EditRequest
+    owner=app.state.upload_store.authenticate(h['X-Hanjang-Session'])
+    store=app.state.editor_store
+    _,task=store.start(owner,m['job_id'],r['candidates'][0]['candidate_id'],EditRequest.model_validate(edit))
+    app.state.upload_store.records[m['job_id']].upload.expires_at=now()-timedelta(seconds=1)
+    store.finish(owner,m['job_id'],task)
+    assert not app.state.render_store.active
+    assert c.get(b+'/editing',headers=h).status_code in (404,410)
+
 @pytest.mark.skipif(os.getenv('RUN_RENDER_TESTS')!='1',reason='Requires existing Chromium')
 def test_actual_edited_png_pdf_and_second_edit(service,tmp_path):
     app,c,h,m,b,body,raw=service

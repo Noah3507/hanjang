@@ -89,7 +89,9 @@ class EditorStore:
                 if v.strategy==candidate.strategy:v.ad_copy=body.ad_copy.model_copy(deep=True)
             self.renders.active=True
             record.edits[request_key]=EditEntry(key,response,request_key);record.last_edit=request_key
-            return self.get(owner,job),(request_key,current.model_copy(deep=True),draft,edited_copy,source,candidate_id)
+            # Do not re-read TTL after reserving the renderer slot. If expiry
+            # occurs now, finish() owns cleanup and always releases the slot.
+            return response.model_copy(deep=True),(request_key,current.model_copy(deep=True),draft,edited_copy,source,candidate_id)
 
     def finish(self,owner,job,task):
         request_key,base,draft,edited_copy,source,candidate_id=task

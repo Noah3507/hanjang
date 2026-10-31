@@ -8,14 +8,14 @@ Windows 데스크탑, Python3.12.10/Node24.20.0/npm11.19.0, 기존 서비스 .ve
 
 | 명령 | 결과 |
 | --- | --- |
-| `RUN_RENDER_TESTS=1 HANJANG_RENDER_CHANNEL=chrome python -m pytest -q -p no:cacheprovider --basetemp artifacts/editor/full-final` | **290 passed**,102.63초,skipped0,AnyIO deprecated alias 경고1 |
+| `RUN_RENDER_TESTS=1 HANJANG_RENDER_CHANNEL=chrome python -m pytest -q -p no:cacheprovider --basetemp artifacts/editor/full-ttl-final` | **291 passed**,96.42초,skipped0,AnyIO deprecated alias 경고1 |
 | `npm --prefix frontend run typecheck` | 통과 |
 | `npm --prefix frontend run test:ci` | **51 passed / 13 files** |
 | `npm --prefix frontend run build` | 통과 |
 | `npm --prefix frontend run test:e2e -- --output=../artifacts/editor/e2e-full-final --reporter=list,html` | **28 passed**,2.0분,exit0 |
 | `python -m pip check`, `git diff --check`, index 보안 검사 | 통과 |
 
-첫 행은 PowerShell 환경변수 설정 후 서비스 `.venv/Scripts/python.exe`로 실행했다. 290에는 편집22개와 기존1–9단계 서비스/계약·실제 렌더러 회귀가 포함되어 focused 테스트를 더해 합산하지 않는다.
+첫 행은 PowerShell 환경변수 설정 후 서비스 `.venv/Scripts/python.exe`로 실행했다. 291에는 편집23개와 기존1–9단계 서비스/계약·실제 렌더러 회귀가 포함되어 focused 테스트를 더해 합산하지 않는다. 첫 전체290개 통과 후 편집 시작 직후 TTL이 만료되는 경계의 슬롯 해제 책임을 보완하고 만료 중 완료 테스트를 추가해 전체를 재실행했다.
 
 최종 E2E 변수: PLAYWRIGHT_CHANNEL=chrome, PLAYWRIGHT_FRONTEND_PORT=5186, PLAYWRIGHT_BACKEND_PORT=8013, DEV_BACKEND_URL=http://127.0.0.1:8013, PLAYWRIGHT_REQUIRE_PHOTO_MODEL=1, PLAYWRIGHT_REQUIRE_ANALYSIS_MODEL=1, PLAYWRIGHT_ANALYSIS_SAMPLE=artifacts/image-analysis/coffee.png, PLAYWRIGHT_HTML_OUTPUT_DIR=artifacts/editor/html-full-final(경로는 절대경로로 지정). rembg/CLIP은 로컬 실모델, 카피·ranking은 Mock이다.
 
