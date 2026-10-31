@@ -1,5 +1,7 @@
 # S5b / 사용자 8단계 광고 렌더링
 
+2026-10-31 후속10단계: [EDITING](EDITING.md)에 승인된 문구 편집·최신 성공 revision 다운로드와 A4 PDF를 추가한다. 기존 rendering 요청/응답·Candidate는 유지하며 같은 생성 snapshot의 POST/GET은 최신 편집 성공본을 반환한다. 편집 상태는 별도 editing envelope, 실패는 마지막 성공 rendering을 보존한다. 실제 renderer는 기존 네 전략 생성 외에 편집 대상 한 전략의 내부 실행도 지원한다. 아래 미구현 설명은8단계 당시 범위 기록이다.
+
 2026-10-30 사전 보완: 사용자 facts의 실제 동봉 폰트 cmap 지원을 렌더링 전에 검사하고 미지원이면 원문을 유지한 오류 안내를 제공합니다. 생성 카피의 이모지/미지원 글리프 검증과 호출 통제는 [OPENAI_VALIDATION](OPENAI_VALIDATION.md)을 따릅니다. 기존 Chromium 최종 검사·템플릿·디자인·Candidate schema는 유지합니다.
 
 7단계 저장 카피 → current snapshot 검증 → Jinja2 → Node/Playwright Chromium → 실제 1080×1350 RGB 불투명 PNG 네 장 → 비공개 asset 조회입니다. LLM·CLIP을 다시 실행하지 않습니다. 순위·진단 엔진·편집·다운로드·PDF는 구현하지 않습니다. Mock 카피는 API의 mock_copy와 UI 배너로 표시하며 실제 LLM 검증은 보류입니다.

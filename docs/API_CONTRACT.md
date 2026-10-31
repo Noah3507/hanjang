@@ -1,5 +1,9 @@
 # API와 Ranking 계약 초안
 
+## 최신 10단계 승인 계약 (2026-10-31)
+
+후보 문구 편집 PATCH `/jobs/{job_id}/candidates/{candidate_id}`, 작업 조회 GET `/jobs/{job_id}/editing`, 인증 다운로드 GET `/jobs/{job_id}/candidates/{candidate_id}/download?format=png|pdf&expected_revision=N`을 추가한다. 요청·응답·상태/오류·중복/충돌 정책은 [EDITING](EDITING.md)을 기준으로 한다. 기존 Candidate/B schema는 유지한다. 동일 계보 candidate_id·원본 copy_key를 유지하면서 네 후보 전체 revision을 올리고, 변경하지 않은 PNG bytes는 재사용한다. editing envelope는 마지막 성공 rendering과 별개이며 실패 시 성공본은 유지된다. rendering POST는 편집 성공본을 원래 카피로 되돌리지 않는다. 기존 ranking은 stale이며 사용자가 새 요청한다. PATCH CORS와16KiB body 제한을 적용한다. A4는 이번 단계 승인으로 필수이며 선택광고 한 장을 담은 세로1페이지 래스터 PDF다. 아래 과거 JobStatus/GenerationResult 초안을 현재 구현 API로 해석하지 않는다.
+
 ## 최신 9단계 결과·Mock Ranking 구현
 
 사용자 Phase A/B 승인으로 `POST/GET /api/v1/jobs/{job_id}/ranking`을 추가했다. POST는 `{expected_render_revision, expected_candidate_ids[4]}`, 응답은 상태 envelope와 기존 v1.1 Ranking이다. Candidate 및 rendering API는 변경하지 않는다. source=mock/model_version=mock-v1/feature_version=null/pairwise=null이며 score는 fixture 고정 시험값으로 UI에 표시하지 않는다. 세션·TTL·revision·asset snapshot·stale·오류와 호환성 영향은 [RESULTS](RESULTS.md)를 따른다. 아래 과거 전체 GenerationResult 초안을 신규 통합 API 구현으로 해석하지 않는다.

@@ -73,6 +73,11 @@ class Record:
     last_render: str | None = None
     rankings: dict = field(default_factory=dict)
     last_ranking: str | None = None
+    edited_renders: dict = field(default_factory=dict)
+    edits: dict = field(default_factory=dict)
+    last_edit: str | None = None
+    asset_hashes: dict = field(default_factory=dict)
+    exports: dict = field(default_factory=dict)
 
 
 class PrivateUploadStore:
@@ -249,6 +254,7 @@ class PrivateUploadStore:
             current = now()
             for job, record in list(self.records.items()):
                 if record.upload.expires_at <= current:
+                    record.exports.clear()
                     self.safe_path(record.path.name).unlink(missing_ok=True)
                     for asset, path in record.derived.items():
                         self.safe_path(path.name).unlink(missing_ok=True)

@@ -42,7 +42,7 @@ for (const [fmt, mime] of [['PNG', 'image/png'], ['JPEG', 'image/jpeg']]) {
     await expect(page.getByLabel('가격', { exact: true })).toHaveValue(' 10,500 원 ')
     await expect(page.getByText(/작업 상태: pending/)).toBeVisible()
     await page.screenshot({ path: info.outputPath('upload-saved.png'), fullPage: true })
-    await expect(page.getByText(/실제 ML 순위·문구 편집·다운로드는 아직 구현되지/)).toBeVisible()
+    await expect(page.getByText(/실제 ML 순위는 아직 연결되지/)).toBeVisible()
   })
 }
 

@@ -14,7 +14,8 @@ class UploadLimitMiddleware:
         path = scope.get("path", "")
         upload = scope.get("method") == "POST" and path == "/api/v1/uploads"
         draft = path.startswith("/api/v1/jobs/") and ((scope.get("method") == "PUT" and path.endswith(("/input", "/photo-source"))) or (scope.get("method") == "POST" and path.endswith(("/photo-processing", "/photo-analysis", "/copy-generation", "/rendering", "/ranking"))))
-        if scope["type"] != "http" or not (upload or draft):
+        edit = scope.get('method') == 'PATCH' and path.startswith('/api/v1/jobs/') and '/candidates/' in path
+        if scope["type"] != "http" or not (upload or draft or edit):
             return await self.app(scope, receive, send)
         try:
             self.storage.authenticate(Headers(scope=scope).get("x-hanjang-session"))
