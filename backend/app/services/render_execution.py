@@ -12,7 +12,7 @@ from PIL import Image, ImageOps
 from app.services.copy_glyphs import font_text_supported
 
 ROOT = Path(__file__).resolve().parents[3]
-VERSION = 'four-layouts-v1'
+VERSION = 'four-layouts-v2-evidence'
 FONT_HASH = '69975a0ac8472717870aefeab0a4d52739308d90856b9955313b2ad5e0148d68'
 ORDERS = ('emotional', 'price', 'visual', 'brand')
 
@@ -80,6 +80,10 @@ class RenderExecution:
                 raise RenderFailure('RENDER_INVALID_RESULT')
             for result in results:
                 result['png'] = opaque_png(base64.b64decode(result['png'], validate=True))
+                from app.services.diagnostics_evidence import attach_contrast_evidence
+                try:attach_contrast_evidence(result)
+                except Exception:pass  # No fabricated evidence, no failed ad.
+                finally:result.pop('background_png',None)
             return results
         except subprocess.TimeoutExpired:
             raise RenderFailure('RENDER_TIMEOUT') from None

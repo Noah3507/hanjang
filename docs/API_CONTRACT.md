@@ -1,5 +1,10 @@
 # API와 Ranking 계약 초안
 
+## 11단계 additive diagnostics 계약
+
+`POST /api/v1/jobs/{job_id}/diagnostics`는 `{expected_render_revision, expected_candidates:[{candidate_id,asset_id}]}`(고유 네 후보)을 받아 동기200을 반환합니다. `GET` 동일 경로는 최근 결과를 재조회합니다. 응답 `operation=diagnostics`, pending/processing/completed/failed는 진단 operation이며 Job 상태를 변경하지 않습니다. 결과는 revision/is_current/rules_version/results/warnings/error/expires_at와 후보별 coverage·네 규칙의 status/measured_value/unit/criterion/explanation/action입니다. 측정 불가는 null, 수치와 점수는 구분합니다. start/end/GET의 snapshot·asset hash 검증, 409/503/failed·stale 정책과 예제는 [DIAGNOSTICS](DIAGNOSTICS.md)가 확정 기준입니다. 기존 Candidate/B diagnostics placeholder 및 JSON Schema·fixture는 변경하지 않습니다. `measurements`의 text 항목에 glyph_rects/contrast_eligible/contrast_evidence를 additive 확장하며 Candidate text_boxes에는 넣지 않습니다.
+
+
 ## 최신 10단계 승인 계약 (2026-10-31)
 
 후보 문구 편집 PATCH `/jobs/{job_id}/candidates/{candidate_id}`, 작업 조회 GET `/jobs/{job_id}/editing`, 인증 다운로드 GET `/jobs/{job_id}/candidates/{candidate_id}/download?format=png|pdf&expected_revision=N`을 추가한다. 요청·응답·상태/오류·중복/충돌 정책은 [EDITING](EDITING.md)을 기준으로 한다. 기존 Candidate/B schema는 유지한다. 동일 계보 candidate_id·원본 copy_key를 유지하면서 네 후보 전체 revision을 올리고, 변경하지 않은 PNG bytes는 재사용한다. editing envelope는 마지막 성공 rendering과 별개이며 실패 시 성공본은 유지된다. rendering POST는 편집 성공본을 원래 카피로 되돌리지 않는다. 기존 ranking은 stale이며 사용자가 새 요청한다. PATCH CORS와16KiB body 제한을 적용한다. A4는 이번 단계 승인으로 필수이며 선택광고 한 장을 담은 세로1페이지 래스터 PDF다. 아래 과거 JobStatus/GenerationResult 초안을 현재 구현 API로 해석하지 않는다.

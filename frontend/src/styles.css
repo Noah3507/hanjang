@@ -67,5 +67,6 @@ input[type="checkbox"] { width: auto; }
 .ad-preview-dialog button{display:block;margin:0 0 12px auto}
 .ranking-results{margin-top:24px;padding:16px;border:1px solid #c6cfc8;border-radius:12px}
 .mock-ranking-notice{font-weight:700}.ranking-results li{padding:6px 0}
+.readability-diagnostics{margin-top:24px;border-top:1px solid #c6cfc8;padding-top:16px}.diagnostic-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.diagnostic-cards article{min-width:0;border:1px solid #c6cfc8;border-radius:12px;padding:16px;overflow-wrap:anywhere}.diagnostic-rule{border-top:1px solid #d5d5d5;padding:8px 0}.diagnostic-rule h5{font-size:1rem;margin:8px 0}@media(max-width:767px){.diagnostic-cards{grid-template-columns:1fr}}
 .ad-editor{margin-top:20px;padding:16px;border:1px solid #c6cfc8;border-radius:12px;overflow-wrap:anywhere}.ad-editor form{margin-top:16px}.ad-editor label{display:block;margin:12px 0}.ad-editor select{max-width:100%}
 @media(max-width:767px){.ad-cards{grid-template-columns:minmax(0,1fr)}}
