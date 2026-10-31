@@ -46,7 +46,11 @@ class RankInput:
 
 @dataclass(frozen=True)
 class ModelHandle:
-    """A loaded bundle. Fields cannot be reassigned and the arrays are read-only."""
+    """A loaded bundle. Fields cannot be reassigned, the arrays are read-only and clip is a read-only mapping.
+
+    _encoder is a torch module (eval mode, no gradients); Python cannot make it fully
+    immutable, so callers must treat the handle as read-only and never change it.
+    """
     model_version: str
     feature_version: str
     preprocessing_version: str

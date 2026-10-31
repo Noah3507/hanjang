@@ -43,18 +43,33 @@ def describe_file(root: Path, relative: str) -> dict:
 
 
 def safe_member(root: Path, relative: str) -> Path:
-    """A listed file must stay inside the bundle folder (no absolute paths, no '..')."""
-    pure = PurePosixPath(relative)
-    if pure.is_absolute() or ".." in pure.parts or not relative:
+    """A listed file must stay inside the bundle folder.
+
+    Rejects absolute paths, '..', backslashes and drive letters, and also any
+    symbolic link (of the file or of a folder on its way) whose real target is
+    outside the bundle: the path is resolved and must stay under the resolved
+    bundle folder. Links that stay inside the bundle are allowed.
+    """
+    pure = PurePosixPath(relative) if isinstance(relative, str) else None
+    if pure is None or not relative or pure.is_absolute() or ".." in pure.parts or "\\" in relative \
+            or ":" in relative:
         raise ArtifactMismatch(f"manifest lists a file outside the bundle: {relative!r}")
-    return root / Path(*pure.parts)
+    path = Path(root) / Path(*pure.parts)
+    try:
+        base = Path(root).resolve(strict=True)
+        target = path.resolve(strict=False)
+    except (OSError, RuntimeError) as error:  # missing folder, link loop
+        raise ArtifactMismatch(f"bundle path cannot be resolved: {pure.name}") from error
+    if not target.is_relative_to(base):
+        raise ArtifactMismatch(f"bundle file points outside the bundle: {pure.name}")
+    return path
 
 
 def read_manifest(root: Path) -> dict:
     root = Path(root)
     if not root.is_dir():
         raise ModelNotAvailable("model bundle folder not found")
-    path = root / "manifest.json"
+    path = safe_member(root, "manifest.json")
     if not path.is_file():
         raise ModelNotAvailable("manifest.json not found in the model bundle")
     try:

@@ -304,3 +304,49 @@ def test_loading_does_not_log_the_random_init_warning(bundle, caplog):
     with caplog.at_level("WARNING"):
         load_model(bundle)
     assert "No pretrained weights loaded" not in caplog.text
+
+
+def _symlink(link: Path, target: Path):
+    try:
+        link.symlink_to(target, target_is_directory=target.is_dir())
+    except (OSError, NotImplementedError):
+        pytest.skip("symbolic links are not available here (e.g. Windows without the privilege)")
+
+
+def test_a_file_linked_to_outside_the_bundle_is_rejected(copy, tmp_path):
+    clip = next((copy / "clip").glob("*.safetensors"))
+    outside = tmp_path / "outside.safetensors"
+    clip.rename(outside)  # same bytes, so only the location is wrong
+    _symlink(clip, outside)
+    with pytest.raises(ArtifactMismatch, match="outside the bundle"):
+        load_model(copy)
+
+
+def test_a_folder_linked_to_outside_the_bundle_is_rejected(copy, tmp_path):
+    outside = tmp_path / "outside-clip"
+    (copy / "clip").rename(outside)
+    _symlink(copy / "clip", outside)
+    with pytest.raises(ArtifactMismatch, match="outside the bundle"):
+        load_model(copy)
+
+
+def test_a_manifest_linked_to_outside_the_bundle_is_rejected(copy, tmp_path):
+    outside = tmp_path / "manifest.json"
+    (copy / "manifest.json").rename(outside)
+    _symlink(copy / "manifest.json", outside)
+    with pytest.raises(ArtifactMismatch, match="outside the bundle"):
+        load_model(copy)
+
+
+def test_links_that_stay_inside_the_bundle_are_allowed(copy):
+    (copy / "clip").rename(copy / "clip-data")
+    _symlink(copy / "clip", copy / "clip-data")
+    assert load_model(copy).model_version == "bt-test-v1"
+
+
+@pytest.mark.parametrize("name", ["..\\\\model.safetensors", "C:/model.safetensors", "/etc/passwd"])
+def test_windows_style_and_absolute_names_are_rejected(copy, name):
+    from ml.inference.bundle import safe_member
+
+    with pytest.raises(ArtifactMismatch):
+        safe_member(copy, name)
