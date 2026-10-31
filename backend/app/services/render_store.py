@@ -36,11 +36,11 @@ class RenderStore:
     def get(self, owner, job):
         with self.locked():
             record, _, asset, _, copy, key = self.snapshot(owner, job)
-            result = record.renders.get(key) or record.renders.get(record.last_render)
+            result = record.edited_renders.get(key) or record.renders.get(key) or record.edited_renders.get(record.last_render) or record.renders.get(record.last_render)
             if not result:
                 return self.blank(job, record, asset, copy)
             response = result.model_copy(deep=True)
-            response.is_current = copy is not None and record.renders.get(key) is result
+            response.is_current = copy is not None and (record.edited_renders.get(key) is result or record.renders.get(key) is result)
             return response
 
     def start(self, owner, job, body):
@@ -57,7 +57,7 @@ class RenderStore:
             if self.active:
                 raise UploadError(503, 'RENDER_BUSY', '다른 광고를 렌더링 중입니다. 잠시 후 다시 시도해 주세요.')
             result = self.blank(job, record, asset, copy)
-            result.revision = max((r.revision for r in record.renders.values()), default=0)+1
+            result.revision = max((r.revision for r in [*record.renders.values(), *record.edited_renders.values()]), default=0)+1
             result.status = 'processing'
             result.warnings = ['MOCK_COPY_NOT_LLM'] if result.mock_copy else ['COPY_REVIEW_REQUIRED']
             record.renders[key], record.last_render = result, key
@@ -98,7 +98,9 @@ class RenderStore:
                 _, _, _, _, current_copy, current_key = self.snapshot(owner, job)
                 response.is_current = current_copy is not None and current_key == key
                 record.derived.update(dict(written))
-                for asset, _ in written: self.uploads.assets[asset] = job
+                for asset, path in written:
+                    self.uploads.assets[asset] = job
+                    record.asset_hashes[asset] = sha256(path.read_bytes()).hexdigest()
                 response.candidates, response.measurements, response.status = candidates, measurements, 'completed'
         except Exception as error:
             for _, path in written: path.unlink(missing_ok=True)

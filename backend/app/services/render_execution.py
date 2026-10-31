@@ -76,7 +76,7 @@ class RenderExecution:
             if process.returncode or body.get('error'):
                 raise RenderFailure(body.get('error', 'RENDER_FAILED'))
             results = body['results']
-            if len(results) != 4 or {r['strategy'] for r in results} != set(ORDERS):
+            if len(results) != len(copy.variants) or {r['strategy'] for r in results} != {v.strategy for v in copy.variants}:
                 raise RenderFailure('RENDER_INVALID_RESULT')
             for result in results:
                 result['png'] = opaque_png(base64.b64decode(result['png'], validate=True))

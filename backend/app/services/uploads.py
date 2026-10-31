@@ -73,6 +73,11 @@ class Record:
     last_render: str | None = None
     rankings: dict = field(default_factory=dict)
     last_ranking: str | None = None
+    edited_renders: dict = field(default_factory=dict)
+    edits: dict = field(default_factory=dict)
+    last_edit: str | None = None
+    asset_hashes: dict = field(default_factory=dict)
+    exports: dict = field(default_factory=dict)
 
 
 class PrivateUploadStore:
