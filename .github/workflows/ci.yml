@@ -83,7 +83,7 @@ jobs:
           RUN_RENDER_TESTS: '1'
         run: |
           python -c "from pathlib import Path; Path('artifacts/renderer').mkdir(parents=True, exist_ok=True)"
-          python -m pytest tests/service/test_rendering.py -q --basetemp artifacts/renderer/ci
+          python -m pytest tests/service/test_rendering.py tests/service/test_editor.py -q --basetemp artifacts/renderer/ci
       - run: npm run test:e2e
       - name: Retain synthetic upload screenshots for review
         if: success()
@@ -95,6 +95,7 @@ jobs:
             artifacts/playwright/results/**/photo-processing.png
             artifacts/playwright/results/**/render-*.png
             artifacts/playwright/results/**/results-*.png
+            artifacts/playwright/results/**/editor-*.png
           retention-days: 7
           if-no-files-found: ignore
       - name: Retain failure diagnostics

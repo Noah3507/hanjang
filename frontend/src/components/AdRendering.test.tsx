@@ -5,6 +5,7 @@ import { rendering, preview } from '../api/rendering'
 import type { CopyState } from '../api/copy'
 import type { Draft, UploadHandle } from '../api/uploads'
 vi.mock('../api/rendering', () => ({ rendering: vi.fn(), preview: vi.fn() }))
+vi.mock('../api/editing', () => ({ editing: vi.fn(async () => ({operation:'editing',status:'pending',is_current:false})), downloadAd: vi.fn() }))
 vi.mock('../api/ranking', () => ({ rankingState: vi.fn(async () => ({ status: 'pending', ranking: null })) }))
 const handle = { token: 'fake', upload: { job_id: 'job' } } as UploadHandle
 const draft = { facts: {}, mood: 'warm' } as Draft

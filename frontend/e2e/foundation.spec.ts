@@ -15,7 +15,7 @@ test('desktop: actual API connection and explicit unimplemented feature notice',
     await expect(page.getByRole('button', { name: '연결 다시 확인' })).toBeEnabled()
   })
   await test.step('show implemented photo tools and distinguish unimplemented ads', async () => {
-    await expect(page.getByText('상품 입력·사진 처리·카피·광고 PNG 생성과 결과 확대·Mock 임시 순위를 제공합니다. 실제 ML 순위·문구 편집·다운로드는 아직 구현되지 않았습니다.')).toBeVisible()
+    await expect(page.getByText('상품 입력·사진 처리·카피·광고 PNG 생성·문구 편집·PNG/A4 PDF 다운로드와 결과 확대·Mock 임시 순위를 제공합니다. 실제 ML 순위는 아직 연결되지 않았습니다.')).toBeVisible()
     await expect(page.getByLabel('상품명', { exact: true })).toBeVisible()
     await expect(page.locator('input[type="file"]')).toHaveCount(1)
   })

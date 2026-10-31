@@ -52,7 +52,7 @@ export default function App() {
         </button>
       </section>
       <ProductInput />
-      <p className="notice">상품 입력·사진 처리·카피·광고 PNG 생성과 결과 확대·Mock 임시 순위를 제공합니다. 실제 ML 순위·문구 편집·다운로드는 아직 구현되지 않았습니다.</p>
+      <p className="notice">상품 입력·사진 처리·카피·광고 PNG 생성·문구 편집·PNG/A4 PDF 다운로드와 결과 확대·Mock 임시 순위를 제공합니다. 실제 ML 순위는 아직 연결되지 않았습니다.</p>
     </main>
   )
 }

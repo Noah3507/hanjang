@@ -1,5 +1,9 @@
 # Hanjang Codex 개발 규칙
 
+## 최신 승인 10단계 (2026-10-31)
+
+feat/service-editor는 후보별 headline/body/cta만 편집하고 실제 Chromium 재렌더링·PNG/A4 PDF 다운로드를 구현한다. facts는 편집 화면 읽기 전용, 자유 디자인은 제외한다. PATCH candidate/GET editing/GET download는 승인됐다. 원본 copy_key·사진·facts·동일 계보 candidate_id를 보존하며 네 후보 revision을 원자적으로 공개한다. 실패는 마지막 성공본을 유지하고 이전 ranking은 stale로 수동 재요청한다. A4는 이번 단계에서 선택후보 한 장·세로 한 페이지·최소10mm 여백의 래스터 PDF로 필수다. Candidate/B 계약·ML·실제 유료 호출은 변경하지 않는다. 상세는 docs/EDITING.md를 따르며 아래 과거 단계 범위와 구분한다.
+
 ## 최신 승인 S5b (사용자 8단계)
 
 feat/service-renderer는 Jinja2/Playwright 네 전략1080×1350 RGB 불투명 PNG·metadata·비공개 미리보기를 구현합니다. 승인된 POST/GET rendering과 additive copy_key를 사용하며 expected 사진/입력/카피 불일치는409입니다. 완료/조회 시에도 snapshot을 검사하고 stale 결과를 최신으로 사용하지 않습니다. 주소/Instagram은 입력됐으면 원문 표시하며 use_address_for_copy의 LLM 전송 조건과 분리합니다. Candidate/B fixture는 유지하고 추가 계측은 별도 envelope에 둡니다. B 코드/환경·.venv-rank·랭킹·편집·다운로드·실제 LLM은 구현하지 않습니다. 과거 단계 범위 기록과 구분하며 docs/RENDERING.md를 따릅니다.

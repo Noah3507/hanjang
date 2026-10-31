@@ -1,5 +1,7 @@
 # 작은 단계별 개발 계획 초안
 
+2026-10-31 사용자 승인10단계 `feat/service-editor`: 문구 편집→후보1장 실제 재렌더링→네 후보 revision 원자 공개→PNG/A4 PDF 인증 다운로드. 단계별 완료 기준: (1) schema/편집 충돌·실패보존 단위/API 검증, (2) 최신 revision 다운로드·실제 A4/PDF픽셀 검증, (3) UI 연속편집·취소·새로고침·stale 순위/E2E, (4) 1–9단계 전체 회귀·문서·PR. facts/자유 디자인/실제 ML/실제 OpenAI는 제외한다. A4는 기존 전역 로드맵상 OPTIONAL이나 이번 승인 범위에서는 필수다. 계약과 완료 검증은 [EDITING](EDITING.md), [EDITING_TEST_REPORT](EDITING_TEST_REPORT.md)를 따른다. 아래는 과거 단계 기록이다.
+
 9단계 `feat/service-results`: 사용자 승인으로 결과 확대·MockRanker·추가 POST/GET ranking·임시 순위·stale/오류 처리를 진행한다. 실제 ML(12단계), 편집/다운로드, 진단, 배포, 디자인/타이포그래피는 포함하지 않는다. 현재 구현·검증은 [RESULTS](RESULTS.md)와 [RESULTS_TEST_REPORT](RESULTS_TEST_REPORT.md)를 따른다.
 
 2026-10-28 최신: PR #24·#25가 main에 병합됐으며 S4 사진 분석과 S5a Mock 카피가 기반입니다. 현재 feat/service-renderer는 S5b(사용자8단계) 네 전략 HTML/CSS·Jinja2/Playwright PNG·metadata·미리보기를 추가합니다. 범위와 설치는 [RENDERING](RENDERING.md), 검증은 [RENDERING_TEST_REPORT](RENDERING_TEST_REPORT.md)를 따릅니다. 아래 과거 미구현 설명은 해당 날짜 이력입니다. 다음 S5c/S6 ranking·편집·다운로드와 실제 LLM 검증은 포함하지 않습니다.

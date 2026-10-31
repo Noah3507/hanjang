@@ -1,7 +1,9 @@
 import { ApiError, type Draft, type UploadHandle } from './uploads'
 import type { CopyState } from './copy'
+import type { Facts } from './uploads'
 export interface RenderCandidate {
   candidate_id: string; strategy: 'emotional' | 'price' | 'visual' | 'brand'; revision: number
+  copy?: { headline: string; body: string; cta: string }; facts?: Facts
   png: { asset_id: string; url: string; width: 1080; height: 1350; revision: number }
 }
 export interface RenderState {

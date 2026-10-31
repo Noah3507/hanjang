@@ -6,6 +6,8 @@ Windows의 기존 모델·가상환경을 별도 worktree에서 재사용하고 
 
 ## 현재 구현 범위
 
+10단계는 후보별 제목/본문/CTA 편집, 실제 재렌더링, 연속 revision, PNG 및 선택광고 한 장의 A4 PDF 다운로드를 추가합니다. facts/사진/원본 카피는 보존하고 편집 성공 후 임시 순위는 다시 요청합니다. 자유 디자인·실제 ML 연결은 포함하지 않습니다. [편집·다운로드/API](docs/EDITING.md), [검증 기록](docs/EDITING_TEST_REPORT.md)을 참고하세요. 아래9단계 설명의 편집/다운로드 미구현 표현은 과거 범위입니다.
+
 9단계는 기존 렌더링 결과 카드에 인증된 확대 비교·키보드 접근성과 **MockRanker 시연용 임시 순위**를 추가한다. 실제 광고 품질·선호 확률·CTR·매출 평가는 아니다. [결과 화면·Ranking API](docs/RESULTS.md), [검증 결과](docs/RESULTS_TEST_REPORT.md)를 참고한다. 기존 Candidate/rendering 계약과 B 코드를 유지하며 실제 ML·편집·다운로드는 후속이다. 아래 날짜별 설명은 과거 단계 기록이다.
 
 8단계 `feat/service-renderer`는 최신 Mock 카피·선택 사진·사용자 원문으로 네 전략의 **1080×1350 RGB PNG 생성과 비공개 미리보기**를 추가합니다. [렌더링 설치·구조·API](docs/RENDERING.md)와 [검증 결과](docs/RENDERING_TEST_REPORT.md)를 참고하세요. 새 PC에서는 기존 Python 설치에 더해 `npm.cmd --prefix frontend ci`와 `npm.cmd --prefix frontend exec -- playwright install chromium`이 필요합니다. 폰트는 저장소에 포함되며 API 키·CLIP/rembg 모델 없이도 원본 사진+Mock 카피로 렌더링할 수 있습니다. 아래의 과거 단계 설명과 구분하며 ranking·편집·다운로드·실제 LLM 호출은 후속입니다.
