@@ -350,3 +350,37 @@ def test_windows_style_and_absolute_names_are_rejected(copy, name):
 
     with pytest.raises(ArtifactMismatch):
         safe_member(copy, name)
+
+
+def _smoke(tmp_path, bundle):
+    spec = importlib.util.spec_from_file_location("ml_smoke_inference", ROOT / "scripts/ml_smoke_inference.py")
+    smoke = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(smoke)
+    if not (tmp_path / "tests/fixtures/ads").exists():
+        shutil.copytree(ADS, tmp_path / "tests/fixtures/ads")
+    args = ["--bundle", str(bundle), "--expected", str(tmp_path / "expected.json")]
+    return smoke, args
+
+
+def test_smoke_check_passes_on_the_recorded_bundle(bundle, tmp_path):
+    smoke, args = _smoke(tmp_path, bundle)
+    recorded = smoke.main(args + ["--record"], repo_root=tmp_path)["recorded"]
+    assert set(recorded["items"]) == {"c_emotional", "c_price", "c_visual", "c_brand"} and len(recorded["pairwise"]) == 6
+    assert smoke.main(args, repo_root=tmp_path)["passed"]
+
+
+@pytest.mark.parametrize("damage", ["score", "rank", "hash"])
+def test_smoke_check_fails_when_the_result_or_bundle_differs(bundle, tmp_path, damage):
+    smoke, args = _smoke(tmp_path, bundle)
+    smoke.main(args + ["--record"], repo_root=tmp_path)
+    path = tmp_path / "expected.json"
+    expected = json.loads(path.read_text())
+    if damage == "score":
+        expected["items"]["c_price"]["score"] += 0.01
+    elif damage == "rank":
+        expected["items"]["c_price"]["rank"] = 5
+    else:
+        expected["files_sha256"]["model.safetensors"] = "0" * 64
+    path.write_text(json.dumps(expected))
+    with pytest.raises(SystemExit):
+        smoke.main(args, repo_root=tmp_path)
