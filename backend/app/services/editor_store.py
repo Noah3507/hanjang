@@ -1,6 +1,6 @@
 """Transactional edits, preserving source copies and last successful four-PNG set."""
 from hashlib import sha256
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import os
 import uuid
 from app.schemas.editing import EditResponse
@@ -33,6 +33,9 @@ class EditorStore:
                 (result.status == 'completed' and render.revision == result.target_revision or
                  result.status != 'completed' and render.revision == result.base_revision))
             return result
+
+    def cancel_dispatch(self,task):
+        self.renders.cancel_dispatch(task)
 
     def start(self, owner, job, candidate_id, body):
         with self.renders.locked():
@@ -87,15 +90,20 @@ class EditorStore:
                 v.ad_copy = next(c.ad_copy.model_copy(deep=True) for c in current.candidates if c.strategy==v.strategy)
             for v in edited_copy.variants:
                 if v.strategy==candidate.strategy:v.ad_copy=body.ad_copy.model_copy(deep=True)
-            self.renders.active=True
             record.edits[request_key]=EditEntry(key,response,request_key);record.last_edit=request_key
+            def abandoned():
+                response.status='failed'
+                response.error=RenderError(code='EDIT_FAILED',message='편집 작업이 시작되지 않았습니다. 마지막 성공본은 유지됩니다. 다시 요청해 주세요.')
+            token=self.renders.slot.reserve(abandoned)
             # Do not re-read TTL after reserving the renderer slot. If expiry
             # occurs now, finish() owns cleanup and always releases the slot.
-            return response.model_copy(deep=True),(request_key,current.model_copy(deep=True),draft,edited_copy,source,candidate_id)
+            return response.model_copy(deep=True),(request_key,current.model_copy(deep=True),draft,edited_copy,source,candidate_id,token)
 
     def finish(self,owner,job,task):
-        request_key,base,draft,edited_copy,source,candidate_id=task
-        path=None
+        request_key,base,draft,edited_copy,source,candidate_id,token=task
+        with self.renders.locked():
+            if not self.renders.slot.claim(token):return
+        path=None;created=False
         try:
             # Only changed strategy is rendered by the real renderer.
             selected=next(c for c in base.candidates if c.candidate_id==candidate_id)
@@ -105,6 +113,7 @@ class EditorStore:
             if len(results)!=1 or results[0]['strategy']!=selected.strategy:raise RenderFailure('RENDER_INVALID_RESULT')
             result=results[0]; png=opaque_png(result['png'])
             with self.renders.locked():
+                if not self.renders.slot.owns(token):return
                 record,_,_,_,_,key=self.renders.snapshot(owner,job)
                 entry=record.edits[request_key];current=self.renders.get(owner,job)
                 if key!=entry.source_key or not current.is_current or current.revision!=base.revision:
@@ -118,7 +127,9 @@ class EditorStore:
                 selected_bytes,_=self.uploads.read_asset(owner,base.source_asset_id)
                 if sha256(selected_bytes).hexdigest()!=sha256(source).hexdigest():raise RenderFailure('EDIT_ASSET_INVALID')
                 asset=uuid.uuid4().hex;path=self.uploads.safe_path(asset+'.png')
-                with os.fdopen(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),'wb') as f:f.write(png)
+                fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+                created=True
+                with os.fdopen(fd,'wb') as f:f.write(png)
                 stamp=record.upload.created_at.timestamp();os.utime(path,(stamp,stamp))
                 self.uploads.get(owner,job)  # TTL can elapse while bytes are written.
                 next_render=base.model_copy(deep=True);revision=entry.response.target_revision
@@ -137,12 +148,15 @@ class EditorStore:
                         c.renderer.text_boxes=[TextBox.model_validate(b) for b in boxes]
                         c.renderer.product_bbox=Box.model_validate(measurement['product'])
                         next_render.measurements[candidate_id]=measurement
-                record.derived[asset]=path;self.uploads.assets[asset]=job
-                record.asset_hashes[asset]=sha256(png).hexdigest()
-                record.edited_renders[key]=next_render
-                entry.response.status='completed';entry.response.is_current=True
-        except Exception as error:
-            if path:path.unlink(missing_ok=True)
+                completed=entry.response.model_copy(deep=True)
+                completed.status='completed';completed.is_current=True
+                self.renders.publish(record,job,[(asset,path)],{asset:sha256(png).hexdigest()},
+                    edited_renders={**record.edited_renders,key:next_render},
+                    edits={**record.edits,request_key:replace(entry,response=completed)},exports={})
+        except BaseException as error:
+            if created:
+                try:path.unlink(missing_ok=True)
+                except OSError:pass
             with self.renders.locked():
                 try:record=self.uploads.get(owner,job)
                 except UploadError:return
@@ -150,5 +164,6 @@ class EditorStore:
                 entry.response.status='failed'
                 entry.response.error=RenderError(code=error.code if isinstance(error,RenderFailure) else 'EDIT_FAILED',
                     message='광고를 적용하지 못했습니다. 마지막 성공본은 유지됩니다. 최신 상태를 확인한 뒤 다시 시도해 주세요.')
+            if not isinstance(error,Exception):raise
         finally:
-            with self.renders.lock:self.renders.active=False
+            with self.renders.lock:self.renders.slot.release(token)

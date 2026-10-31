@@ -12,11 +12,12 @@ from app.services.uploads import UploadError
 
 class PdfExecution:
     def __call__(self,png):
-        node=shutil.which('node') or (r'C:\Program Files\nodejs\node.exe' if os.name=='nt' else 'node')
-        proc=subprocess.Popen([node,str(ROOT/'scripts/service_pdf_worker.mjs')],cwd=ROOT,
-            stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0,start_new_session=os.name!='nt')
+        proc=None
         try:
+            node=shutil.which('node') or (r'C:\Program Files\nodejs\node.exe' if os.name=='nt' else 'node')
+            proc=subprocess.Popen([node,str(ROOT/'scripts/service_pdf_worker.mjs')],cwd=ROOT,
+                stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0,start_new_session=os.name!='nt')
             out,_=proc.communicate(json.dumps({'png':base64.b64encode(png).decode()}).encode(),timeout=90)
             result=json.loads(out)
             if proc.returncode or result.get('error'):raise ValueError('PDF failed')
@@ -26,12 +27,18 @@ class PdfExecution:
         except Exception:
             raise UploadError(503,'PDF_FAILED','PDF를 만들지 못했습니다. PNG는 유지됩니다. 다시 시도해 주세요.') from None
         finally:
-            if proc.poll() is None:
-                if os.name=='nt':subprocess.run(['taskkill','/PID',str(proc.pid),'/T','/F'],capture_output=True)
-                else:
-                    import signal
-                    os.killpg(proc.pid,signal.SIGKILL)
-                proc.communicate()
+            if proc is not None:
+                try:
+                    if proc.poll() is None:
+                        if os.name=='nt':subprocess.run(['taskkill','/PID',str(proc.pid),'/T','/F'],capture_output=True,timeout=5)
+                        else:
+                            import signal
+                            os.killpg(proc.pid,signal.SIGKILL)
+                        proc.communicate(timeout=5)
+                except Exception:
+                    # Cleanup failures must never replace the safe public error.
+                    try:proc.kill()
+                    except Exception:pass
 
 class ExportService:
     def __init__(self,renders,pdf=None):
@@ -74,6 +81,7 @@ class ExportService:
             with self.renders.locked():
                 record,_,latest=self.snapshot(owner,job,candidate_id,revision)
                 if sha256(latest).hexdigest()!=key[2]:raise UploadError(409,'DOWNLOAD_SOURCE_CHANGED','광고가 변경됐습니다.')
+                record.exports={k:v for k,v in record.exports.items() if k[1]==revision}
                 record.exports[key]=cached
             data=cached
         fallback=f'hanjang-{candidate.strategy}-r{revision}.{format}'

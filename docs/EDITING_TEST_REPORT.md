@@ -1,5 +1,7 @@
 # 10단계 편집·다운로드 검증 — 2026-10-31
 
+PR #44 후속 안정성 리뷰의 최신320개 회귀·예외주입·캐시/작업소유권 검증은 [EDITOR_REVIEW_TEST_REPORT](EDITOR_REVIEW_TEST_REPORT.md)를 따른다. 아래291개는 최초 기능 완료 기록으로 보존한다.
+
 ## 환경과 보존
 
 Windows 데스크탑, Python3.12.10/Node24.20.0/npm11.19.0, 기존 서비스 .venv·분석 .venv-analysis·Chrome 재사용. 기준 main ea90b00, feat/service-editor. 패키지/모델/폰트 설치 없음. B 코드·가중치·Candidate fixture/schema 변경 없음. 실제 LLM 호출0, Mock/paid=false 및 모델 offline 유지.

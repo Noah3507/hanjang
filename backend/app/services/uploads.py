@@ -254,6 +254,7 @@ class PrivateUploadStore:
             current = now()
             for job, record in list(self.records.items()):
                 if record.upload.expires_at <= current:
+                    record.exports.clear()
                     self.safe_path(record.path.name).unlink(missing_ok=True)
                     for asset, path in record.derived.items():
                         self.safe_path(path.name).unlink(missing_ok=True)

@@ -4,6 +4,14 @@
 
 ## 데이터와 revision
 
+### PR #44 안정성 보완
+
+렌더링·편집은 내부 단일 슬롯의 UUID token, 예약/실행 시작 시각, 실행 thread 소유권을 관리한다. 요청을 background에 등록하지 못하면 즉시 예약 취소·failed 처리한다. 예약 후30초 내 실행 claim이 없는 경우 다음 GET/POST/PATCH에서 예약만 회수하고 failed로 재요청을 안내한다. 회수된 token으로 늦게 도착한 callback은 executor를 실행하지 않으며 새 작업의 슬롯을 해제하지 못한다. 실행 claim 이후는 시간만으로 회수하지 않는다. 정상 worker는 기존90초 제한과 소유 subprocess 정리 후 token 일치 finally에서 해제한다. 실행 중 예외/중단도 failed와 슬롯 정리를 수행한다.
+
+이는 실행 중 Python thread/OS가 영구적으로 멈춘 경우의 강제 복구 시스템이 아니다. worker 종료를 입증하지 못하면 busy를 유지하며, 관리자가 소유 worker 정지와 서버 재시작을 확인해야 한다. 서버 hard kill/재시작 후의 메모리 복구는 보장하지 않는다. 새 큐/Redis/Celery나 public token 필드는 추가하지 않는다.
+
+새 PNG의 인덱스·derived·해시·성공본·편집 상태·PDF캐시는 동일 lock 범위에서 copy-on-write로 등록한다. 중간 예외는 모든 참조를 이전 값으로 rollback하고, 해당 작업이 exclusive 생성한 PNG만 정리한다. 기존 파일명 충돌은 기존 파일을 삭제하지 않는다. 파일 삭제가 OS권한 오류로 실패하면 미등록 파일은 공개되지 않으며 기존 TTL sweep 대상이다.
+
 CopyStore의 최초 카피·copy_key를 변경하지 않는다. 동일 사진/입력/카피/template snapshot에 별도 편집 ID와 네 후보 성공본을 연결한다. 같은 계보의 candidate_id/strategy/facts/원본·선택 사진 해시는 보존한다. 수정된 후보는 기존 Chromium으로 렌더링하고 다른 세 후보는 asset ID와 bytes를 재사용한다. 네 Candidate와 png reference의 revision은 모두 새 revision이다. Candidate/B JSON schema는 변경하지 않는다.
 
 완료 후 네 후보를 한 번에 공개한다. 편집 상태와 마지막 성공 render는 별도로 조회하며 실패 중에도 기존 성공본을 유지한다. revision은 job 내 단조 증가하고 실패한 target을 재사용하지 않아 번호에 빈 구간이 있을 수 있다. 최신 성공본을 다시 편집할 수 있다. 새 입력·사진·카피 계보의 ID는 기존 생성 정책대로 새로 발급한다.
@@ -50,6 +58,7 @@ CopyStore의 최초 카피·copy_key를 변경하지 않는다. 동일 사진/�
 - 브라우저는 인증 fetch → Blob 다운로드를 사용한다. 기존 인증 asset 미리보기는 유지한다.
 - PDF는 기존 Chromium 사용, 210×297mm, 최소10mm 여백·중앙 배치다. Chromium print의 비대칭 반올림을 피하려고 이미지716×895 CSS px(약189.44×236.80mm, 좌우약10.28mm·위아래약30.10mm)를 사용해 실제 PDF draw matrix의4:5 비율도 검증한다. 한글은 PNG 픽셀에 포함되어 폰트 대체가 없으며 검색 가능한 텍스트/300dpi 원본은 아니다.
 - PDF 생성은 PNG와 독립이며 revision+candidate+PNG해시별 메모리 캐시다. 생성 후에도 source/TTL/PNG를 다시 검사한다. 동시 PDF 생성은 하나로 제한하고90초 timeout은 소유 worker tree만 종료한다.
+- 성공한 새 rendering/edit revision 공개 시 이전 PDF캐시를 비우고 현재 revision의 후보별 결과만 보관한다(최대4개). 실패는 기존 캐시를 유지한다. 생성 중 revision이 바뀌거나 만료되면 늦은 PDF는 캐시에 등록하지 않는다. 만료 cleanup은 캐시 참조도 해제한다. subprocess 생성/권한/실행 실패와 timeout·cleanup 예외는 경로를 노출하지 않는 PDF_FAILED 503으로 처리한다.
 
 ## 오류
 

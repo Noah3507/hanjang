@@ -8,17 +8,45 @@ from app.schemas.rendering import RenderResponse, RenderError, Candidate
 from app.services.copy_store import digest
 from app.services.render_execution import VERSION, RenderFailure, rgb
 from app.services.uploads import UploadError
+from app.services.render_slot import RenderSlot
 
 class RenderStore:
     def __init__(self, uploads, copies, executor):
         self.uploads, self.copies, self.executor = uploads, copies, executor
         self.lock = RLock()
-        self.active = False
+        self.slot = RenderSlot()
+
+    @property
+    def active(self):
+        return self.slot.lease is not None
 
     @contextmanager
     def locked(self):
         with self.lock, self.copies.locked():
+            self.slot.recover()
             yield
+
+    def cancel_dispatch(self, task):
+        with self.locked():self.slot.cancel(task[-1])
+
+    def publish(self, record, job, written, hashes, **updates):
+        """Copy-on-write transaction, restoring all references on registration failure.
+
+        Caller holds render -> copy -> analysis -> upload locks. Nothing becomes
+        observable between assignments, including to other jobs' asset readers.
+        """
+        changes={'derived':{**record.derived,**dict(written)},
+                 'asset_hashes':{**record.asset_hashes,**hashes},**updates}
+        before={name:getattr(record,name) for name in changes}
+        old_assets=self.uploads.assets
+        try:
+            record.derived=changes.pop('derived')
+            self.uploads.assets={**old_assets,**{asset:job for asset,_ in written}}
+            for name,value in changes.items():setattr(record,name,value)
+        except BaseException:
+            for name,value in before.items():object.__setattr__(record,name,value)
+            object.__setattr__(self.uploads,'assets',old_assets)
+            raise
 
     def snapshot(self, owner, job):
         record, photo, asset, draft, _, _, _ = self.copies.snapshot(owner, job)
@@ -60,17 +88,23 @@ class RenderStore:
             result.revision = max((r.revision for r in [*record.renders.values(), *record.edited_renders.values()]), default=0)+1
             result.status = 'processing'
             result.warnings = ['MOCK_COPY_NOT_LLM'] if result.mock_copy else ['COPY_REVIEW_REQUIRED']
-            record.renders[key], record.last_render = result, key
             data, _ = self.uploads.read_asset(owner, asset.asset_id)
-            self.active = True
-            return result.model_copy(deep=True), (key, draft, copy, data, asset.sha256)
+            record.renders[key], record.last_render = result, key
+            def abandoned():
+                result.status='failed'
+                result.error=RenderError(code='RENDER_FAILED',message='렌더링 작업이 시작되지 않았습니다. 다시 요청해 주세요.')
+            token=self.slot.reserve(abandoned)
+            return result.model_copy(deep=True), (key, draft, copy, data, asset.sha256,token)
 
     def finish(self, owner, job, task):
-        key, draft, copy, data, selected_hash = task
+        key, draft, copy, data, selected_hash,token = task
+        with self.locked():
+            if not self.slot.claim(token):return
         written = []
         try:
             results = self.executor(draft, copy, data)
             with self.locked():
+                if not self.slot.owns(token):return
                 record = self.uploads.get(owner, job)
                 response = record.renders[key]
                 candidates, measurements = [], {}
@@ -97,13 +131,14 @@ class RenderStore:
                 # Compute current state again; old result is retained, never promoted as current.
                 _, _, _, _, current_copy, current_key = self.snapshot(owner, job)
                 response.is_current = current_copy is not None and current_key == key
-                record.derived.update(dict(written))
-                for asset, path in written:
-                    self.uploads.assets[asset] = job
-                    record.asset_hashes[asset] = sha256(path.read_bytes()).hexdigest()
-                response.candidates, response.measurements, response.status = candidates, measurements, 'completed'
-        except Exception as error:
-            for _, path in written: path.unlink(missing_ok=True)
+                completed=response.model_copy(deep=True)
+                completed.candidates,completed.measurements,completed.status=candidates,measurements,'completed'
+                self.publish(record,job,written,{asset:sha256(path.read_bytes()).hexdigest() for asset,path in written},
+                    renders={**record.renders,key:completed},exports={} if completed.is_current else record.exports)
+        except BaseException as error:
+            for _, path in written:
+                try:path.unlink(missing_ok=True)
+                except OSError:pass
             with self.locked():
                 try: record = self.uploads.get(owner, job)
                 except UploadError: return
@@ -113,5 +148,6 @@ class RenderStore:
                     message='입력에 광고 글꼴이 지원하지 않는 문자 또는 이모지가 있습니다. 가게명·상품명·연락처를 확인해 주세요. 원문은 유지됩니다.'
                     if isinstance(error, RenderFailure) and error.code == 'RENDER_UNSUPPORTED_GLYPH'
                     else '광고를 렌더링하지 못했습니다. 입력·사진·카피는 유지됩니다.')
+            if not isinstance(error,Exception):raise
         finally:
-            with self.lock: self.active = False
+            with self.lock:self.slot.release(token)

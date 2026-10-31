@@ -2,6 +2,7 @@ from typing import Literal
 from fastapi import APIRouter,BackgroundTasks,Depends,Request,Response,Query
 from app.api.uploads import owner
 from app.schemas.editing import EditRequest,EditResponse
+from app.services.uploads import UploadError
 
 router=APIRouter(tags=['editing'])
 
@@ -11,7 +12,11 @@ def patch(job_id:str,candidate_id:str,body:EditRequest,request:Request,response:
     store=request.app.state.editor_store
     result,task=store.start(user,job_id,candidate_id,body)
     response.headers['Cache-Control']='no-store';response.headers['Location']=result.status_url
-    if task:background.add_task(store.finish,user,job_id,task)
+    if task:
+        try:background.add_task(store.finish,user,job_id,task)
+        except Exception:
+            store.cancel_dispatch(task)
+            raise UploadError(503,'EDIT_FAILED','작업을 예약하지 못했습니다. 마지막 성공본은 유지됩니다.') from None
     return result
 
 @router.get('/jobs/{job_id}/editing',response_model=EditResponse)
