@@ -298,3 +298,9 @@ def test_build_script_writes_a_checked_bundle(bundle, tmp_path):
         "model.safetensors", "model_config.json", f"clip/{TINY}-None-visual.safetensors"}
     assert len(report["fixture_ranking"]["items"]) == 4 and (model_dir / "bundle_report.json").exists()
     assert load_model(model_dir).model_version == "bt-test-v1"
+
+
+def test_loading_does_not_log_the_random_init_warning(bundle, caplog):
+    with caplog.at_level("WARNING"):
+        load_model(bundle)
+    assert "No pretrained weights loaded" not in caplog.text

@@ -15,6 +15,7 @@ for the same file. Everything runs on CPU without gradients and without network.
 from __future__ import annotations
 
 import json
+import logging
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -66,17 +67,29 @@ def _read_only(array: np.ndarray) -> np.ndarray:
     return array
 
 
+class _DropRandomInitWarning(logging.Filter):
+    """open_clip warns 'Model initialized randomly' before the bundle weights replace them."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "No pretrained weights loaded" not in record.getMessage()
+
+
 def _load_encoder(root: Path, clip: dict) -> ClipEncoder:
     """Build the CLIP architecture without any download, then load the image tower from the bundle."""
+    quiet = _DropRandomInitWarning()
+    logging.getLogger().addFilter(quiet)  # the bundle weights are loaded right after, so the warning is wrong here
     try:
         model, _, preprocess = open_clip.create_model_and_transforms(
             clip["model"], pretrained=None, force_quick_gelu=bool(clip["quick_gelu"]))
+        logging.getLogger().removeFilter(quiet)
         state = load_torch(str(safe_member(root, clip["weights_file"])))
         model.visual.load_state_dict(state, strict=True)
     except ArtifactMismatch:
         raise
     except (KeyError, RuntimeError, ValueError) as error:
         raise ArtifactMismatch("CLIP weights do not fit the CLIP settings in the manifest") from error
+    finally:
+        logging.getLogger().removeFilter(quiet)
     model.eval()
     for parameter in model.parameters():
         parameter.requires_grad_(False)
