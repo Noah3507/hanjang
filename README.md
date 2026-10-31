@@ -1,5 +1,8 @@
 # Hanjang
 
+11단계는 **규칙 기반 가독성 진단**을 추가합니다. 최신 광고 네 장을 동기 API로 진단하며 대비·글자 크기·경계/겹침·텍스트 블록 밀도를 별도 표시합니다. 36px/40%는 초기 휴리스틱이고 측정 불가를 정상으로 표시하지 않습니다. 선호 순위·성과 점수와 별개이며 프로필·실제 ML은 포함하지 않습니다. [API·규칙·실행](docs/DIAGNOSTICS.md), [실행한 검증](docs/DIAGNOSTICS_TEST_REPORT.md)을 참고하세요.
+
+
 Windows의 기존 모델·가상환경을 별도 worktree에서 재사용하고 반복 실행하는 방법은 [LAPTOP_SETUP](LAPTOP_SETUP.md)을 따릅니다. OpenAI 보완 통합과 검증은 [OPENAI_VALIDATION](docs/OPENAI_VALIDATION.md), [HARDENING_TEST_REPORT](docs/HARDENING_TEST_REPORT.md)에 기록합니다.
 
 소규모 음식점·카페·식품 매장을 위한 광고 제작 웹서비스입니다. 실제 사진 한 장과 가게명·상품명·가격·분위기로 emotional/price/visual/brand 광고 4종을 만들고 상대 선호 순위를 제공하는 것이 목표입니다. 상품 사진을 AI로 재생성하지 않고 입력 사실을 그대로 유지합니다. preference는 구매율·매출·CTR 예측이 아닙니다.

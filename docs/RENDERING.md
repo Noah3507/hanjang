@@ -1,5 +1,10 @@
 # S5b / 사용자 8단계 광고 렌더링
 
+## 11단계 계측 확장
+
+기존 디자인·PNG·Candidate/B 계약을 유지하고 별도 measurements에 실제 glyph rect와 contrast evidence를 추가합니다. 원본 PNG 캡처 후 글자 fill만 숨긴 배경 캡처와 실제 paint eligibility를 검사하고 최종 PNG SHA-256으로 결합합니다. CSS 배경색만으로 대비를 추정하지 않으며 gradient/image/transparency 등 불확실 항목은 unavailable입니다. 원본 PNG를 먼저 확보하므로 optional 계측 실패는 기존 렌더링을 실패시키지 않습니다. template version은 four-layouts-v2-evidence이며 자세한 계약은 [DIAGNOSTICS](DIAGNOSTICS.md)를 따릅니다.
+
+
 2026-10-31 후속10단계: [EDITING](EDITING.md)에 승인된 문구 편집·최신 성공 revision 다운로드와 A4 PDF를 추가한다. 기존 rendering 요청/응답·Candidate는 유지하며 같은 생성 snapshot의 POST/GET은 최신 편집 성공본을 반환한다. 편집 상태는 별도 editing envelope, 실패는 마지막 성공 rendering을 보존한다. 실제 renderer는 기존 네 전략 생성 외에 편집 대상 한 전략의 내부 실행도 지원한다. 아래 미구현 설명은8단계 당시 범위 기록이다.
 
 2026-10-30 사전 보완: 사용자 facts의 실제 동봉 폰트 cmap 지원을 렌더링 전에 검사하고 미지원이면 원문을 유지한 오류 안내를 제공합니다. 생성 카피의 이모지/미지원 글리프 검증과 호출 통제는 [OPENAI_VALIDATION](OPENAI_VALIDATION.md)을 따릅니다. 기존 Chromium 최종 검사·템플릿·디자인·Candidate schema는 유지합니다.

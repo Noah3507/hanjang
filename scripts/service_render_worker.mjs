@@ -25,7 +25,18 @@ try {
             const lines=[...new Set([...range.getClientRects()].map(r=>Math.round(r.y)))].length
             return {...r,field:e.dataset.field,text:e.textContent,font_size_px:parseFloat(s.fontSize),font_weight:parseInt(s.fontWeight),
               foreground:s.color,background:s.backgroundColor,overflow:e.scrollHeight>e.clientHeight+1||e.scrollWidth>e.clientWidth+1,
-              font_family:s.fontFamily,line_count:lines}
+              font_family:s.fontFamily,line_count:lines,glyph_rects:[...range.getClientRects()].map(r=>({x:r.x,y:r.y,width:r.width,height:r.height})),
+              contrast_eligible:(()=>{
+                // Exclude image/gradient backgrounds and paint effects, even if
+                // a sampled image happens to look uniform. Pixels confirm CSS.
+                for(let a=e;a;a=a.parentElement){const c=getComputedStyle(a)
+                  if(c.backgroundImage!=='none'||c.opacity!=='1'||c.filter!=='none'||c.backdropFilter!=='none'||c.mixBlendMode!=='normal'||c.transform!=='none')return false
+                  for(const pseudo of ['::before','::after']){const p=getComputedStyle(a,pseudo);if(p.content!=='none'&&p.content!=='normal')return false}
+                }
+                if(s.textShadow!=='none'||parseFloat(s.webkitTextStrokeWidth)!==0||s.webkitTextFillColor!==s.color||s.backgroundClip==='text')return false
+                const intersects=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom
+                return ![...document.querySelectorAll('img,svg,canvas,video')].some(img=>intersects(e.getBoundingClientRect(),img.getBoundingClientRect()))
+              })()}
           })
           const img=document.querySelector('img'),outer=box(img),scale=Math.min(outer.width/img.naturalWidth,outer.height/img.naturalHeight)
           const product={x:outer.x+(outer.width-img.naturalWidth*scale)/2,y:outer.y+(outer.height-img.naturalHeight*scale)/2,width:img.naturalWidth*scale,height:img.naturalHeight*scale}
@@ -48,7 +59,22 @@ try {
         if(fonts.some(f=>!f.isCustomFont)) throw Error('RENDER_UNSUPPORTED_GLYPH')
       }
       await cdp.detach()
-      results.push({strategy:item.strategy,measurement,png:(await page.screenshot({type:'png',animations:'disabled'})).toString('base64')})
+      const png=(await page.screenshot({type:'png',animations:'disabled'})).toString('base64')
+      // Capture original first; hide glyph fill only, without changing layout,
+      // background/border currentColor, or the published PNG.
+      let background_png=null
+      try{
+       await page.evaluate(()=>{for(const e of document.querySelectorAll('.text')){
+         e.style.setProperty('-webkit-text-fill-color','transparent','important')
+         e.style.setProperty('text-shadow','none','important')
+       }})
+       const unchanged=await page.evaluate(boxes=>boxes.every(b=>{
+        const e=[...document.querySelectorAll('[data-field]')].find(e=>e.dataset.field===b.field),r=e.getBoundingClientRect()
+        return ['x','y','width','height'].every(k=>Math.abs(r[k]-b[k])<.01)
+      }),measurement.text)
+       background_png=unchanged?(await page.screenshot({type:'png',animations:'disabled',timeout:2000})).toString('base64'):null
+      }catch{/* Optional evidence failure never replaces the successful PNG. */}
+      results.push({strategy:item.strategy,measurement,png,background_png})
     } finally {await page.close()}
   }
   await context.close()

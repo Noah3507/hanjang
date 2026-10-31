@@ -5,6 +5,7 @@ import type { Draft, UploadHandle } from '../api/uploads'
 import AdResults from './AdResults'
 import RankingResults from './RankingResults'
 import AdEditor from './AdEditor'
+import ReadabilityDiagnostics from './ReadabilityDiagnostics'
 export default function AdRendering({ handle, draft, asset, copy, disabled }: { handle: UploadHandle; draft: Draft; asset: string; copy: CopyState | null; disabled: boolean }) {
   const [state, setState] = useState<RenderState | null>(null)
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const ticket = useRef(0)
@@ -37,6 +38,7 @@ export default function AdRendering({ handle, draft, asset, copy, disabled }: { 
     {state?.status === 'pending' && <p>아직 생성된 광고가 없습니다. 최신 카피로 광고를 렌더링해 주세요.</p>}
     {state && <AdResults candidates={state.candidates} handle={handle} snapshot={JSON.stringify([state.revision, stale])} />}
     {state?.status === 'completed' && <AdEditor handle={handle} draft={draft} render={state} disabled={Boolean(stale)||disabled||busy} onBusy={setEditingBusy} onApplied={()=>void update(false)} />}
+    {state?.status === 'completed' && <ReadabilityDiagnostics handle={handle} render={state} disabled={Boolean(stale)||disabled||busy} />}
     {state && (state.status === 'completed' || state.candidates.length > 0) && <RankingResults handle={handle} render={state} disabled={Boolean(stale) || disabled || state.status !== 'completed'} />}
   </section>
 }
