@@ -39,7 +39,7 @@ PDF의 동일버전 재사용, 편집실패 시 유지, 성공 시 제거, 생�
 - `python -m pip check`, `git diff --check`, index 비밀검사 수행.
 - 전체 Playwright: **28 passed (2.0m), exit0**. 실제 PNG/PDF 결과는 `artifacts/editor-review/html/index.html`, `e2e/`에 보관한다. 정상 편집 console/pageerror를 별도 확인한다. 모든 검사는 실제 실행했으며 환경 문제로 미실행한 필수 검사는 없다.
 
-PowerShell에서 환경변수를 먼저 설정하고 기존 `.venv/Scripts/python.exe`를 사용했다. E2E는 PLAYWRIGHT_CHANNEL=chrome, FRONTEND_PORT=5187/BACKEND_PORT=8014 및 DEV_BACKEND_URL=http://127.0.0.1:8014, 실제 rembg/CLIP 필수 옵션과 기존 coffee.png를 사용한다. 카피/임시순위는Mock, 오류 route는 모의다.
+PowerShell에서 환경변수를 먼저 설정하고 기존 `.venv/Scripts/python.exe`를 사용했다. E2E는 PLAYWRIGHT_CHANNEL=chrome, PLAYWRIGHT_FRONTEND_PORT=5187/PLAYWRIGHT_BACKEND_PORT=8014 및 DEV_BACKEND_URL=http://127.0.0.1:8014, 실제 rembg/CLIP 필수 옵션과 기존 coffee.png를 사용한다. 카피/임시순위는Mock, 오류 route는 모의다.
 
 ## 제약·병합 검토
 
