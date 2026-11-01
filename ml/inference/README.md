@@ -66,8 +66,10 @@ python scripts/ml_benchmark_inference.py                        # .venv-rank에�
 
 `requirements.txt`는 `ml/requirements.txt`를 제약으로 open_clip_torch·pillow·numpy·safetensors를 새 venv에 설치한 뒤 고정한 목록이다(pandas·pytest 없음, 실제 설치로 확인). 측정 스크립트는 load 시간, 첫 `rank_ads`, warm `rank_ads`(중앙값·p95·최대), 최대 메모리(표준 라이브러리, Windows 포함)를 JSON 한 줄로 출력한다. timeout(초기 10초)과 worker 재시작은 A의 worker가 담당하고, 이 패키지는 동기 함수로 둔다.
 
-## 전달 절차 (12단계에서 확정)
+## 전달과 재현 확인 (12단계)
 
-1. B: `python scripts/ml_build_bundle.py` → `bundle_report.json`의 cache check `ok: true` 확인.
-2. B: `cd artifacts/models/ranking && zip -r bt-logistic-v1.zip bt-logistic-v1` → A와 정한 비공개 경로로 전달. Git·공개 링크 금지. manifest의 파일별 SHA-256을 PR/메신저에 함께 남긴다.
-3. A: 같은 위치에 압축 해제 → `.venv-rank`에서 `load_model`(체크섬·버전 자동 검사) → `python scripts/ml_benchmark_inference.py`로 시간·메모리 측정.
+1. B: `python scripts/ml_build_bundle.py`(`.venv-ml`) → `bundle_report.json`의 cache check `ok: true`. 그다음 `.venv-rank`에서 `python scripts/ml_smoke_inference.py --record`로 `ml/inference/smoke_expected.json`(파일별 SHA-256, fixture 점수·순위·pairwise)을 기록해 Git에 올린다.
+2. B: `cd artifacts/models/ranking && zip -r bt-logistic-v1.zip bt-logistic-v1` → zip의 SHA-256과 함께 A와 정한 비공개 경로로 전달. Git·공개 링크 금지.
+3. A: 같은 위치(`artifacts/models/ranking/bt-logistic-v1/`)에 압축 해제 → `.venv-rank`에 `ml/inference/requirements.txt` 설치 → `python scripts/ml_smoke_inference.py`가 `PASS`인지 확인 → `python scripts/ml_benchmark_inference.py`로 시간·메모리 측정 → 결과를 B에게 공유.
+
+모델 설명(데이터·권리·평가·한계)은 `ml/inference/MODEL_CARD.md`.

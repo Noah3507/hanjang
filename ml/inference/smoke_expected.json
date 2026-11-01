@@ -1,0 +1,46 @@
+{
+  "model_version": "bt-logistic-v1",
+  "files_sha256": {
+    "model.safetensors": "e9868257f299d11b9888a9f432241cd666a776849b8d2d6320a96cb18138bd93",
+    "model_config.json": "4b39a7213a2ed15833f4647172ae554b86fbed3dbfa59deaf163af6c8840311d",
+    "clip/ViT-B-32-openai-visual.safetensors": "f9483a213b1159f3c2237e3c2bd970c489c86d397c939c8f494405aa7e4cc20d"
+  },
+  "items": {
+    "c_emotional": {
+      "score": -2.0628486094484018,
+      "rank": 3
+    },
+    "c_price": {
+      "score": -1.8478832700417351,
+      "rank": 2
+    },
+    "c_visual": {
+      "score": -2.3317294702058136,
+      "rank": 4
+    },
+    "c_brand": {
+      "score": -1.8212226185328082,
+      "rank": 1
+    }
+  },
+  "pairwise": {
+    "c_brand|c_emotional": 0.5601143101779273,
+    "c_brand|c_price": 0.5066647681108429,
+    "c_brand|c_visual": 0.6249252848141997,
+    "c_emotional|c_price": 0.4464646626429382,
+    "c_emotional|c_visual": 0.5668181373103792,
+    "c_price|c_visual": 0.6186556866788782
+  },
+  "note": "synthetic fixture ads: the order checks reproducibility only, not ad quality",
+  "recorded_on": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.10",
+    "packages": {
+      "torch": "2.14.1",
+      "open_clip_torch": "3.3.0",
+      "pillow": "13.0.0",
+      "numpy": "2.5.4",
+      "safetensors": "0.8.0"
+    }
+  }
+}
