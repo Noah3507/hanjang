@@ -1,5 +1,10 @@
 # Hanjang Codex 개발 규칙
 
+## 최신 승인: 11단계 규칙 기반 가독성 진단
+
+feat/service-diagnostics는 별도 인증 POST/GET diagnostics를 추가합니다. POST는 동기200이며 Job 상태와 구분합니다. Candidate/B·ranking·편집·다운로드 계약은 유지합니다. Chromium 실제 계측만 사용하고 불확실 대비는 null/unavailable, bbox 교차는 주의로 처리합니다. 36 PNG px/40%는 조정 가능한 초기 서비스 휴리스틱이며 밀도는 bbox 합집합입니다. 시작·완료·조회 시 revision/asset/PNG hash/snapshot을 검증하고 stale 결과를 최신으로 게시하지 않습니다. 프로필·실제 ML·유료 API·모델 다운로드는 제외합니다. docs/DIAGNOSTICS.md와 DIAGNOSTICS_TEST_REPORT.md를 따릅니다. 아래 날짜별 단계 제한은 과거 기록입니다.
+
+
 ## 최신 승인 10단계 (2026-10-31)
 
 feat/service-editor는 후보별 headline/body/cta만 편집하고 실제 Chromium 재렌더링·PNG/A4 PDF 다운로드를 구현한다. facts는 편집 화면 읽기 전용, 자유 디자인은 제외한다. PATCH candidate/GET editing/GET download는 승인됐다. 원본 copy_key·사진·facts·동일 계보 candidate_id를 보존하며 네 후보 revision을 원자적으로 공개한다. 실패는 마지막 성공본을 유지하고 이전 ranking은 stale로 수동 재요청한다. A4는 이번 단계에서 선택후보 한 장·세로 한 페이지·최소10mm 여백의 래스터 PDF로 필수다. Candidate/B 계약·ML·실제 유료 호출은 변경하지 않는다. 상세는 docs/EDITING.md를 따르며 아래 과거 단계 범위와 구분한다.

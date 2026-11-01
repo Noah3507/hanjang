@@ -115,7 +115,7 @@ class RenderStore:
                         written.append((asset, path)); stream.write(result['png'])
                     stamp = record.upload.created_at.timestamp(); os.utime(path, (stamp, stamp))
                     m = result['measurement']
-                    boxes = [{k: v for k, v in b.items() if k not in ('line_count', 'font_family', 'actual_fonts')} for b in m['text']]
+                    boxes = [{k: v for k, v in b.items() if k not in ('line_count', 'font_family', 'actual_fonts','glyph_rects','contrast_eligible','contrast_evidence')} for b in m['text']]
                     for b in boxes:
                         b['foreground'] = rgb(b['foreground'])
                         b['background'] = None if b['background'].endswith(', 0)') else rgb(b['background'])

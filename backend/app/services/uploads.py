@@ -78,6 +78,7 @@ class Record:
     last_edit: str | None = None
     asset_hashes: dict = field(default_factory=dict)
     exports: dict = field(default_factory=dict)
+    diagnostic_result: object | None = None
 
 
 class PrivateUploadStore:
@@ -255,6 +256,7 @@ class PrivateUploadStore:
             for job, record in list(self.records.items()):
                 if record.upload.expires_at <= current:
                     record.exports.clear()
+                    record.diagnostic_result=None
                     self.safe_path(record.path.name).unlink(missing_ok=True)
                     for asset, path in record.derived.items():
                         self.safe_path(path.name).unlink(missing_ok=True)

@@ -142,7 +142,7 @@ class EditorStore:
                         measurement=result['measurement']
                         boxes=[]
                         for raw in measurement['text']:
-                            b={k:v for k,v in raw.items() if k not in ('line_count','font_family','actual_fonts')}
+                            b={k:v for k,v in raw.items() if k not in ('line_count','font_family','actual_fonts','glyph_rects','contrast_eligible','contrast_evidence')}
                             b['foreground']=rgb(b['foreground']);b['background']=None if b['background'].endswith(', 0)') else rgb(b['background'])
                             boxes.append(b)
                         c.renderer.text_boxes=[TextBox.model_validate(b) for b in boxes]

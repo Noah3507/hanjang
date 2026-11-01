@@ -1,5 +1,10 @@
 # 작은 단계별 개발 계획 초안
 
+## 11단계 현재 승인 범위
+
+S7 중 규칙 기반 진단만 구현합니다. 프로필과 실제 ML 연결은 후속입니다. 별도 동기 POST/GET, Chromium 증거 기반 대비·글꼴·bbox 합집합·경계 진단, current snapshot 검증 및 stale 분리를 완료 기준으로 사용합니다. 36px/40%는 서비스 휴리스틱이며 bbox 교차는 오류 확정이 아닙니다. Candidate/B·ranking·편집·다운로드는 유지합니다. [계약·한계](DIAGNOSTICS.md), [자동·브라우저 검증](DIAGNOSTICS_TEST_REPORT.md)을 참조하세요. 아래 표는 원본 단계 계획이며 현재 승인 기록을 우선합니다.
+
+
 2026-10-31 사용자 승인10단계 `feat/service-editor`: 문구 편집→후보1장 실제 재렌더링→네 후보 revision 원자 공개→PNG/A4 PDF 인증 다운로드. 단계별 완료 기준: (1) schema/편집 충돌·실패보존 단위/API 검증, (2) 최신 revision 다운로드·실제 A4/PDF픽셀 검증, (3) UI 연속편집·취소·새로고침·stale 순위/E2E, (4) 1–9단계 전체 회귀·문서·PR. facts/자유 디자인/실제 ML/실제 OpenAI는 제외한다. A4는 기존 전역 로드맵상 OPTIONAL이나 이번 승인 범위에서는 필수다. 계약과 완료 검증은 [EDITING](EDITING.md), [EDITING_TEST_REPORT](EDITING_TEST_REPORT.md)를 따른다. 아래는 과거 단계 기록이다.
 
 9단계 `feat/service-results`: 사용자 승인으로 결과 확대·MockRanker·추가 POST/GET ranking·임시 순위·stale/오류 처리를 진행한다. 실제 ML(12단계), 편집/다운로드, 진단, 배포, 디자인/타이포그래피는 포함하지 않는다. 현재 구현·검증은 [RESULTS](RESULTS.md)와 [RESULTS_TEST_REPORT](RESULTS_TEST_REPORT.md)를 따른다.
