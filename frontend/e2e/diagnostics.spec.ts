@@ -48,7 +48,7 @@ test('actual measured four diagnostics, caution, edit, stale, re-diagnose and PN
  await page.reload();await page.getByRole('button',{name:'저장 정보 다시 조회'}).click()
  await expect(panel.getByText(/진단 revision: 3/)).toBeVisible()
  const summary=panel.getByRole('article',{name:'감성 가독성 진단'}).getByText('판단 근거와 조치',{exact:true}).first()
- await summary.focus();await page.keyboard.press('Enter');await expect(panel.getByText(/일반 4.5:1/).first()).toBeVisible()
+ await summary.focus();await page.keyboard.press('Enter');await expect(panel.getByText(/모든 광고 텍스트 4.5:1/).first()).toBeVisible()
  await page.screenshot({path:info.outputPath('diagnostics-desktop.png'),fullPage:true})
  await page.setViewportSize({width:375,height:900});await expect(page.locator('body')).toHaveJSProperty('scrollWidth',375)
  await page.screenshot({path:info.outputPath('diagnostics-mobile.png'),fullPage:true});expect(errors).toEqual([])

@@ -3,7 +3,8 @@ import math
 from app.schemas.diagnostics import RuleResult,CandidateDiagnostics
 from app.services.diagnostics_evidence import EVIDENCE_VERSION
 
-RULES_VERSION='readability-rules-v1'
+RULES_VERSION='readability-rules-v2'
+CONTRAST_MINIMUM=4.5  # Conservative service reference at unknown display scale.
 SMALL_FONT_PX=36.0  # Tunable initial service heuristic, not a universal standard.
 DENSITY_LIMIT=.40  # Union of text BLOCK rectangles, not glyph ink or a score.
 WIDTH,HEIGHT=1080,1350
@@ -71,25 +72,26 @@ def contrast_rule(texts,measurement,png_hash):
     raw=raw if isinstance(raw,list) else []
     items=[]
     for t in texts:
-        item={'field':t.get('field','unknown'),'value':None,'threshold':None,'status':'unavailable'}
+        item={'field':t.get('field','unknown'),'value':None,'threshold':None,'status':'unavailable',
+              'reason':'현재 PNG에 대응하는 검증된 전경·배경 증거가 없어 측정·판정할 수 없습니다.'}
         candidates=[x for x in raw if isinstance(x,dict) and x.get('field')==t.get('field')]
         if len(candidates)==1:
             m=candidates[0];e=m.get('contrast_evidence',{})
-            match=all(m.get(k)==t.get(k) for k in ('text','x','y','width','height','font_size_px','font_weight'))
+            match=all(m.get(k)==t.get(k) for k in ('text','x','y','width','height'))
             fg=e.get('foreground_rgb') if isinstance(e,dict) else None
             if (match and m.get('contrast_eligible') is True and isinstance(e,dict) and e.get('version')==EVIDENCE_VERSION and e.get('status')=='verified'
                 and e.get('png_sha256')==png_hash and color(fg) and color(e.get('background_rgb'))
                 and '#'+''.join(f'{n:02X}' for n in fg)==str(t.get('foreground','')).upper()):
                 item['value']=contrast(fg,e['background_rgb'])
-                size,weight=t.get('font_size_px'),t.get('font_weight')
-                if number(size) and size>0 and number(weight):
-                    large=size>=24 or size>=14*96/72 and weight>=700
-                    item['threshold']=3. if large else 4.5
-                    item['status']='normal' if item['value']>=item['threshold'] else 'problem'
+                item['threshold']=CONTRAST_MINIMUM
+                item['status']='normal' if item['value']>=CONTRAST_MINIMUM else 'problem'
+                item['reason']='표시 배율을 확정하지 않아 모든 텍스트에 4.5:1 참고 기준을 적용합니다.'
+                if not number(t.get('font_size_px')) or t['font_size_px']<=0 or not number(t.get('font_weight')) or t['font_weight']<=0:
+                    item['reason']+=' 글꼴 크기·굵기 계측이 불완전하지만 이 대비 기준은 글꼴 분류에 의존하지 않습니다. 글자 크기 진단도 확인해 주세요.'
         items.append(item)
     ratios=[i['value'] for i in items if i['value'] is not None]
     return rule('contrast',[i['status'] for i in items],{'minimum':min(ratios) if ratios else None,'items':items},'contrast ratio',
-        'WCAG식 참고: 일반 4.5:1 / 큰 글자 3:1 (24 CSS px 또는 18.67px·700 이상)',
+        '모든 광고 텍스트 4.5:1 · 실제 표시 배율이 미확정인 서비스의 보수적 참고 기준',
         '실제 배경 캡처로 확인된 단색 픽셀과 전경만 계산합니다. 이미지·그라데이션·합성 불확실 항목은 측정 불가이며 접근성 인증이 아닙니다.',
         '미리보기에서 확인해 주세요. 현재 자유 색상·배경 편집과 자동 보정은 지원하지 않습니다.')
 

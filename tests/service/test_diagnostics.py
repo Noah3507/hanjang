@@ -33,10 +33,26 @@ def test_contrast_known_values_and_symmetry():
 @pytest.mark.parametrize('color',[[256,0,0],[-1,0,0],[True,0,0],[float('nan'),0,0],[0,0]])
 def test_bad_color(color):
     with pytest.raises(ValueError):e.contrast(color,[255,255,255])
-@pytest.mark.parametrize('size,weight,threshold',[(24,400,3),(23.99,400,4.5),(14*96/72,700,3),(18,700,4.5)])
+@pytest.mark.parametrize('size,weight,threshold',[(24,400,4.5),(32,400,4.5),(72,900,4.5),(18,700,4.5)])
 def test_large_text_reference(size,weight,threshold):
     c=candidate();c['renderer']['text_boxes'][0].update(font_size_px=size,font_weight=weight)
     r=rules(c,evidence(c))['contrast'];assert r.measured_value['items'][0]['threshold']==threshold
+
+@pytest.mark.parametrize('size,weight',[(None,400),(32,None),(float('nan'),400),(32,float('inf')),(0,0),(-1,-1)])
+def test_contrast_uniform_policy_independent_of_invalid_font_metrics(size,weight):
+    c=candidate();c['renderer']['text_boxes'][0].update(font_size_px=size,font_weight=weight)
+    r=rules(c,evidence(c))['contrast'];item=r.measured_value['items'][0]
+    assert item['value']==21 and item['threshold']==4.5 and item['status']=='normal'
+    assert '불완전' in item['reason'] and r.coverage=='complete'
+
+def test_32px_body_between_three_and_four_point_five_is_problem_and_partial():
+    c=candidate();t=c['renderer']['text_boxes'][0];t.update(field='body',font_size_px=32,foreground='#888888')
+    m=evidence(c);m['text'][0]['contrast_evidence']['foreground_rgb']=[136]*3
+    r=rules(c,m)['contrast'];assert 3<r.measured_value['minimum']<4.5 and r.status=='problem'
+    c['renderer']['text_boxes'].append({**t,'field':'cta'})
+    r=rules(c,m)['contrast'];assert r.coverage=='partial' and r.status=='problem'
+    assert r.measured_value['items'][1]['value'] is None and r.measured_value['items'][1]['threshold'] is None
+    assert '증거' in r.measured_value['items'][1]['reason']
 @pytest.mark.parametrize('ratio,status',[(4.5,'normal'),(4.499999,'problem')])
 def test_contrast_unrounded_boundary(monkeypatch,ratio,status):
     c=candidate();c['renderer']['text_boxes'][0]['font_size_px']=18
@@ -139,6 +155,65 @@ def test_invalid_asset_is_not_reported_normal(service,mode):
     assert c.post(b+'/diagnostics',headers=h,json=request(r)).status_code in (404,409)
     assert record.diagnostic_result is None
 
+@pytest.mark.parametrize('asset_kind',['original','rendered'])
+@pytest.mark.parametrize('damage',['missing','changed','corrupt','ownership'])
+def test_get_existing_result_propagates_integrity_errors(service,asset_kind,damage):
+    app,c,h,m,b,_,_=service;r,_=prepared(service)
+    assert c.post(b+'/diagnostics',headers=h,json=request(r)).json()['is_current']
+    record=app.state.upload_store.records[m['job_id']];entry=record.diagnostic_result
+    asset=m['asset_id'] if asset_kind=='original' else r['candidates'][0]['png']['asset_id']
+    path=record.path if asset_kind=='original' else record.derived[asset]
+    if damage=='ownership':app.state.upload_store.assets[asset]='other-job'
+    elif damage=='missing':path.unlink()
+    elif damage=='changed':path.write_bytes(path.read_bytes()+b'changed')
+    else:path.write_bytes(b'corrupt PNG')
+    response=c.get(b+'/diagnostics',headers=h)
+    assert response.status_code in (404,409) and 'results' not in response.json()
+    assert record.diagnostic_result is entry
+    assert str(path) not in response.text
+
+@pytest.mark.parametrize('change',['input','copy','render_absent','revision','draft_absent'])
+def test_get_existing_result_staleness_not_integrity_error(service,change):
+    app,c,h,m,b,_,_=service;r,edit=prepared(service)
+    previous=c.post(b+'/diagnostics',headers=h,json=request(r)).json()
+    record=app.state.upload_store.records[m['job_id']]
+    if change=='input':
+        d=draft();d['product_features']='다른 입력';c.put(b+'/input',headers=h,json=d)
+    elif change=='copy':record.copies.clear()
+    elif change=='render_absent':record.renders.clear();record.edited_renders.clear()
+    elif change=='draft_absent':record.draft=None
+    else:c.patch(target(b,r),headers=h,json=edit)
+    response=c.get(b+'/diagnostics',headers=h)
+    assert response.status_code==200 and response.json()['is_current'] is False
+    assert response.json()['results']==previous['results']
+
+@pytest.mark.parametrize('asset_kind',['original','rendered'])
+def test_changed_input_does_not_mask_original_integrity_error(service,asset_kind):
+    app,c,h,m,b,_,_=service;r,_=prepared(service)
+    c.post(b+'/diagnostics',headers=h,json=request(r))
+    d=draft();d['product_features']='다른 입력';c.put(b+'/input',headers=h,json=d)
+    record=app.state.upload_store.records[m['job_id']]
+    path=record.path if asset_kind=='original' else record.derived[r['candidates'][0]['png']['asset_id']]
+    path.write_bytes(b'broken')
+    assert c.get(b+'/diagnostics',headers=h).json()['error']['code']=='DIAGNOSTICS_ASSET_INVALID'
+
+@pytest.mark.parametrize('damage',[None,'missing','corrupt'])
+def test_selected_photo_change_is_stale_unless_file_unreadable(service,damage):
+    from app.schemas.photo import PhotoAsset
+    from uuid import uuid4
+    app,c,h,m,b,_,_=service;r,_=prepared(service)
+    c.post(b+'/diagnostics',headers=h,json=request(r))
+    record=app.state.upload_store.records[m['job_id']];asset=uuid4().hex;data=png()
+    path=record.path.parent/(asset+'.png');path.write_bytes(data)
+    record.derived[asset]=path;app.state.upload_store.assets[asset]=m['job_id']
+    record.photo.processed=PhotoAsset(asset_id=asset,width=400,height=300,mime_type='image/png',sha256=sha256(data).hexdigest())
+    assert c.put(b+'/photo-source',headers=h,json={'photo_source':'processed'}).status_code==200
+    if damage=='missing':path.unlink()
+    elif damage=='corrupt':path.write_bytes(b'broken')
+    response=c.get(b+'/diagnostics',headers=h)
+    if damage is None:assert response.status_code==200 and response.json()['is_current'] is False
+    else:assert response.status_code in (404,409) and 'results' not in response.json()
+
 def test_failed_diagnosis_retry_and_edit_staleness(service):
     app,c,h,m,b,_,_=service;r,edit=prepared(service);store=app.state.diagnostics_store;analyze=store.analyzer
     store.analyzer=lambda *a:(_ for _ in ()).throw(RuntimeError('private error'))
@@ -212,7 +287,7 @@ def test_real_contrast_evidence_edit_and_pdf_contract(service):
     assert result['status']=='completed'
     for candidate_result in result['results']:
         contrast=next(x for x in candidate_result['rules'] if x['rule_id']=='contrast')
-        assert contrast['coverage']=='complete' and contrast['measured_value']['minimum']>3
+        assert contrast['coverage']=='complete' and contrast['measured_value']['minimum']>=4.5
     before=c.get('/api/v1/assets/'+m['asset_id'],headers=h).content
     c.patch(target(b,r),headers=h,json=edit);assert not c.get(b+'/diagnostics',headers=h).json()['is_current']
     new=c.get(b+'/rendering',headers=h).json();diag=c.post(b+'/diagnostics',headers=h,json=request(new)).json()

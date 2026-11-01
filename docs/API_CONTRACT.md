@@ -2,6 +2,8 @@
 
 ## 11단계 additive diagnostics 계약
 
+PR #46 보완: 모든 광고 텍스트의 대비 참고 기준은 **4.5:1**입니다. 캔버스 글자 크기 기준 큰 글자3:1 분기는 제거합니다(실제 표시 배율 미확정). 대비 item의 value/threshold/status와 reason을 구분하고, 글꼴 누락은 균일 기준을 막지 않습니다. 색 근거가 없으면 null/unavailable이며 인증·만능 가독성 보장이 아닙니다. GET은 최신 렌더링 부재·입력 변경을 stale로 구분하되 원본·선택 사진·광고 PNG 무결성/접근 오류는 정상·stale로 숨기지 않습니다. Candidate/B 계약은 그대로입니다.
+
 `POST /api/v1/jobs/{job_id}/diagnostics`는 `{expected_render_revision, expected_candidates:[{candidate_id,asset_id}]}`(고유 네 후보)을 받아 동기200을 반환합니다. `GET` 동일 경로는 최근 결과를 재조회합니다. 응답 `operation=diagnostics`, pending/processing/completed/failed는 진단 operation이며 Job 상태를 변경하지 않습니다. 결과는 revision/is_current/rules_version/results/warnings/error/expires_at와 후보별 coverage·네 규칙의 status/measured_value/unit/criterion/explanation/action입니다. 측정 불가는 null, 수치와 점수는 구분합니다. start/end/GET의 snapshot·asset hash 검증, 409/503/failed·stale 정책과 예제는 [DIAGNOSTICS](DIAGNOSTICS.md)가 확정 기준입니다. 기존 Candidate/B diagnostics placeholder 및 JSON Schema·fixture는 변경하지 않습니다. `measurements`의 text 항목에 glyph_rects/contrast_eligible/contrast_evidence를 additive 확장하며 Candidate text_boxes에는 넣지 않습니다.
 
 

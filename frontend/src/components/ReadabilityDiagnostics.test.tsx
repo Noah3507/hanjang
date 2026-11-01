@@ -1,4 +1,4 @@
-import {render,screen,fireEvent,waitFor} from '@testing-library/react'
+import {render,screen,fireEvent,waitFor,act} from '@testing-library/react'
 import {vi,test,expect,beforeEach} from 'vitest'
 import ReadabilityDiagnostics from './ReadabilityDiagnostics'
 import {diagnostics,type DiagnosticsState} from '../api/diagnostics'
@@ -30,6 +30,27 @@ test('failure and manual retry are safe',async()=>{
  expect(await screen.findByRole('alert')).toHaveTextContent('다시 시도')
  vi.mocked(diagnostics).mockResolvedValue(completed);fireEvent.click(screen.getByRole('button',{name:'가독성 진단 실행'}))
  expect(await screen.findAllByRole('article')).toHaveLength(4)
+})
+
+test('temporary disabled keeps last success without accepting in-flight old reply',async()=>{
+ vi.mocked(diagnostics).mockResolvedValue(completed)
+ const view=render(<ReadabilityDiagnostics handle={handle} render={source} disabled={false}/>)
+ expect(await screen.findAllByRole('article')).toHaveLength(4)
+ let resolve!:(v:DiagnosticsState)=>void
+ vi.mocked(diagnostics).mockReturnValueOnce(new Promise(r=>resolve=r))
+ fireEvent.click(screen.getByRole('button',{name:'가독성 진단 실행'}))
+ view.rerender(<ReadabilityDiagnostics handle={handle} render={source} disabled={true}/>)
+ expect(screen.getAllByRole('article')).toHaveLength(4)
+ expect(screen.getByText(/재검증은 보류/)).toBeInTheDocument()
+ expect(screen.getByRole('button',{name:'가독성 진단 실행'})).toBeDisabled()
+ await act(async()=>resolve({...completed,is_current:false}))
+ expect(screen.getAllByRole('article')).toHaveLength(4)
+ view.rerender(<ReadabilityDiagnostics handle={handle} render={source} disabled={false}/>)
+ await waitFor(()=>expect(screen.queryByText(/재검증은 보류/)).not.toBeInTheDocument())
+ expect(screen.getAllByRole('article')).toHaveLength(4)
+ view.rerender(<ReadabilityDiagnostics handle={handle} render={{...source,revision:2}} disabled={false}/>)
+ expect(await screen.findByRole('alert')).toHaveTextContent('이전 revision')
+ expect(screen.queryAllByRole('article')).toHaveLength(0)
 })
 test('stale revision and mismatched asset cannot be shown as current',async()=>{
  vi.mocked(diagnostics).mockResolvedValue(completed)

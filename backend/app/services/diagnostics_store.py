@@ -20,6 +20,7 @@ class DiagnosticsStore:
         self.busy={}
 
     def snapshot(self,owner,job):
+        self.validate_sources(owner,job)
         record,_,_,draft,copy,source_key=self.renders.snapshot(owner,job)
         render=self.renders.get(owner,job)
         if not copy or render.status!='completed' or not render.is_current:
@@ -31,21 +32,36 @@ class DiagnosticsStore:
             raise UploadError(409,'DIAGNOSTICS_SOURCE_CHANGED','광고 후보 snapshot이 일치하지 않습니다.')
         hashes=[]
         for c in cs:
-            if self.uploads.assets.get(c.png.asset_id)!=job:raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','광고 파일 소유 정보가 일치하지 않습니다.')
-            try:
-                data,mime=self.uploads.read_asset(owner,c.png.asset_id)
-                opaque_png(data)
-            except UploadError:raise
-            except Exception:raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','광고 PNG가 손상됐거나 규격이 다릅니다.') from None
-            value=sha256(data).hexdigest()
-            if mime!='image/png' or value!=record.asset_hashes.get(c.png.asset_id):
-                raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','광고 파일 내용이 변경됐습니다.')
-            hashes.append(value)
+            hashes.append(self.validate_png(owner,job,record,c.png.asset_id))
         # Nonfinite metadata is fingerprinted, never emitted as a numeric result.
         key=sha256(json.dumps({'source':source_key,'render':render.model_dump(mode='python',by_alias=True),
-            'hashes':hashes,'rules':engine.RULES_VERSION,'font':engine.SMALL_FONT_PX,'density':engine.DENSITY_LIMIT},
+            'hashes':hashes,'rules':engine.RULES_VERSION,'font':engine.SMALL_FONT_PX,'density':engine.DENSITY_LIMIT,'contrast':engine.CONTRAST_MINIMUM},
             ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest()
         return record,render,hashes,key
+
+    def validate_png(self,owner,job,record,asset):
+        if self.uploads.assets.get(asset)!=job:raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','광고 파일 소유 정보가 일치하지 않습니다.')
+        try:
+            data,mime=self.uploads.read_asset(owner,asset)
+            opaque_png(data)
+        except UploadError:raise
+        except Exception:raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','광고 PNG가 손상됐거나 규격이 다릅니다.') from None
+        value=sha256(data).hexdigest()
+        if mime!='image/png' or value!=record.asset_hashes.get(asset):
+            raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','광고 파일 내용이 변경됐습니다.')
+        return value
+
+    def validate_sources(self,owner,job):
+        # Integrity failures are not snapshot staleness. Validate even when a
+        # changed draft means there is no current render to compare against.
+        record=self.uploads.get(owner,job)
+        _,selected=self.renders.copies.analysis.selected(owner,job)
+        for asset in {record.upload.asset_id:record.upload,selected.asset_id:selected}.values():
+            if self.uploads.assets.get(asset.asset_id)!=job:
+                raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','상품 사진 소유 정보가 일치하지 않습니다.')
+            data,mime=self.uploads.read_asset(owner,asset.asset_id)
+            if mime!=asset.mime_type or sha256(data).hexdigest()!=asset.sha256:
+                raise UploadError(409,'DIAGNOSTICS_ASSET_INVALID','상품 사진의 무결성을 확인하지 못했습니다. 사진을 다시 업로드해 주세요.')
 
     def blank(self,job,record,status='pending',revision=None,is_current=False):
         return DiagnosticsResponse(job_id=job,status=status,revision=revision,is_current=is_current,
@@ -57,9 +73,14 @@ class DiagnosticsStore:
             entry=record.diagnostic_result
             active=self.busy.get(job)
             if not entry and not active:return self.blank(job,record)
+            if entry:
+                # A stale snapshot is not a licence to ignore corrupted cached
+                # result assets when there is no new render to validate.
+                for candidate in entry.response.results:
+                    self.validate_png(owner,job,record,candidate.asset_id)
             try:_,render,hashes,key=self.snapshot(owner,job)
             except UploadError as error:
-                if error.code!='DIAGNOSTICS_RENDER_NOT_READY':raise
+                if error.code not in ('DIAGNOSTICS_RENDER_NOT_READY','INPUT_NOT_SAVED'):raise
                 key=None
             if active:
                 return self.blank(job,record,'processing',active[1],active[0]==key)

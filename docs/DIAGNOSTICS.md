@@ -26,11 +26,11 @@
 
 후보별 결과: `candidate_id`, `strategy`, `asset_id`, `coverage`, `rules`. 규칙별 결과: `rule_id`(contrast/font_size/layout/density), `status`(normal/caution/problem/unavailable), `coverage`(complete/partial/unavailable), `measured_value`(객체 또는 null), `unit`, `criterion`, `explanation`, `action`. 측정 누락은 null이며 0점·정상으로 바꾸지 않습니다. 일부 측정 불가 시 유효한 수치와 coverage를 함께 표시합니다. NaN/Infinity는 반환하지 않습니다.
 
-오류: 인증 누락·잘못된 세션 401, 다른 소유자·없는/만료된 작업은 기존 upload 정책, 잘못된 본문 422, 초과 본문 413. 현재 성공 광고 없음은 409 `DIAGNOSTICS_RENDER_NOT_READY`, 기대 revision/ID 불일치 또는 계산 중 snapshot 변경은 409 `DIAGNOSTICS_SOURCE_CHANGED`, PNG 소유·형식·해시 불일치는 409 `DIAGNOSTICS_ASSET_INVALID`(파일 자체 누락은 기존 asset 오류), 동일 작업의 동시 실행은 503 `DIAGNOSTICS_BUSY`입니다. 내부 파일 경로를 오류에 포함하지 않습니다.
+오류: 인증 누락·잘못된 세션 401, 다른 소유자·없는/만료된 작업은 기존 upload 정책, 잘못된 본문 422, 초과 본문 413. 현재 성공 광고 없음은 409 `DIAGNOSTICS_RENDER_NOT_READY`, 기대 revision/ID 불일치 또는 계산 중 snapshot 변경은 409 `DIAGNOSTICS_SOURCE_CHANGED`, 원본·선택 사진 또는 광고 PNG의 소유·형식·해시 불일치는 409 `DIAGNOSTICS_ASSET_INVALID`(파일 자체 누락은 기존 404 asset 오류), 동일 작업의 동시 실행은 503 `DIAGNOSTICS_BUSY`입니다. 내부 파일 경로를 오류에 포함하지 않습니다. GET은 입력 미저장·최신 성공 렌더링 부재 시 이전 결과를 200/is_current=false로 보존하지만, 무결성·권한·파일 조회 오류는 stale로 바꾸거나 무시하지 않습니다. 원본/선택 사진은 현재 렌더링 유무 판단 전 검증합니다.
 
 ## 최신성·동시성·보존
 
-시작·완료·재조회 시 현재 사진/저장 입력/카피/template snapshot, revision, 네 후보·asset ID, 원문 facts, 실제 PNG SHA-256 및 등록 해시를 검증합니다. 계산은 복제된 snapshot에서 실행하고, 완료 시 다르면 결과를 게시하지 않습니다. 이전 결과는 보존하되 조회 시 `is_current=false`로 반환하고 현재 광고의 진단으로 표시하지 않습니다. 새 snapshot의 성공 결과가 최신 슬롯을 대체합니다. 같은 snapshot과 규칙 상수의 완료 결과는 재사용합니다. 후보 순서는 API 내부 ID 비교로 확인하며 B 계약을 변경하지 않습니다.
+시작·완료·재조회 시 현재 사진/저장 입력/카피/template snapshot, revision, 네 후보·asset ID, 원문 facts, 실제 PNG SHA-256 및 등록 해시를 검증합니다. GET은 이전 진단에 연결된 광고 파일도 검사하므로 새 렌더링이 없어도 손상·삭제된 기존 PNG의 오류를 숨기지 않습니다. 계산은 복제된 snapshot에서 실행하고, 완료 시 다르면 결과를 게시하지 않습니다. 이전 결과는 보존하되 조회 시 `is_current=false`로 반환하고 현재 광고의 진단으로 표시하지 않습니다. 새 snapshot의 성공 결과가 최신 슬롯을 대체합니다. 같은 snapshot과 규칙 상수의 완료 결과는 재사용합니다. 후보 순서는 API 내부 ID 비교로 확인하며 B 계약을 변경하지 않습니다.
 
 진단 전용 per-job busy는 동기 함수의 finally에서 해제하며 렌더링·편집 worker active와 분리합니다. PNG·편집·PDF·ranking 상태를 잠그거나 변경하지 않습니다. 성공한 편집은 이전 진단을 stale로, 실패한 편집은 기존 진단을 유지합니다. 메타데이터는 인메모리이며 서버 재시작 시 유실되고 작업 만료 시 제거됩니다.
 
@@ -41,9 +41,11 @@
 | 글자 크기 | 실제 Chromium font-size, 현재 CSS px=PNG px(배율1). `SMALL_FONT_PX=36.0` 미만 **주의**, 같으면 정상 | 조정 가능한 초기 서비스 휴리스틱. 보편 기준·모바일/인쇄 보장이 아님 |
 | 텍스트 밀도 | 캔버스 내 text block bbox **합집합** / (1080×1350), `DENSITY_LIMIT=.40` 초과 **주의**. 중복 제외, 누락 시 하한값·partial | 글자 잉크 면적이나 이해도 점수가 아님 |
 | 경계·겹침 | 캔버스 이탈은 문제. 1px 초과 bbox 교차 및 DOM overflow는 주의 | bbox만으로 실제 글자 가림·의도적 배치·투명 이미지 영역을 확정하지 않음 |
-| 명도 대비 | 검증된 전경 RGB와 실제 배경 픽셀만 sRGB 상대휘도 `(Lmax+.05)/(Lmin+.05)`. 일반4.5:1, 큰 글자3:1 미만 문제 | 측정할 수 없는 항목은 null/unavailable. 접근성 인증이 아님 |
+| 명도 대비 | 검증된 전경 RGB와 실제 배경 픽셀만 sRGB 상대휘도 `(Lmax+.05)/(Lmin+.05)`. **모든 광고 텍스트 4.5:1 미만 문제**, 정확히4.5는 정상 | 표시 배율이 미확정인 서비스의 보수적 참고 기준. 측정 불가는 null/unavailable. 접근성 인증이 아님 |
 
-36px/40%는 `backend/app/services/diagnostics_engine.py` 상수이며 변경하면 캐시 fingerprint도 달라집니다. 대비 큰 글자는 24 CSS px 이상 또는 14pt(18.666…px) 이상·weight700 이상이며 판정 전 반올림하지 않습니다. [W3C 대비 참고 기준](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)을 사용합니다.
+36px/40%와 `CONTRAST_MINIMUM=4.5`는 `backend/app/services/diagnostics_engine.py` 상수이며 변경하면 캐시 fingerprint도 달라집니다. 규칙 버전은 `readability-rules-v2`입니다. 1080px 캔버스의 글자는 모바일에서 축소되므로 캔버스 px를 실제 표시 크기로 취급하지 않습니다. 큰 글자3:1 분기는 제거했으며 표시 크기·배율 정책을 별도로 승인하기 전 도입하지 않습니다. [W3C 대비 참고 기준](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)의 일반 텍스트 기준을 보수적으로 사용하지만 WCAG 인증·모든 출력 환경의 가독성을 보장하지 않습니다. 판정 전 반올림하지 않습니다.
+
+대비 items는 `value`(측정), `threshold`(적용 기준), `status`(판정), `reason`(측정·판정 근거)을 구분합니다. 검증된 색이 있으면 글꼴 크기·굵기가 누락돼도 균일4.5 기준을 적용할 수 있습니다. 그 경우 reason에 글꼴 계측 불완전을 표시하며 글자 크기 규칙은 별도 유지합니다. 색 증거가 없으면 value/threshold는 null이며 unavailable 사유를 표시합니다. 일부 항목만 측정되면 coverage=partial로 표시합니다.
 
 ## 실제 렌더링 대비 계측
 
@@ -53,6 +55,6 @@
 
 ## 화면·실행
 
-최신 성공 광고 아래 별도 진단 영역에서 **가독성 진단 실행**을 누릅니다. 네 후보의 네 규칙, 측정값·coverage와 펼침 가능한 근거/조치를 확인합니다. 문구 편집→재렌더링 후 이전 진단은 숨겨지고 새 revision으로 재진단합니다. 순위는 독립적으로 유지됩니다. 새로고침은 세션과 Job이 살아 있으면 GET으로 복원하며 늦은 이전 응답은 무시합니다.
+최신 성공 광고 아래 별도 진단 영역에서 **가독성 진단 실행**을 누릅니다. 네 후보의 네 규칙, 측정값·coverage와 펼침 가능한 근거/조치를 확인합니다. 단순 disabled 전환은 진단을 지우지 않고 마지막 확인 snapshot·재검증 보류 안내와 함께 보존합니다. 다시 활성화되면 GET으로 재검증합니다. 실제 사진·카피·후보·revision 변경은 snapshot 변경으로 분리하여 이전 응답을 무시하고 새 revision으로 재진단합니다. 순위는 독립적으로 유지됩니다. 새로고침은 세션과 Job이 살아 있으면 GET으로 복원합니다.
 
 추가 패키지·모델·유료 API는 필요하지 않습니다. 기존 Python/Pillow·Chromium·Noto Sans KR을 사용합니다. 검증 명령과 실제 결과는 [DIAGNOSTICS_TEST_REPORT](DIAGNOSTICS_TEST_REPORT.md)를 따릅니다.
