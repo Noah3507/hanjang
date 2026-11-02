@@ -2,6 +2,8 @@
 
 ## 현재 기준
 
+12단계 실제 ranking은 기존 `.venv-rank`와 B bundle을 재사용한다. 실행 스크립트의 기본 ranking_mode는 model이며 ranking_python/ranking_model_path를 로컬 JSON으로 지정할 수 있다. RANKING_MODEL_PATH는 bundle directory가 아닌 model.safetensors **파일**이다. 필요하면 upload_root로 시험 저장 위치를 분리한다. 실제 모델 설정·검증·명시적 Mock 정책은 [RANKING_SERVICE](docs/RANKING_SERVICE.md)를 따른다. 기존 .env/JSON/모델/환경을 덮어쓰지 않는다.
+
 PR #39가 병합된 main에 OpenAI 보완 커밋 `3f4eea7`을 통합한다. 기존 브랜치와 worktree를 보존한다. transfer 소스를 덮어쓰거나 과거 브랜치로 되돌려 복원하지 않는다. 기본 Mock/paid=false이며 유료 호출은 별도 승인 대상이다.
 
 ## 리소스 재사용

@@ -1,5 +1,9 @@
 # API와 Ranking 계약 초안
 
+## 12단계 실제 모델 적용
+
+POST/GET ranking 및 Candidate/Ranking v1.1 shape는 변경하지 않는다. 기존 source=model과 score/model_version/feature_version/pairwise를 실제 B 출력으로 채우고 warnings에 실행 모드를 구분한다. 모델 실패는 기존 failed/error/ranking=null이며 자동 Mock fallback은 없다. 편집·다운로드·진단 API는 유지한다. 상세는 [RANKING_SERVICE](RANKING_SERVICE.md)를 따른다.
+
 ## 11단계 additive diagnostics 계약
 
 PR #46 보완: 모든 광고 텍스트의 대비 참고 기준은 **4.5:1**입니다. 캔버스 글자 크기 기준 큰 글자3:1 분기는 제거합니다(실제 표시 배율 미확정). 대비 item의 value/threshold/status와 reason을 구분하고, 글꼴 누락은 균일 기준을 막지 않습니다. 색 근거가 없으면 null/unavailable이며 인증·만능 가독성 보장이 아닙니다. GET은 최신 렌더링 부재·입력 변경을 stale로 구분하되 원본·선택 사진·광고 PNG 무결성/접근 오류는 정상·stale로 숨기지 않습니다. Candidate/B 계약은 그대로입니다.

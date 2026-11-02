@@ -1,5 +1,7 @@
 # A/B 병렬 개발과 모델 전달 계약 점검
 
+2026-11-02 후속12단계: B의 ml.inference 계약을 그대로 소비하는 서비스 worker를 추가한다. 실제 모델·명시적 Mock·실패 분리와 현재 통합 상태는 [RANKING_SERVICE](RANKING_SERVICE.md)를 따른다. 아래 미구현/미확정 표현은 초기 설계 당시 기록이며, B의 현재 함수·bundle 계약은 ml/inference/README.md를 우선한다.
+
 2026-10-12 점검. 문서·인터페이스 검토 결과이며 실행 가능한 추론 코드나 신규 API를 추가하지 않습니다. 기준은 [API_CONTRACT](API_CONTRACT.md), [DEVELOPMENT_PLAN](DEVELOPMENT_PLAN.md), [ROLE_SPLIT](ROLE_SPLIT.md)입니다.
 
 ## 구현 상태와 계약의 확정 수준

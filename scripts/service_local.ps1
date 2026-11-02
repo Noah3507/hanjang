@@ -31,6 +31,14 @@ $python = Resolve-LocalFile 'service_python' '.venv/Scripts/python.exe'
 $analysisPython = Resolve-LocalFile 'analysis_python' '.venv-analysis/Scripts/python.exe'
 $photoModel = Resolve-LocalFile 'photo_model' 'artifacts/models/rembg/u2netp.onnx'
 $clipModel = Resolve-LocalFile 'clip_model' 'artifacts/models/analysis/ViT-B-32.pt'
+$rankingMode = if ($config.ranking_mode) { [string]$config.ranking_mode } else { 'model' }
+if ($rankingMode -notin @('model','mock')) { throw 'ranking_mode must be model or explicit test mock.' }
+# Missing ranking artifacts do not block editing/rendering/download; POST ranking reports failure.
+$rankingPython = if ($config.ranking_python) { [string]$config.ranking_python } else { Join-Path $resourceRoot '.venv-rank/Scripts/python.exe' }
+$rankingModel = if ($config.ranking_model_path) { [string]$config.ranking_model_path } else { Join-Path $resourceRoot 'artifacts/models/ranking/bt-logistic-v1/model.safetensors' }
+if (-not [IO.Path]::IsPathRooted($rankingPython) -or -not [IO.Path]::IsPathRooted($rankingModel)) {
+    throw 'ranking_python and ranking_model_path must be absolute local paths.'
+}
 if ((Get-FileHash -LiteralPath $photoModel -Algorithm SHA256).Hash -ne '309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8' -or
     (Get-FileHash -LiteralPath $clipModel -Algorithm SHA256).Hash -ne '40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af') {
     throw 'Model checksum mismatch. Existing files were not changed; provision the documented exact models separately.'
@@ -62,7 +70,8 @@ if ($clipModel -match '[^\x00-\x7F]') {
     if (-not (Test-Path -LiteralPath $clipModel -PathType Leaf)) { throw 'CLIP junction target is unavailable; repair local config.' }
 }
 $names = @('HANJANG_PHOTO_MODEL_PATH','HANJANG_ANALYSIS_MODEL_PATH','HANJANG_ANALYSIS_PYTHON','HANJANG_UPLOAD_ROOT',
-    'HANJANG_COPY_PROVIDER','HANJANG_COPY_ALLOW_PAID','OPENAI_API_KEY','HANJANG_CORS_ORIGINS','HF_HUB_OFFLINE','TRANSFORMERS_OFFLINE','PYTHONUTF8','PYTHONPATH')
+    'HANJANG_COPY_PROVIDER','HANJANG_COPY_ALLOW_PAID','OPENAI_API_KEY','HANJANG_CORS_ORIGINS','HF_HUB_OFFLINE','TRANSFORMERS_OFFLINE','PYTHONUTF8','PYTHONPATH',
+    'HANJANG_RANKING_MODE','HANJANG_RANKING_PYTHON','RANKING_MODEL_PATH')
 $previous = @{}
 foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVariable($name,'Process') }
 Push-Location $project
@@ -70,7 +79,10 @@ try {
     $env:HANJANG_PHOTO_MODEL_PATH = $photoModel
     $env:HANJANG_ANALYSIS_MODEL_PATH = $clipModel
     $env:HANJANG_ANALYSIS_PYTHON = $analysisPython
-    $env:HANJANG_UPLOAD_ROOT = Join-Path $project 'artifacts/local-dev/uploads'
+    $env:HANJANG_RANKING_MODE = $rankingMode
+    $env:HANJANG_RANKING_PYTHON = $rankingPython
+    $env:RANKING_MODEL_PATH = $rankingModel
+    $env:HANJANG_UPLOAD_ROOT = if ($config.upload_root) { [IO.Path]::GetFullPath([string]$config.upload_root) } else { Join-Path $project 'artifacts/local-dev/uploads' }
     $env:HANJANG_COPY_PROVIDER = 'mock'
     $env:HANJANG_COPY_ALLOW_PAID = 'false'
     $env:OPENAI_API_KEY = ''
@@ -92,7 +104,7 @@ try {
         $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,$Port)
         try { $listener.Start() } catch { throw "Port $Port is occupied. Existing process was not stopped; choose another port." }
         finally { $listener.Stop() }
-        Write-Host "Mock-only backend: http://127.0.0.1:$Port/docs (Ctrl+C to stop)"
+        Write-Host "Mock-copy backend / ranking=$rankingMode : http://127.0.0.1:$Port/docs (Ctrl+C to stop)"
         & $python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port $Port
         if ($LASTEXITCODE -ne 0) { throw 'Backend exited unsuccessfully. Inspect server output.' }
     }
