@@ -1,5 +1,9 @@
 # 작은 단계별 개발 계획 초안
 
+## 12단계 현재 승인 범위
+
+실제 B 모델의 최종 PNG 네 장 평가를 A worker로 연동하고 raw score·버전·rank를 표시한다. 기본 model/명시적 mock, 무결성·timeout·오류·복구·snapshot·편집 후 stale를 검증한다. B 학습/가중치·계약 변경·13단계는 제외한다. [실행 경계](RANKING_SERVICE.md), [검증](RANKING_INTEGRATION_TEST_REPORT.md)을 따른다. 아래11단계 이하 기록의 실제 ML 미구현 표현은 과거 범위다.
+
 ## 11단계 현재 승인 범위
 
 S7 중 규칙 기반 진단만 구현합니다. 프로필과 실제 ML 연결은 후속입니다. 별도 동기 POST/GET, Chromium 증거 기반 대비·글꼴·bbox 합집합·경계 진단, current snapshot 검증 및 stale 분리를 완료 기준으로 사용합니다. 36px/40%는 서비스 휴리스틱이며 bbox 교차는 오류 확정이 아닙니다. Candidate/B·ranking·편집·다운로드는 유지합니다. [계약·한계](DIAGNOSTICS.md), [자동·브라우저 검증](DIAGNOSTICS_TEST_REPORT.md)을 참조하세요. 아래 표는 원본 단계 계획이며 현재 승인 기록을 우선합니다.

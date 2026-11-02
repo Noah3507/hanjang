@@ -42,18 +42,25 @@ export default function RankingResults({ handle, render, disabled }: { handle: U
   }
   const current = !disabled && render.is_current && receivedFor === signature && state?.is_current && state.revision === render.revision
   const ranking = current && state.status === 'completed' ? state.ranking : null
-  return <section aria-label="광고 임시 순위" className="ranking-results">
-    <h4>광고 임시 순위</h4>
-    <p className="mock-ranking-notice">시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다</p>
-    <p className="help">MockRanker는 고정 시험값을 사용합니다. 실제 ML 모델은 연결되지 않았으며 선호 확률·CTR·매출 예측을 제공하지 않습니다.</p>
-    <button disabled={disabled || busy || render.status !== 'completed'} onClick={() => void update(true)}>임시 순위 확인</button>{' '}
+  const mock = ranking ? ranking.source !== 'model' : state?.warnings?.includes('MOCK_RANKING_NOT_QUALITY_EVALUATION')
+  const real = ranking ? ranking.source === 'model' : state?.warnings?.includes('RANKING_MODEL_MODE')
+  const closeCall = ranking?.source === 'model' && ranking.items.some((item,n) => n > 0 && Math.abs(item.score-ranking.items[n-1].score)<0.2)
+  return <section aria-label="광고 선호 순위" className="ranking-results">
+    <h4>광고 선호 순위</h4>
+    {mock && <p className="mock-ranking-notice">시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다</p>}
+    {real && <p>실행 모드: 실제 모델 · 자동 Mock 전환 없음</p>}
+    <p className="help">모델 점수는 같은 상품의 네 광고 간 상대 선호 값입니다. 확률·CTR·매출·객관적 디자인 품질을 뜻하지 않으며 가독성 진단과 별개입니다.</p>
+    <button disabled={disabled || busy || render.status !== 'completed'} onClick={() => void update(true)}>순위 계산</button>{' '}
     <button disabled={disabled || busy} onClick={() => void update(false)}>순위 다시 조회</button>
     <p role="status">순위 상태: {busy ? '조회 중' : state?.status ?? '미조회'}</p>
-    {error && <p role="alert">{error}</p>}{state?.error && <p role="alert">{state.error.message}</p>}
+    {error && <p role="alert">{error}</p>}{state?.error && <p role="alert">{state.error.code} · {state.error.message}</p>}
     {(disabled || (state && state.status !== 'pending' && !current)) && <p className="ranking-stale">현재 광고와 일치하는 순위가 아닙니다. 최신 광고를 조회한 후 임시 순위를 확인해 주세요.</p>}
     {!busy && !error && state?.status === 'pending' && <p>아직 생성된 순위가 없습니다.</p>}
     {ranking && <><p>순위 출처: {ranking.source === 'mock' ? 'MockRanker · 시연용' : ranking.source === 'fallback_mock' ? 'Mock 대체 결과' : '모델 상대 선호 순위'}</p>
-      <ol>{ranking.items.map(item => { const c = render.candidates.find(c => c.candidate_id === item.candidate_id); return <li key={item.candidate_id}>{item.rank}위 · {c ? strategyLabels[c.strategy] : '알 수 없는 광고'}{c ? ` · ${c.strategy}` : ''}</li> })}</ol>
+      <p>모델 버전: {ranking.model_version}</p>
+      {ranking.source === 'model' && <p>실제 모델 실행 완료 · 높은 score부터 정렬, 동점은 후보 ID 순서입니다.</p>}
+      {closeCall && <p>점수가 가까운 후보가 있습니다. 작은 차이를 우열로 단정하지 말고 광고와 가독성 진단을 함께 확인하세요.</p>}
+      <ol>{ranking.items.map(item => { const c = render.candidates.find(c => c.candidate_id === item.candidate_id); return <li key={item.candidate_id}>{item.rank}위 · {c ? strategyLabels[c.strategy] : '알 수 없는 광고'}{c ? ` · ${c.strategy}` : ''}{ranking.source === 'model' && <span> · score: {String(item.score)}</span>}</li> })}</ol>
     </>}
   </section>
 }

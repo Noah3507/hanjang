@@ -13,7 +13,7 @@ describe('backend connection status', () => {
     expect(screen.getByRole('heading', { name: 'Hanjang' })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('백엔드 연결 확인 중')
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('백엔드 연결됨'))
-    expect(screen.getByText(/실제 ML 순위는 아직 연결되지 않았습니다/)).toBeInTheDocument()
+    expect(screen.getByText(/가독성 진단은 모델 점수와 별개입니다/)).toBeInTheDocument()
     expect(fetch).toHaveBeenCalledWith('/api/v1/health', expect.objectContaining({ signal: expect.any(AbortSignal) }))
   })
 

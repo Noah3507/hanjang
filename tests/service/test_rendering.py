@@ -34,7 +34,7 @@ def fake_render(draft, copy, data):
 
 @pytest.fixture
 def service(tmp_path):
-    app=create_app(Settings(_env_file=None,upload_root=tmp_path/'uploads'))
+    app=create_app(Settings(_env_file=None,upload_root=tmp_path/'uploads',ranking_mode='mock'))
     app.state.render_store.executor=fake_render
     with TestClient(app) as client:
         h={'X-Hanjang-Session':client.post('/api/v1/sessions').json()['session_token']}

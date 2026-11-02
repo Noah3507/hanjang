@@ -37,6 +37,8 @@ export default defineConfig({
     {
       command: `${python} -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port ${backendPort}`,
       cwd: root,
+      // Regression suite explicitly opts into demonstration mode; production defaults to model.
+      env: { HANJANG_RANKING_MODE: process.env.PLAYWRIGHT_RANKING_MODE || 'mock' },
       url: `http://127.0.0.1:${backendPort}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

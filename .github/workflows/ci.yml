@@ -97,6 +97,7 @@ jobs:
             artifacts/playwright/results/**/results-*.png
             artifacts/playwright/results/**/editor-*.png
             artifacts/playwright/results/**/diagnostics-*.png
+            artifacts/playwright/results/**/ranking-model-*.png
           retention-days: 7
           if-no-files-found: ignore
       - name: Retain failure diagnostics

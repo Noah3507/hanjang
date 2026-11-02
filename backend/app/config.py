@@ -40,8 +40,12 @@ class Settings(BaseSettings):
     copy_max_retries: int = Field(default=1, ge=0, le=1)
     openai_api_key: SecretStr | None = Field(default=None, validation_alias='OPENAI_API_KEY')
     copy_budget_path: Path = PROJECT_ROOT / 'artifacts/copy-usage/ledger.json'
-    # Exact unprefixed name agreed with B. Optional until the real adapter exists.
-    ranking_model_path: Path | None = Field(default=None, validation_alias="RANKING_MODEL_PATH")
+    ranking_mode: Literal['model', 'mock'] = 'model'
+    ranking_python: Path = PROJECT_ROOT / '.venv-rank' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+    ranking_timeout_seconds: float = Field(default=30, gt=0, le=120)
+    ranking_temp_root: Path = PROJECT_ROOT / 'artifacts/ranking-runtime'
+    # Preserve the agreed FILE meaning, pass its parent to B's loader.
+    ranking_model_path: Path | None = Field(default=PROJECT_ROOT / 'artifacts/models/ranking/bt-logistic-v1/model.safetensors', validation_alias="RANKING_MODEL_PATH")
 
     @field_validator("ranking_model_path", mode="before")
     @classmethod

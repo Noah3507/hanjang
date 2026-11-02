@@ -32,3 +32,21 @@ test('permission and conflict errors do not become success', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ error: { message: '광고가 변경됐습니다' } }, { status: 409 })))
   await expect(rankingState(handle)).rejects.toThrow('광고가 변경됐습니다')
 })
+
+test.each(['version','features','error'])('rejects malformed real model display metadata %s', async mode => {
+  const body=result()
+  Object.assign(body.ranking,{source:'model',model_version:'bt-logistic-v1',feature_version:'real-features'})
+  if(mode==='version')Object.assign(body.ranking,{model_version:{bad:true}})
+  if(mode==='features')Object.assign(body.ranking,{feature_version:{bad:true}})
+  if(mode==='error')Object.assign(body,{status:'failed',ranking:null,error:{code:{bad:true},message:'model unavailable'}})
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json(body)))
+  await expect(rankingState(handle)).rejects.toThrow('응답 형식')
+})
+
+test('retains actual model raw scores and version without normalization',async()=>{
+  const body=result()
+  Object.assign(body.ranking,{source:'model',model_version:'bt-logistic-v1',feature_version:'real-features'})
+  body.ranking.items.forEach((item,n)=>{item.score=-1.1-n*.2})
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(Response.json(body)))
+  expect((await rankingState(handle)).ranking).toEqual(body.ranking)
+})

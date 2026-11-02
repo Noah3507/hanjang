@@ -28,7 +28,7 @@ export default function AdRendering({ handle, draft, asset, copy, disabled }: { 
   }
   const stale = state && state.status !== 'pending' && (!state.is_current || disabled || state.source_asset_id !== asset || state.copy_key !== copy?.copy_key)
   return <section aria-label="4전략 광고 이미지" className="ad-rendering">
-    <h3>4전략 광고 이미지</h3><p>광고 네 장을 확대해 비교하고 문구 편집·PNG/A4 PDF 다운로드와 시연용 임시 순위를 확인할 수 있습니다.</p>
+    <h3>4전략 광고 이미지</h3><p>광고 네 장을 확대해 비교하고 문구 편집·PNG/A4 PDF 다운로드와 선호 순위를 확인할 수 있습니다.</p>
     <button type="button" disabled={disabled || busy || editingBusy || !copy?.copy_key || !copy.is_current || copy.status !== 'completed'} onClick={() => void update(true)}>광고 4장 렌더링</button>{' '}
     <button type="button" disabled={busy} onClick={() => void update(false)}>광고 상태 다시 조회</button>
     <p role="status">렌더링 상태: {state?.status ?? '조회 중'}</p>

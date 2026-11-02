@@ -1,5 +1,9 @@
 # Hanjang Codex 개발 규칙
 
+## 최신 승인: 12단계 실제 Preference 모델 서비스 연동
+
+feat/service-ranking-integration은 A 전용 worker가 기존 `.venv-rank`에서 B의 load_model/RankInput/rank_ads를 호출한다. 기본 ranking은 실제 model이며 mock은 명시적인 개발·테스트 설정만 허용하고 자동 fallback은 하지 않는다. 최종 네 PNG snapshot·candidate ID·revision·소유권·TTL·stale 계약을 유지하고 실제 raw score/모델 버전을 가독성 진단과 별도로 표시한다. B 코드/가중치/환경·사용자 파일은 수정하지 않으며 다운로드·유료 API·13단계·main 병합은 제외한다. docs/RANKING_SERVICE.md와 RANKING_INTEGRATION_TEST_REPORT.md를 따른다. 아래 단계별 제한은 해당 시점 기록이다.
+
 ## 최신 승인: 11단계 규칙 기반 가독성 진단
 
 feat/service-diagnostics는 별도 인증 POST/GET diagnostics를 추가합니다. POST는 동기200이며 Job 상태와 구분합니다. Candidate/B·ranking·편집·다운로드 계약은 유지합니다. Chromium 실제 계측만 사용하고 불확실 대비는 null/unavailable, bbox 교차는 주의로 처리합니다. 36 PNG px/40%는 조정 가능한 초기 서비스 휴리스틱이며 밀도는 bbox 합집합입니다. 시작·완료·조회 시 revision/asset/PNG hash/snapshot을 검증하고 stale 결과를 최신으로 게시하지 않습니다. 프로필·실제 ML·유료 API·모델 다운로드는 제외합니다. docs/DIAGNOSTICS.md와 DIAGNOSTICS_TEST_REPORT.md를 따릅니다. 아래 날짜별 단계 제한은 과거 기록입니다.

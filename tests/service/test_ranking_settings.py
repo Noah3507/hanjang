@@ -13,7 +13,8 @@ def test_optional_or_missing_model_does_not_prevent_service_start(monkeypatch, t
     if value is not None:
         monkeypatch.setenv("RANKING_MODEL_PATH", value)
     settings = Settings(_env_file=None, upload_root=tmp_path / "uploads")
-    expected = None if not value else PROJECT_ROOT / value
+    expected = (PROJECT_ROOT / 'artifacts/models/ranking/bt-logistic-v1/model.safetensors'
+                if value is None else None if value == '' else PROJECT_ROOT / value)
     assert settings.ranking_model_path == expected
     with TestClient(create_app(settings)) as client:
         assert client.get("/health").json()["status"] == "ok"

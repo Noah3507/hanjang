@@ -25,20 +25,21 @@ export async function rankingState(handle: UploadHandle, render?: RenderState): 
       expected_candidate_ids: render.candidates.map(c => c.candidate_id) }) } : {}),
   })
   const body = await response.json().catch(() => null)
-  if (!response.ok) throw new ApiError(body?.error?.message || '임시 순위를 조회하지 못했습니다.')
+  if (!response.ok) throw new ApiError(body?.error?.message || '광고 순위를 조회하지 못했습니다.')
   const r = body?.ranking as Ranking | null | undefined
   if (!body || body.operation !== 'ranking' || body.job_id !== handle.upload.job_id
     || !['pending', 'processing', 'completed', 'failed'].includes(body.status) || typeof body.is_current !== 'boolean'
     || (body.revision !== null && (!Number.isInteger(body.revision) || body.revision < 1))
-    || !Array.isArray(body.warnings)
+    || !Array.isArray(body.warnings) || body.warnings.some((w: unknown) => typeof w !== 'string')
+    || (body.error !== null && (!body.error || typeof body.error.code !== 'string' || typeof body.error.message !== 'string'))
     || (body.status === 'completed' && !r)
-    || (r && (!['mock', 'model', 'fallback_mock'].includes(r.source) || !r.model_version
+    || (r && (!['mock', 'model', 'fallback_mock'].includes(r.source) || typeof r.model_version !== 'string' || !r.model_version
       || r.revision !== body.revision || !Array.isArray(r.items) || r.items.length !== 4
       || new Set(r.items.map(i => i.candidate_id)).size !== 4
-      || r.items.some((i, n) => !i.candidate_id || !Number.isFinite(i.score) || i.rank !== n+1
+      || r.items.some((i, n) => typeof i.candidate_id !== 'string' || !i.candidate_id || !Number.isFinite(i.score) || i.rank !== n+1
         || (n > 0 && (i.score > r.items[n-1].score || (i.score === r.items[n-1].score && i.candidate_id < r.items[n-1].candidate_id))))
       || (r.source !== 'model' && (r.model_version !== 'mock-v1' || r.feature_version !== null || r.pairwise != null))
-      || (r.source === 'model' && !r.feature_version)))) {
+      || (r.source === 'model' && (typeof r.feature_version !== 'string' || !r.feature_version))))) {
     throw new Error('순위 응답 형식이 올바르지 않습니다.')
   }
   return body

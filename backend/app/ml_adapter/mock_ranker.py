@@ -19,6 +19,7 @@ def ordered_items(scores: list[tuple[str, float]]) -> list[dict]:
 
 
 class MockRanker:
+    mode = 'mock'
     def rank(self, candidates: list[Candidate], revision: int) -> Ranking:
         if len(candidates) != 4 or len({c.candidate_id for c in candidates}) != 4:
             raise ValueError('Four distinct candidates required')

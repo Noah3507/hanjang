@@ -23,6 +23,8 @@ from app.services.render_store import RenderStore
 from app.services.render_execution import RenderExecution
 from app.api.ranking import router as ranking_router
 from app.services.ranking_store import RankingStore
+from app.ml_adapter.real_ranker import RealRanker
+from app.ml_adapter.mock_ranker import MockRanker
 from app.api.editing import router as editor_router
 from app.services.editor_store import EditorStore
 from app.services.export_service import ExportService
@@ -36,6 +38,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     analysis_executor = AnalysisExecution(settings.analysis_python, settings.analysis_model_path,
         settings.analysis_timeout_seconds, settings.analysis_idle_seconds)
     copy_provider = build_copy_provider(settings)
+    ranker = MockRanker() if settings.ranking_mode == 'mock' else RealRanker(
+        settings.ranking_python,settings.ranking_model_path,settings.ranking_temp_root,settings.ranking_timeout_seconds)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -50,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             await asyncio.to_thread(copy_provider.close)
             await asyncio.to_thread(analysis_executor.close)
+            if hasattr(ranker,'close'): await asyncio.to_thread(ranker.close)
             task.cancel()
             try:
                 await task
@@ -62,7 +67,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.analysis_store = AnalysisStore(storage, analysis_executor)
     application.state.copy_store = CopyStore(storage, application.state.analysis_store, copy_provider, settings.copy_max_retries)
     application.state.render_store = RenderStore(storage, application.state.copy_store, RenderExecution())
-    application.state.ranking_store = RankingStore(storage, application.state.render_store)
+    application.state.ranking_store = RankingStore(storage, application.state.render_store,ranker)
     application.state.editor_store = EditorStore(application.state.render_store)
     application.state.export_service = ExportService(application.state.render_store)
     application.state.diagnostics_store = DiagnosticsStore(application.state.render_store)

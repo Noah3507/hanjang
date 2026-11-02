@@ -1,5 +1,7 @@
 # 9단계 결과 비교 및 Mock 임시 순위
 
+후속12단계는 실제 모델 경로와 score·버전 표시를 추가한다. 현재 동작은 [RANKING_SERVICE](RANKING_SERVICE.md)를 따르며 아래 내용은9단계 Mock 구현 기록이다.
+
 ## 범위와 보존
 
 최신 main `e114d7d` 기반 `feat/service-results`에서 결과 확대·MockRanker·Ranking API를 추가한다. 기존 rendering API, Candidate 및 B v1.1 계약을 유지한다. 실제 ML·편집·다운로드·가독성 진단·배포·Figma/타이포그래피 기능은 포함하지 않는다.

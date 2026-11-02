@@ -21,8 +21,8 @@ async function ready(page:import('@playwright/test').Page){
 test('actual edit twice, reload current copy, stale mock ranking, exact PNG and one-page A4 download',async({page},info)=>{
  test.setTimeout(120000);await ready(page)
  const editor=page.getByRole('region',{name:'광고 편집 및 다운로드'})
- const ranks=page.getByRole('region',{name:'광고 임시 순위'})
- await ranks.getByRole('button',{name:'임시 순위 확인'}).click()
+ const ranks=page.getByRole('region',{name:'광고 선호 순위'})
+ await ranks.getByRole('button',{name:'순위 계산'}).click()
  await expect(ranks.getByRole('listitem')).toHaveCount(4)
  await editor.getByRole('button',{name:'문구 편집',exact:true}).click()
  await expect(editor.getByRole('button',{name:'적용하고 재렌더링'})).toBeDisabled()

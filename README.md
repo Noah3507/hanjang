@@ -1,5 +1,7 @@
 # Hanjang
 
+12단계는 **B의 실제 Preference 모델**을 기본 ranking 경로로 연결합니다. `.venv-rank` 전용 worker에서 최종 광고 PNG 네 장을 평가하고 원시 score·모델 버전·순위를 표시합니다. 실패 시 조용히 Mock으로 바꾸지 않으며 편집·다운로드·규칙 기반 진단은 유지합니다. [설정·실행·오류 정책](docs/RANKING_SERVICE.md), [검증 기록](docs/RANKING_INTEGRATION_TEST_REPORT.md)을 참고하세요. 아래 설명은 단계별 이력입니다.
+
 11단계는 **규칙 기반 가독성 진단**을 추가합니다. 최신 광고 네 장을 동기 API로 진단하며 대비·글자 크기·경계/겹침·텍스트 블록 밀도를 별도 표시합니다. 36px/40%는 초기 휴리스틱이고 측정 불가를 정상으로 표시하지 않습니다. 선호 순위·성과 점수와 별개이며 프로필·실제 ML은 포함하지 않습니다. [API·규칙·실행](docs/DIAGNOSTICS.md), [실행한 검증](docs/DIAGNOSTICS_TEST_REPORT.md)을 참고하세요.
 
 
