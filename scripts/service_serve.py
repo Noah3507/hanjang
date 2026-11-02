@@ -24,7 +24,10 @@ def main():
         print('Readiness failed: '+', '.join(k for k,v in result['checks'].items() if not v),file=sys.stderr)
         return 1
     if args.check_only:
-        print('Configuration readiness OK (model inference and paid API not performed).');return 0
+        print('Configuration readiness OK (model inference and paid API not performed).')
+        print(f'Copy provider={settings.copy_provider}; model={settings.copy_model}; paid_enabled={settings.copy_allow_paid}; '
+              f'cumulative_requests={settings.copy_max_requests}; budget_usd={settings.copy_budget_usd:.2f}; app_retries={settings.copy_max_retries}.')
+        return 0
     from app.main import create_app
     import uvicorn
     app=PresentationGateway(create_app(settings),settings)

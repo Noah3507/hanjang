@@ -55,6 +55,34 @@ Linux의 모델 없는 CI 발표 smoke는 `HANJANG_RANKING_MODE=mock`, `HANJANG_
 - 카피는 기본 Mock/paid=false. 실제 호출은 server-only 키 + provider=openai + paid=true + 별도 사용자 승인이 모두 필요합니다. `VITE_*`/브라우저 번들에 키를 넣지 않습니다.
 - 누적 원장은 기본 **resource_root/artifacts/copy-usage/ledger.json** 재사용. 별도 기존 원장이 있다면 `copy_budget_path`로 같은 파일을 명시하세요. 재시작·포트 변경·롤백을 이유로 원장을 새로 만들어 한도를 우회하지 않습니다. 기본 최대 6회·$0.10, 기존 요청 예약 상한 $0.013716, 앱 재시도 최대 1회·SDK 재시도 0회. 가격·토큰 가정 기반 로컬 guard이며 공급자의 최종 청구를 대체하지 않습니다. 계정 자체의 사용 제한도 함께 확인합니다.
 
+### 2026-11-02 발표 호출 한도 준비
+
+기존 누적 6건·$0.00906225 원장은 그대로 보존합니다. `copy_max_requests`는 기본6, 명시적으로 최대10까지 허용하며 달러 한도는 $0.10입니다. **설정 확장은 추가 유료 호출 승인이 아닙니다.** 현재8014 서버는 재시작하지 않아 기존 Mock 모드를 유지합니다.
+
+새 Git 제외 JSON(기존 JSON을 덮어쓰지 않음)에 기존 resource/runtime 경로와 함께 다음 값을 지정합니다.
+
+```json
+{
+  "copy_provider": "openai",
+  "copy_allow_paid": true,
+  "copy_max_requests": 10,
+  "copy_budget_path": "C:/path/to/hanjang/artifacts/copy-usage/ledger.json"
+}
+```
+
+발표 실행기는 모델 `gpt-5.4-mini-2026-03-17`, 누적 예산0.10, 앱 재시도0을 강제하고 종료 후 부모 환경을 복원합니다. SDK 재시도도 기존대로0입니다. 키는 기존 server-only `.env`/프로세스 환경에서만 읽으며 JSON/프런트엔드에 넣지 않습니다. `-CheckOnly`는 provider·모델·paid gate·누적 한도·예산·재시도를 출력하지만 API를 호출하지 않습니다.
+
+로컬 준비 파일은 `artifacts/release/presentation-openai-20261102.json`입니다. 기존 발표 서버의 전환에는 먼저 사용자에게 중단/재시작을 알리고, 별도 확인 후 이 설정으로 실행해야 합니다. 재시작 시 현재 Job/세션은 유실됩니다. **이번에는 기존8014를 전환하지 않았습니다.**
+
+```powershell
+# 비밀번호는 기존 안내대로 현재 프로세스에만 설정. 이 명령은 API 호출 없음.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/service_presentation.ps1 -ConfigFile artifacts/release/presentation-openai-20261102.json -CheckOnly
+```
+
+누적 6→10은 추가 최대4회이며 네 번 모두 예약 상한을 사용해도 합계 $0.06392625입니다. 시간초과·검증 실패도 호출로 계산하고 사용량 미확인은 예약액을 유지합니다. 원장을 지우거나 새 경로로 변경하지 않습니다. 별도 유료 승인 후 브라우저 전체 흐름은 `PLAYWRIGHT_RELEASE=1`, `PLAYWRIGHT_RELEASE_MODELS=1`, `PLAYWRIGHT_RELEASE_OPENAI=1`, `PLAYWRIGHT_APPROVE_PAID_CALL=1`을 모두 명시합니다. 마지막 플래그는 승인 자체를 대신하지 않습니다. Playwright/앱/SDK 재시도0, copy 생성 POST 최대1회로 제한합니다. 실패하면 재실행하지 않고 먼저 보고합니다.
+
+승인 전 무료 검증은 `openai-preflight.spec.ts`를 `PLAYWRIGHT_OPENAI_PREFLIGHT=1`로 실행합니다. 업로드·저장·GET 상태 조회까지만 하며 카피 생성 POST를 차단합니다. 이번 검증에서는 외부 socket 연결까지 차단한 별도 임시8018 서버를 사용하고 종료했습니다. 실제 유료 카피→PNG→순위→진단→편집→다운로드 흐름의 성공과 구분합니다.
+
 유료 smoke 준비만 확인:
 
 ```powershell

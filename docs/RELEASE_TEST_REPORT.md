@@ -1,5 +1,19 @@
 # 13단계 로컬 릴리스 검증 (2026-11-02)
 
+## 후속: OpenAI 발표 설정 준비 (추가 유료 호출 미승인)
+
+- 기본6회 유지, 명시적 누적 호출 상한10 지원. 예산0.10/기존 원장 유지. 발표 wrapper는 모델 고정·재시도0·provider/paid/max_requests를 자식 환경에 적용하고 종료 후 복원합니다.
+- 기존 원장 6건·$0.00906225의 준비 전후 SHA-256을 대조합니다. 실제 원장은 테스트 fixture로 사용하거나 수정하지 않습니다.
+- 새 `artifacts/release/presentation-openai-20261102.json` 및 별도 preflight 설정 생성. 기존 `.env`/local-actual.json/모델/환경/transfer 보존.8014 Mock 서버는 중단·재시작하지 않습니다.
+- CheckOnly: OpenAI·gpt-5.4-mini-2026-03-17·paid=true·누적10·예산0.10·재시도0 준비 확인. 실제 호출 아님.
+- 실제 브라우저 preflight: 임시8018, 외부 네트워크 차단, 카피 생성 POST0, 합성 사진/상품 저장 후 pending 상태의 OpenAI 모델명 표시 확인. 유료 전체 흐름은 미실행입니다.
+- `release.spec.ts`는 기본 Mock이며 server provider가 다르면 생성 전에 중단합니다. 실제 카피 경로는 별도 승인 플래그 필요, copy 생성 POST 최대1회, 기존 PNG4/실제 순위/진단/편집/다운로드 흐름을 재사용합니다.
+- 합성 원장·fake SDK 검사로 6건 보존·추가4회·11번째 차단·별도 예산 제한·재시도0 검증. 관련 backend101 PASS, frontend67 PASS, 타입/빌드 PASS. OpenAI 표시-only preflight1 PASS, 기존8014 Mock카피+실제 모델 전체 흐름1 PASS. 유료 OpenAI 전체 흐름은 미실행입니다. CI는 PR #51 후속 commit의 Actions 결과를 참고합니다.
+- 임시8018 서버 종료 후 실제 원장 SHA-256 동일, 6건·$0.00906225 유지 확인. 기존8014 ready·Mock 유지 확인. 현재 서비스의10회/OpenAI 설정 적용은 아직 하지 않았습니다.
+- 로컬 근거: `artifacts/release/presentation-preparation-tests.log`, `browser-openai-preflight-20261102/`, `browser-preparation-mock-20261102/`, `ledger-before-preparation-20261102.json`. 비밀·원본·로그는 Git 제외.
+
+아래는 최초13단계 릴리스 검증 이력입니다. 후속 준비 작업을 실제 유료 E2E 성공으로 해석하지 않습니다.
+
 ## 범위와 환경
 
 `cb71c09` 최신 main에서 `feat/service-release` 생성. PR #49 병합 상태 확인 후 fetch/ff-only 확인. 기존 브랜치·worktree·transfer·모델·`.env`·가상환경 보존. B 소유 파일 변경 없음. Windows, Python 3.12, Node24, 기존 서비스/분석/rank 환경과 Chromium 재사용. Docker/WSL/cloudflared 미설치, 이번에 설치하지 않음.

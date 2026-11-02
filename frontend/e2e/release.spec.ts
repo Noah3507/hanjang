@@ -5,14 +5,23 @@ import {writeFile} from 'node:fs/promises'
 const root=fileURLToPath(new URL('../..',import.meta.url))
 const python=process.env.PLAYWRIGHT_PYTHON||(process.platform==='win32'?`${root}/.venv/Scripts/python.exe`:'python')
 const real=process.env.PLAYWRIGHT_RELEASE_MODELS==='1'
+const liveCopy=process.env.PLAYWRIGHT_RELEASE_OPENAI==='1'
 test.use({httpCredentials:{username:process.env.HANJANG_PRESENTATION_USER||'presenter',password:process.env.HANJANG_PRESENTATION_PASSWORD||'synthetic-ci-presentation-password'}})
 
 test('built presentation: complete flow with explicit model provenance',async({page,request},info)=>{
  test.skip(process.env.PLAYWRIGHT_RELEASE!=='1','Opt-in authenticated built frontend, never launches a tunnel')
+ if(liveCopy && process.env.PLAYWRIGHT_APPROVE_PAID_CALL!=='1')throw new Error('Separate paid browser E2E approval is required')
  test.setTimeout(300000)
  const errors:string[]=[];page.on('console',e=>{if(e.type()==='error')errors.push(e.text())})
  const ready=await request.get('/ready');expect(ready.status()).toBe(200)
- expect((await ready.json()).check_level).toBe('configuration_not_inference')
+ const configuration=await ready.json()
+ expect(configuration.check_level).toBe('configuration_not_inference')
+ expect(configuration.copy_provider).toBe(liveCopy?'openai':'mock')
+ let copyPosts=0
+ await page.route('**/copy-generation',async route=>{
+  if(route.request().method()==='POST' && ++copyPosts>1){await route.abort();throw new Error('Only one copy generation POST is allowed')}
+  await route.continue()
+ })
  await page.goto('/')
  const sample=process.env.PLAYWRIGHT_RELEASE_SAMPLE
  if(sample)await page.getByLabel('상품 사진',{exact:true}).setInputFiles(sample)
@@ -41,6 +50,7 @@ test('built presentation: complete flow with explicit model provenance',async({p
  await expect(analysis.getByText(real?'CLIP: 실제 모델 시각 단서':'CLIP: 사용 불가 · 추정 단서 없음')).toBeVisible()
  await page.getByRole('button',{name:'4전략 카피 생성'}).click()
  await expect(page.getByText('카피 상태: completed')).toBeVisible()
+ if(liveCopy)await expect(page.getByText('OpenAI 모드 · gpt-5.4-mini-2026-03-17')).toBeVisible()
  const rendering=page.waitForResponse(async r=>r.url().endsWith('/rendering')&&r.request().method()==='GET'&&r.status()===200&&(await r.json()).status==='completed')
  await page.getByRole('button',{name:'광고 4장 렌더링'}).click()
  await expect(page.getByText('렌더링 상태: completed')).toBeVisible({timeout:45000})
@@ -82,6 +92,7 @@ test('built presentation: complete flow with explicit model provenance',async({p
  await page.setViewportSize({width:375,height:900})
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  await page.screenshot({path:info.outputPath('release-mobile.png'),fullPage:true})
- await writeFile(info.outputPath('release-result.json'),JSON.stringify({realModels:real,copy:'mock',rendering:rendered,ranking:ranked},null,2))
+ expect(copyPosts).toBe(1)
+ await writeFile(info.outputPath('release-result.json'),JSON.stringify({realModels:real,copy:liveCopy?'openai':'mock',rendering:rendered,ranking:ranked},null,2))
  expect(errors).toEqual([])
 })

@@ -8,7 +8,7 @@ $config=Get-Content -LiteralPath $ConfigFile -Raw -Encoding UTF8|ConvertFrom-Jso
 if(-not $config.resource_root -or -not [IO.Path]::IsPathRooted($config.resource_root)){throw 'Set absolute resource_root in ignored local config.'}
 $resource=[IO.Path]::GetFullPath($config.resource_root)
 $python=if($config.service_python){[string]$config.service_python}else{Join-Path $resource '.venv/Scripts/python.exe'}
-$names=@('HANJANG_FRONTEND_DIST','HANJANG_PHOTO_MODEL_PATH','HANJANG_ANALYSIS_MODEL_PATH','HANJANG_ANALYSIS_PYTHON','HANJANG_RANKING_PYTHON','RANKING_MODEL_PATH','HANJANG_RANKING_MODE','HANJANG_RELEASE_REQUIRE_MODELS','HANJANG_UPLOAD_ROOT','HANJANG_RANKING_TEMP_ROOT','HANJANG_COPY_BUDGET_PATH','HANJANG_COPY_PROVIDER','HANJANG_COPY_ALLOW_PAID','HANJANG_CORS_ORIGINS','HF_HUB_OFFLINE','TRANSFORMERS_OFFLINE')
+$names=@('HANJANG_FRONTEND_DIST','HANJANG_PHOTO_MODEL_PATH','HANJANG_ANALYSIS_MODEL_PATH','HANJANG_ANALYSIS_PYTHON','HANJANG_RANKING_PYTHON','RANKING_MODEL_PATH','HANJANG_RANKING_MODE','HANJANG_RELEASE_REQUIRE_MODELS','HANJANG_UPLOAD_ROOT','HANJANG_RANKING_TEMP_ROOT','HANJANG_COPY_BUDGET_PATH','HANJANG_COPY_PROVIDER','HANJANG_COPY_ALLOW_PAID','HANJANG_COPY_MODEL','HANJANG_COPY_MAX_REQUESTS','HANJANG_COPY_BUDGET_USD','HANJANG_COPY_MAX_RETRIES','HANJANG_CORS_ORIGINS','HF_HUB_OFFLINE','TRANSFORMERS_OFFLINE')
 $previous=@{};foreach($name in $names){$previous[$name]=[Environment]::GetEnvironmentVariable($name,'Process')}
 Push-Location $project
 try{
@@ -36,6 +36,10 @@ try{
  $env:HANJANG_COPY_BUDGET_PATH=if($config.copy_budget_path){[string]$config.copy_budget_path}else{Join-Path $resource 'artifacts/copy-usage/ledger.json'}
  $env:HANJANG_COPY_PROVIDER=if($config.copy_provider){[string]$config.copy_provider}else{'mock'}
  $env:HANJANG_COPY_ALLOW_PAID=if($config.copy_allow_paid -eq $true){'true'}else{'false'}
+ $env:HANJANG_COPY_MODEL='gpt-5.4-mini-2026-03-17'
+ $env:HANJANG_COPY_MAX_REQUESTS=if($null -ne $config.copy_max_requests){[string]$config.copy_max_requests}else{'6'}
+ $env:HANJANG_COPY_BUDGET_USD='0.10'
+ $env:HANJANG_COPY_MAX_RETRIES='0'
  $env:HANJANG_CORS_ORIGINS='[]';$env:HF_HUB_OFFLINE='1';$env:TRANSFORMERS_OFFLINE='1'
  $arguments=@((Join-Path $PSScriptRoot 'service_serve.py'),'--port',[string]$Port)
  if($CheckOnly){$arguments+='--check-only'}
