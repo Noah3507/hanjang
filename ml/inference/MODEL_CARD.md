@@ -79,7 +79,16 @@
 
 - `.venv-rank`: Python 3.12, `ml/inference/requirements.txt`(torch 2.14.1, open_clip_torch 3.3.0, pillow 13.0.0, numpy 2.5.4, safetensors 0.8.0 등 31개). 버전이 manifest와 다르면 `ArtifactMismatch`.
 - CPU 전용, 네트워크 없음. 학습 feature cache와 추론 특징의 차이: val 32장에서 CLIP 0.0, 통계 0.0.
-- 맥북(Apple Silicon, `scripts/ml_benchmark_inference.py`): load 0.88초, 광고 4장 순위 중앙값 0.134초·p95 0.145초, 최대 메모리 약 1.33GB. Windows 값은 A가 같은 스크립트로 측정해 이 표에 추가한다.
+- 재현: A의 Windows 11 노트북(Python 3.12.10, `.venv-rank`)에서 zip SHA-256 일치, smoke **PASS**(B 맥과의 최대 점수 차이 9.46e-06, 허용 1e-3). 맥과 Windows가 같은 순위·사실상 같은 점수를 낸다(2026-11-02).
+
+| `scripts/ml_benchmark_inference.py` (광고 4장, 20회) | 불러오기 | 첫 순위 | 순위 중앙값 | p95 | 최대 | 최대 메모리 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 맥북 Apple Silicon (B) | 0.88초 | 0.131초 | 0.134초 | 0.145초 | 0.145초 | 약 1.33GB |
+| Windows 11 노트북 (A) | 1.211초 | 0.375초 | 0.344초 | 0.430초 | 0.477초 | 미측정* |
+
+\* 첫 측정 스크립트가 64비트 Windows에서 메모리를 읽지 못해 null이었다(타입 선언 누락, 2026-11-02 수정). 다시 측정하면 이 칸을 채운다.
+
+서비스 worker 안에서 A가 잰 값(`docs/RANKING_INTEGRATION_TEST_REPORT.md`): 모델 불러오기 1.085초, 순위 중앙값 0.320초, worker 시작·import 포함 첫 요청 약 5.6초, 이후 요청 약 0.33초. 서비스 제한 시간은 30초(첫 요청의 import·불러오기 포함).
 
 ## 파일, 체크섬, 확인 절차
 
