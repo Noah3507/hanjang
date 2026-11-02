@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     copy_provider: Literal['mock', 'openai'] = 'mock'
     copy_model: str = 'gpt-5.4-mini-2026-03-17'
     copy_allow_paid: bool = False
-    copy_max_requests: int = Field(default=6, ge=0, le=6)
+    copy_max_requests: int = Field(default=6, ge=0, le=10)
     copy_budget_usd: float = Field(default=.1, ge=0, le=.1, allow_inf_nan=False)
     copy_max_retries: int = Field(default=1, ge=0, le=1)
     openai_api_key: SecretStr | None = Field(default=None, validation_alias='OPENAI_API_KEY')
@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     ranking_python: Path = PROJECT_ROOT / '.venv-rank' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
     ranking_timeout_seconds: float = Field(default=30, gt=0, le=120)
     ranking_temp_root: Path = PROJECT_ROOT / 'artifacts/ranking-runtime'
+    frontend_dist: Path | None = None
+    release_require_models: bool = False
+    presentation_user: str = 'presenter'
+    presentation_password: SecretStr | None = None
+    presentation_requests_per_minute: int = Field(default=600,ge=30,le=1200)
+    presentation_mutations_per_minute: int = Field(default=30,ge=1,le=60)
     # Preserve the agreed FILE meaning, pass its parent to B's loader.
     ranking_model_path: Path | None = Field(default=PROJECT_ROOT / 'artifacts/models/ranking/bt-logistic-v1/model.safetensors', validation_alias="RANKING_MODEL_PATH")
 

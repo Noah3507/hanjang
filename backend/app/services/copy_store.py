@@ -122,7 +122,9 @@ class CopyStore:
                 response.attempts = attempts
                 if error:
                     response.status = 'failed'
-                    response.error = CopyError(code=error.code, message='카피를 생성하지 못했습니다. 입력과 사진은 유지됩니다.', retryable=error.retryable)
+                    message = ('가격·상품명 뒤의 한국어 조사를 확인해야 합니다. 입력과 사진은 유지됩니다.'
+                        if error.code.startswith('COPY_PARTICLE_') else '카피를 생성하지 못했습니다. 입력과 사진은 유지됩니다.')
+                    response.error = CopyError(code=error.code, message=message, retryable=error.retryable)
                 else:
                     response.status, response.variants = 'completed', variants
         except Exception:

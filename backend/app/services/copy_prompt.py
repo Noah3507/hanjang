@@ -3,7 +3,7 @@ import json
 from app.schemas.copy import Variants
 from app.services.copy_contract import CopyFailure, CopyPayload
 
-PROMPT_VERSION = 'copy-v2-glyphs'
+PROMPT_VERSION = 'copy-v3-particles'
 SYSTEM_PROMPT = '''한국어 광고 카피 네 전략을 정확히 한 번씩 작성한다.
 emotional: 일상의 여유/공감. price: 입력 가격에 주목, 할인/저렴함/가성비를 지어내지 말 것.
 visual: 제공 사진을 보도록 안내, CLIP 단서를 맛/재료/상품 사실로 단정하지 말 것.
@@ -13,6 +13,9 @@ brand: 가게와의 만남/인상. 각 전략의 문구를 구분한다.
 미제공 할인/이벤트/재료/원산지/맛/효능/인기/품질을 추가하지 않는다.
 가게명/상품명/가격/주소를 언급하려면 [[store_name]], [[product_name]], [[price_text]], [[address]]를 사용한다.
 서버가 원문을 연결한다. 제공되지 않은 주소/Instagram/URL은 작성하지 않는다.
+가격·상품명은 '가격: [[price_text]]', '상품: [[product_name]]'처럼 조사 없는 문형을 우선한다.
+조사는 치환된 원문의 받침에 맞춘다(원으로/국수를). 으로/로는 모음·ㄹ 받침 뒤 로, 그 외 받침 뒤 으로를 쓴다.
+원문·공백은 보존한다. 숫자·영문·기호로 끝나 발음이 불확실하면 조사를 붙이지 않는다.
 facts는 출력하지 않는다. variants의 strategy와 copy(headline,body,cta)만 출력한다.
 headline 1~60자, body 0~160자, cta 0~30자. 긴 이름은 headline에 반복하지 말 것.
 문구는 plain text, HTML/개행/제어 문자 없이. 이모지, ZWJ/variation selector, 장식용 그림 기호를 사용하지 않는다.

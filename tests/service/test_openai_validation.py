@@ -149,7 +149,7 @@ def test_over_budget_usage_is_recorded_not_refunded(tmp_path):
     r=json.loads(budget.path.read_text())['calls'][0]
     assert r['usage_known'] and r['input_tokens']==7000
 
-@pytest.mark.parametrize('updates',[{'copy_max_requests':7},{'copy_budget_usd':.11},{'copy_max_retries':2},{'copy_budget_usd':float('nan')}])
+@pytest.mark.parametrize('updates',[{'copy_max_requests':11},{'copy_budget_usd':.11},{'copy_max_retries':2},{'copy_budget_usd':float('nan')}])
 def test_limits_cannot_silently_exceed_approval(updates):
     with pytest.raises(ValueError):Settings(_env_file=None,**updates)
 

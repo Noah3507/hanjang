@@ -11,6 +11,58 @@ permissions:
   contents: read
 
 jobs:
+  presentation-release:
+    runs-on: ubuntu-latest
+    env:
+      HANJANG_PRESENTATION_PASSWORD: synthetic-ci-presentation-password
+      HANJANG_COPY_PROVIDER: mock
+      HANJANG_COPY_ALLOW_PAID: 'false'
+      HANJANG_RANKING_MODE: mock
+      HANJANG_RELEASE_REQUIRE_MODELS: 'false'
+      HANJANG_PHOTO_MODEL_PATH: artifacts/absent-photo.onnx
+      HANJANG_ANALYSIS_MODEL_PATH: artifacts/absent-clip.pt
+      HANJANG_UPLOAD_ROOT: artifacts/ci-presentation/uploads
+      PLAYWRIGHT_EXTERNAL_SERVER: '1'
+      PLAYWRIGHT_FRONTEND_PORT: '8014'
+      PLAYWRIGHT_RELEASE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: python -m pip install -r backend/requirements.txt
+      - run: python -m pip check
+      - run: npm --prefix frontend ci
+      - run: npm --prefix frontend exec -- playwright install --with-deps chromium
+      - run: npm --prefix frontend run build
+      - name: Validate safe presentation configuration and built frontend flow
+        run: |
+          python scripts/service_openai_smoke.py
+          python scripts/service_serve.py --check-only
+          mkdir -p artifacts/ci-presentation
+          python scripts/service_serve.py --port 8014 > artifacts/ci-presentation/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if python scripts/service_deploy_smoke.py; then break; fi
+            sleep 1
+          done
+          python scripts/service_deploy_smoke.py
+          cd frontend
+          npx playwright test release.spec.ts --reporter=list --output=../artifacts/ci-presentation/browser
+      - name: Retain synthetic presentation diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-failure-diagnostics
+          path: artifacts/ci-presentation/
+          retention-days: 7
+
   repository-policy:
     runs-on: ubuntu-latest
     steps:

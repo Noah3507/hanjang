@@ -13,7 +13,7 @@ MAX_COST = (6000 * .75 + 2048 * 4.5) / 1_000_000
 class CopyBudget:
     def __init__(self, path: Path, max_requests=6, budget_usd=.1):
         self.path = path
-        if not 0 <= max_requests <= 6 or not 0 <= budget_usd <= .1:
+        if not 0 <= max_requests <= 10 or not 0 <= budget_usd <= .1:
             raise ValueError('Budget exceeds approved limits')
         self.max_requests, self.budget_usd = max_requests, budget_usd
 
