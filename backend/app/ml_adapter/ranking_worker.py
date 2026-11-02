@@ -29,7 +29,9 @@ def main():
                 if not path.is_relative_to(root): raise ValueError('Invalid snapshot')
                 items.append(RankInput(item['candidate_id'],path))
             start=time.perf_counter();result=rank_ads(items,model)
-            body={'result':result,'metrics':{'load_seconds':load_seconds,'inference_seconds':time.perf_counter()-start,'model_loads':loads}}
+            from app.services.analysis_worker import peak_memory_mib
+            body={'result':result,'metrics':{'load_seconds':load_seconds,'inference_seconds':time.perf_counter()-start,'model_loads':loads,
+                'peak_working_set_mib':peak_memory_mib()}}
         except Exception as error:
             # Never forward B/library exception text, paths, or tracebacks.
             code={'ModelNotAvailable':'RANKING_MODEL_UNAVAILABLE','ArtifactMismatch':'RANKING_ARTIFACT_INVALID',

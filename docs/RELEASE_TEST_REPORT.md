@@ -1,0 +1,79 @@
+# 13단계 로컬 릴리스 검증 (2026-11-02)
+
+## 범위와 환경
+
+`cb71c09` 최신 main에서 `feat/service-release` 생성. PR #49 병합 상태 확인 후 fetch/ff-only 확인. 기존 브랜치·worktree·transfer·모델·`.env`·가상환경 보존. B 소유 파일 변경 없음. Windows, Python 3.12, Node24, 기존 서비스/분석/rank 환경과 Chromium 재사용. Docker/WSL/cloudflared 미설치, 이번에 설치하지 않음.
+
+이번 릴리스는 **배포 준비와 로컬 검증**입니다. 실제 HTTPS 공개 및 실제 OpenAI 유료 smoke는 사용자 조건에 따라 미실행입니다. 13단계 전체 공개 배포 완료라고 보고하지 않습니다.
+
+## 구현
+
+- `scripts/service_presentation.ps1`, `service_serve.py`: built frontend와 API 단일 origin·loopback·단일 worker, 서버 환경만 설정. 기존 누적 비용 원장 재사용. 모델·환경 자동 설치/다운로드 없음.
+- `presentation.py`: origin 전체 Basic 인증, 전체/쓰기/실패 인증의 rolling60초 제한, 교차 Origin 쓰기 차단·보안 헤더. 기존 Job/session 계약 유지.
+- `/ready`: 파일·Node/Chromium·폰트·저장소·카피 설정 준비 검사, 30초 캐시. 설정 검사와 실제 추론을 분리. 경로/키 비노출.
+- TTL: 잠긴 파일 때문에 다른 만료 파일이 굶지 않도록 정리 계속, 경로 없는 경고·503 후 재시도. 활성 추론 snapshot 보호, 새 전용 마커의 24시간 지난 파일만 정리. 알 수 없는 파일·이전 unmarked 디렉터리 보존.
+- 유료 smoke는 기존 provider/validator/누적 원장 재사용, 기본은 계획 출력만. 원격 read-only smoke도 별도 opt-in, 인증정보 포함 URL과 redirect 차단.
+- 기존 CI 4개 유지 + 모델 다운로드 없는 authenticated built UI job 추가. 공개·유료 호출 없음.
+
+## 실행 결과
+
+| 검사 | 결과·범위 |
+| --- | --- |
+| backend 전체, 렌더러/실제 B opt-in | 최종 420 PASS, 실패0/skip0, 332.13초; Starlette/anyio deprecated alias 경고1 |
+| release/실행 guard/업로드 대상 검사 | 35 PASS (후속 fake smoke 추가 전) |
+| frontend 단위 | 67 PASS / 15 files |
+| TypeScript·production build | PASS |
+| 기존 Playwright | 30 PASS, opt-in 실제 모델/발표 2 SKIP, 실패0 |
+| authenticated built UI, 실제 모델3종 | 1 PASS, Mock 카피, 실제 사진, 네 PNG·순위·편집·다운로드·모바일 |
+| 최종 서버 재시작 후 실제 모델3종 | 별도 1 PASS, 최신 코드 로딩·전체 흐름 재확인 |
+| authenticated built UI, 모델 없음 | 1 PASS, rembg/CLIP fallback·Mock 순위 표시 명시; 실제 모델 성공으로 계산하지 않음 |
+| 실제 B fixture·cache benchmark | 1 PASS, 가중치/기준 score 오차 허용 범위, 역순 후보 매핑·모델 1회 로딩 |
+| 단일 호출 smoke guard | 7 PASS, 기존 provider factory에 fake 주입; 유료 요청0 |
+| pip check·repository policy·diff check·문서 로컬 링크 | PASS (최종 stage 후 재확인) |
+| 정적 번들 검사 | 파일3개, 실제 서버 key 값 비포함·흔한 secret 패턴 없음 |
+| 실제 유료 API / Tunnel·공개 URL | 미실행: 별도 승인 필요 |
+| 신규 Windows 완전 신규 설치 | 미실행: 기존 가상환경 보존·재사용 검증 |
+| CI Linux 신규 설치 | PR CI에서 판정. 모델 없는 fresh clone 검증이며 Linux 실제 ML 성공이 아님 |
+
+첫 backend 실행은 `--basetemp` 상위 경로 누락으로 274 setup error/138 PASS였고 경로 생성 후 재실행했습니다. 첫 발표 검사는 Playwright config 미적용(Invalid URL), 다음 검사는 기존 명시적 ‘저장 정보 다시 조회’ 단계 누락으로 실패했습니다. 별도 포트 회귀 첫 시도는 Vite proxy가 기본8000을 가리켜 중단했고 config에서 backend 포트와 연결했습니다. 해당 오류와 로그는 보존하고 최종 재실행과 구분합니다.
+
+실제 E2E는 상품명·가격 원문, rembg 처리본 표시/선택, 원본 복귀, CLIP 실제 단서/대표색, Mock 카피, 실제 Chromium 4개 PNG, 모델 source/version·후보 ID/revision·내림차순 score/1~4위, 진단 분리, 편집 후 이전 순위 숨김·재계산, PNG/PDF, 새로고침 후 명시적 조회, 375px 넘침 없음, console/pageerror를 확인했습니다. 편집 PNG는 RGB1080×1350으로 별도 확인했습니다. 기존 회귀의 API 오류·stale·만료·권한·편집 실패 모의 검사는 실제 API 정상 경로와 구분됩니다.
+
+로컬 결과: `artifacts/release/browser-actual-final/`, `browser-ci-local/`, `browser-regression-final/`, `backend-tests.log`, `backend-final.log`, `model-benchmark.log`, `process-memory.json`, `bundle-security.json`. 이미지·로그·토큰·설정은 Git에 넣지 않습니다. 실제 서버 재시작 후 최종 결과는 별도 `browser-actual-restarted/`에 보존합니다.
+
+## 모델·비용·성능
+
+- rembg: resource root의 `artifacts/models/rembg/u2netp.onnx`.
+- CLIP: `artifacts/models/analysis/ViT-B-32.pt`, Windows TorchScript는 검증된 `%LOCALAPPDATA%/HanJang/model-links/<tag>/ViT-B-32.pt` junction 사용.
+- B: `artifacts/models/ranking/bt-logistic-v1/model.safetensors`와 기존 manifest/관련 파일. B `load_model/rank_ads` 그대로 사용.
+- 실제 상품 PNG의 초기 score: price -1.1534828598447122, visual -1.272531617524746, emotional -1.4995509213600162, brand -1.7345923428478727. 후보·문구가 바뀌면 점수도 달라지며 확률·성과/객관적 품질 보증이 아닙니다.
+- 별도 B fixture 측정: 로딩1.144초, 첫 추론0.530초, warm0.321초, 모델 load count1, worker peak1250.3MiB. 이전 Windows20회 benchmark 중앙값0.344/p950.4298초와 **표본 수·동시 작업 조건이 달라 직접 성능 개선으로 주장하지 않습니다**.
+- 전체 흐름 뒤 프로세스 관측: backend98.5MiB, 두 모델 Python935/1280MiB, Python launcher/console 포함 현재 합계 약2.3GiB. 개별 peak214.5/1250/1296.5MiB는 서로 다른 시점의 값이며 동시 총 peak가 아닙니다. 렌더링 Chromium/rembg 일시 peak와 OS·다른 앱은 별도 여유가 필요합니다. 최소 사양 보증은 아니며 발표 노트북에서 여유 RAM/디스크를 다시 확인하세요.
+- 유료 호출0, 모델 다운로드0, 클라우드 리소스0. `service_openai_smoke.py` 계획 출력: 최대1회·재시도0·예약 상한$0.013716. 실제 계정/응답 품질은 미검증입니다. fake SDK 테스트를 실제 API 성공으로 보고하지 않습니다.
+
+## 재현
+
+README 설치 후 기존 모델·세 환경을 설정합니다. `.env`를 덮어쓰지 않습니다.
+
+```powershell
+$env:RUN_RENDER_TESTS='1'; $env:RUN_RANKING_TESTS='1'
+# 새 경로의 상위 폴더를 먼저 준비하고 기존 basetemp를 재사용하지 않습니다.
+.\.venv\Scripts\python.exe -m pytest -q --basetemp artifacts/release/backend-new-run
+npm.cmd --prefix frontend run typecheck
+npm.cmd --prefix frontend run test -- --run
+npm.cmd --prefix frontend run build
+.\.venv\Scripts\python.exe scripts/service_openai_smoke.py
+# DEPLOYMENT의 비밀번호·ConfigFile 설정으로 발표 서버8014 실행 후:
+.\.venv\Scripts\python.exe scripts/service_deploy_smoke.py
+$env:PLAYWRIGHT_EXTERNAL_SERVER='1'; $env:PLAYWRIGHT_FRONTEND_PORT='8014'
+$env:PLAYWRIGHT_RELEASE='1'; $env:PLAYWRIGHT_RELEASE_MODELS='1'
+# 허가된 실제 사진 선택 가능. 미지정 시 synthetic 상품을 만듭니다.
+# $env:PLAYWRIGHT_RELEASE_SAMPLE='C:/path/to/approved-product.png'
+npm.cmd --prefix frontend run test:e2e -- release.spec.ts --reporter=list --output=../artifacts/release/browser-new-run
+```
+
+일반 개발 회귀에서는 위 presentation flag를 제거하고 별도 포트/저장소를 사용합니다. 이번 발표 서버는 `http://127.0.0.1:8014`에 유지하며 인증 필요합니다. 테스트용 비밀번호는 Git 제외 로컬 `artifacts/release/test-credentials.json`에만 보관합니다. 실제 발표 전 사용자 고유 비밀번호로 실행하세요. 다른 기존 서버는 종료하지 않았습니다.
+
+## 제약과 후속 승인
+
+Windows clean install, Linux 실제 모델, 외부 HTTPS 접근·Tunnel 종료·외부 제한, 실제 OpenAI smoke는 미검증입니다. CI 통과와 로컬 성공은 이를 대체하지 않습니다. Job·세션은 재시작 시 유실, 단일 프로세스 공유 rate limit/Basic 비밀번호 한계, 오래된 unmarked snapshot 수동 검토, 절전/인터넷 단절을 유지합니다. Figma/타이포그래피/광고 디자인 고도화는 미구현·범위 밖입니다. 외부 공개와 유료 smoke는 이 로컬 결과를 리뷰한 뒤 별도 승인합니다. main 자동 병합하지 않습니다.

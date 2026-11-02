@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 from threading import RLock, Thread
 import uuid
+import re
+import time
 from hashlib import sha256
 from app.schemas.ranking import Ranking
 
@@ -50,6 +52,25 @@ class RealRanker:
                 self.process.stdin.close(); self.process.stdout.close()
                 self.process = None
 
+    def cleanup_expired(self):
+        # Never touch legacy/unmarked directories or an active inference snapshot.
+        if not self.lock.acquire(blocking=False):return
+        try:
+            if not self.temp_root.is_dir():return
+            for folder in self.temp_root.iterdir():
+                if (not re.fullmatch(r'ranking-[a-z0-9_]{8}',folder.name) or folder.is_symlink()
+                    or not folder.is_dir() or folder.resolve().parent!=self.temp_root
+                    or time.time()-folder.stat().st_mtime<86400):continue
+                marker=folder/'.hanjang-snapshot'
+                if marker.is_symlink() or not marker.is_file() or marker.read_bytes()!=b'owned-snapshot-v1':continue
+                children=list(folder.iterdir())
+                if any(p.is_symlink() or not p.is_file() or p.name not in {'.hanjang-snapshot','0.png','1.png','2.png','3.png'} for p in children):continue
+                for path in children:
+                    if path!=marker:path.unlink()
+                marker.unlink()
+                folder.rmdir()
+        finally:self.lock.release()
+
     def rank_snapshot(self, candidates, revision, pngs):
         with self.lock:
             if not self.model_file or not self.model_file.is_file():
@@ -60,6 +81,7 @@ class RealRanker:
             # These immutable private copies bind inference to the bytes checked at POST.
             # Cleanup is limited to the newly created owned TemporaryDirectory.
             with tempfile.TemporaryDirectory(prefix='ranking-',dir=self.temp_root) as folder:
+                (Path(folder)/'.hanjang-snapshot').write_bytes(b'owned-snapshot-v1')
                 items=[]
                 for index,candidate in enumerate(candidates):
                     path=Path(folder)/f'{index}.png'

@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import asyncio
+import logging
+from fastapi.staticfiles import StaticFiles
+from app.api.readiness import router as readiness_router
+from app.services.runtime_health import RuntimeHealth
 
 from app.api.health import router as health_router
 from app.api.photos import router as photo_router
@@ -41,13 +45,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ranker = MockRanker() if settings.ranking_mode == 'mock' else RealRanker(
         settings.ranking_python,settings.ranking_model_path,settings.ranking_temp_root,settings.ranking_timeout_seconds)
 
+    def cleanup():
+        try:
+            storage.cleanup()
+            if hasattr(ranker,'cleanup_expired'):ranker.cleanup_expired()
+            application.state.cleanup_failed=False
+        except OSError:
+            application.state.cleanup_failed=True
+            logging.getLogger('hanjang').warning('Temporary cleanup failed; retry scheduled. No paths or user data logged.')
+
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        await asyncio.to_thread(storage.cleanup)
+        await asyncio.to_thread(cleanup)
         async def sweep():
             while True:
                 await asyncio.sleep(60)
-                await asyncio.to_thread(storage.cleanup)
+                await asyncio.to_thread(cleanup)
         task = asyncio.create_task(sweep())
         try:
             yield
@@ -62,6 +75,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 pass
 
     application = FastAPI(title="Hanjang API", version="0.1.0", lifespan=lifespan)
+    application.state.runtime_health=RuntimeHealth(settings)
+    application.state.cleanup_failed=False
     application.state.upload_store = storage
     application.state.analysis_executor = analysis_executor
     application.state.analysis_store = AnalysisStore(storage, analysis_executor)
@@ -93,6 +108,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(diagnostics_router, prefix="/api/v1")
     # Requested local health path; same response as the versioned contract.
     application.include_router(health_router, include_in_schema=False)
+    application.include_router(readiness_router)
+    if settings.frontend_dist is not None:
+        application.mount('/',StaticFiles(directory=settings.frontend_dist,html=True),name='frontend')
     return application
 
 

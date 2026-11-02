@@ -1,5 +1,63 @@
 # Hanjang
 
+실제 상품 사진과 입력 사실을 보존하면서 `emotional / price / visual / brand` 광고를 만드는 서비스입니다. 현재 업로드·배경 제거·CLIP/대표색 분석·카피·1080×1350 PNG 네 장·실제 Bradley–Terry 선호 순위·문구 편집·PNG/PDF 다운로드·독립적인 가독성 진단까지 구현되어 있습니다. 선호 score는 확률·CTR·매출 예측이 아닙니다.
+
+13단계는 **Windows 노트북의 발표용 실행 및 로컬 검증**입니다. 빌드한 React와 FastAPI를 같은 loopback 주소에서 제공하며 Vite를 공개하지 않습니다. Cloudflare Tunnel과 실제 OpenAI 유료 smoke는 별도 승인 전 실행하지 않습니다. [배포 설정](docs/DEPLOYMENT.md) · [릴리스 체크리스트](docs/RELEASE_CHECKLIST.md) · [테스트 보고](docs/RELEASE_TEST_REPORT.md) · [3~5분 데모](docs/DEMO_GUIDE.md).
+
+## 신규 개발자 빠른 시작
+
+Python 3.12, Node.js 24, Git이 필요합니다. Windows PowerShell에서 `npm.ps1` 실행 정책 오류가 나면 정책을 바꾸지 말고 `npm.cmd`를 사용합니다. 신규 환경에서만 아래 가상환경을 생성합니다. 기존 환경을 덮어쓰지 않습니다.
+
+```powershell
+git clone https://github.com/Noah3507/hanjang.git
+cd hanjang
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+npm.cmd --prefix frontend ci
+npm.cmd --prefix frontend exec -- playwright install chromium
+npm.cmd --prefix frontend run build
+```
+
+Linux 신규 환경의 대응 명령입니다. 배포 대상은 Windows이며 Linux의 모델 포함 실행은 미검증입니다. CI의 모델 없는 설치·테스트와 구분합니다.
+
+```sh
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+npm --prefix frontend ci
+npm --prefix frontend exec -- playwright install --with-deps chromium
+npm --prefix frontend run build
+```
+
+환경변수는 [.env.example](.env.example)을 참고해 **새 환경에서만** 구성합니다. 기존 `.env`를 복사·덮어쓰거나 키를 `VITE_*`에 넣지 않습니다. 기본 카피는 Mock, 유료 gate는 false입니다. 모델이 없는 개발 실행은 `HANJANG_RANKING_MODE=mock`을 명시합니다.
+
+```powershell
+# 서로 다른 두 터미널, 개발 전용 loopback 서버
+$env:HANJANG_COPY_PROVIDER='mock'; $env:HANJANG_COPY_ALLOW_PAID='false'
+$env:HANJANG_RANKING_MODE='mock'
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+# 다른 터미널:
+npm.cmd --prefix frontend run dev -- --host 127.0.0.1
+```
+
+개발 UI `http://127.0.0.1:5173`, API `http://127.0.0.1:8000/docs`. 실제 모델은 [LAPTOP_SETUP](LAPTOP_SETUP.md), [사진 분석](docs/IMAGE_ANALYSIS.md), [서비스 ranking](docs/RANKING_SERVICE.md)을 따라 **공식 모델·B 전달 번들**을 준비합니다. 자동 다운로드는 없습니다. `.venv-analysis`는 CLIP, `.venv-rank`는 B 추론 전용이며 모델 없는 Mock 성공을 실제 모델 성공으로 간주하지 않습니다.
+
+발표 실행은 [DEPLOYMENT의 Windows 절차](docs/DEPLOYMENT.md)를 따릅니다. 실제 OpenAI 설정은 [OPENAI_VALIDATION](docs/OPENAI_VALIDATION.md)과 배포 문서의 opt-in smoke를 참고합니다. 설정만으로 실제 API 성공을 보장하지 않습니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+npm.cmd --prefix frontend run typecheck
+npm.cmd --prefix frontend run test -- --run
+npm.cmd --prefix frontend run build
+npm.cmd --prefix frontend run test:e2e
+.\.venv\Scripts\python.exe scripts/service_check_repository.py
+```
+
+실제 렌더러 검사는 `RUN_RENDER_TESTS=1`, 로컬 B 번들 검사는 `RUN_RANKING_TESTS=1`로 opt-in합니다. 발표용 전체 흐름 검사는 [테스트 보고](docs/RELEASE_TEST_REPORT.md)의 별도 실행을 사용합니다. 모델 다운로드·유료 API 호출을 CI 통과 조건으로 삼지 않습니다.
+
+원본·중간 파일·결과물은 비공개 임시 저장하며 24시간 TTL과 60초 정리 주기를 사용합니다. 잠긴 파일은 지연될 수 있고 `/ready`로 경고합니다. 세션과 작업 메타데이터는 메모리에 있어 **재시작하면 복구되지 않습니다**. 중요한 결과는 먼저 다운로드하세요. 노트북 절전·인터넷 단절 시 외부 시연이 끊기며 운영 SLA나 상시 서비스는 제공하지 않습니다. 폰트/디자인 시스템 고도화·다중 서버·영속 Job DB는 미구현입니다.
+
+아래 내용은 1~12단계의 이력이며 현재 사용법은 위 안내와 최신 문서를 우선합니다.
+
 12단계는 **B의 실제 Preference 모델**을 기본 ranking 경로로 연결합니다. `.venv-rank` 전용 worker에서 최종 광고 PNG 네 장을 평가하고 원시 score·모델 버전·순위를 표시합니다. 실패 시 조용히 Mock으로 바꾸지 않으며 편집·다운로드·규칙 기반 진단은 유지합니다. [설정·실행·오류 정책](docs/RANKING_SERVICE.md), [검증 기록](docs/RANKING_INTEGRATION_TEST_REPORT.md)을 참고하세요. 아래 설명은 단계별 이력입니다.
 
 11단계는 **규칙 기반 가독성 진단**을 추가합니다. 최신 광고 네 장을 동기 API로 진단하며 대비·글자 크기·경계/겹침·텍스트 블록 밀도를 별도 표시합니다. 36px/40%는 초기 휴리스틱이고 측정 불가를 정상으로 표시하지 않습니다. 선호 순위·성과 점수와 별개이며 프로필·실제 ML은 포함하지 않습니다. [API·규칙·실행](docs/DIAGNOSTICS.md), [실행한 검증](docs/DIAGNOSTICS_TEST_REPORT.md)을 참고하세요.

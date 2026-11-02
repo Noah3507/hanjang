@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     ranking_python: Path = PROJECT_ROOT / '.venv-rank' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
     ranking_timeout_seconds: float = Field(default=30, gt=0, le=120)
     ranking_temp_root: Path = PROJECT_ROOT / 'artifacts/ranking-runtime'
+    frontend_dist: Path | None = None
+    release_require_models: bool = False
+    presentation_user: str = 'presenter'
+    presentation_password: SecretStr | None = None
+    presentation_requests_per_minute: int = Field(default=600,ge=30,le=1200)
+    presentation_mutations_per_minute: int = Field(default=30,ge=1,le=60)
     # Preserve the agreed FILE meaning, pass its parent to B's loader.
     ranking_model_path: Path | None = Field(default=PROJECT_ROOT / 'artifacts/models/ranking/bt-logistic-v1/model.safetensors', validation_alias="RANKING_MODEL_PATH")
 

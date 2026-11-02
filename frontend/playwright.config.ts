@@ -33,7 +33,7 @@ export default defineConfig({
       ...(process.env.PLAYWRIGHT_CHANNEL === 'chrome' ? { channel: 'chrome' } : {}),
     },
   }],
-  webServer: [
+  webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1' ? undefined : [
     {
       command: `${python} -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port ${backendPort}`,
       cwd: root,
@@ -46,6 +46,7 @@ export default defineConfig({
     {
       command: `${process.platform === 'win32' ? 'npm.cmd' : 'npm'} run dev -- --port ${frontendPort}`,
       cwd: frontend,
+      env: { DEV_BACKEND_URL: process.env.DEV_BACKEND_URL || `http://127.0.0.1:${backendPort}` },
       url: `http://127.0.0.1:${frontendPort}`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

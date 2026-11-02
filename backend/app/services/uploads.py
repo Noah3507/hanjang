@@ -253,21 +253,31 @@ class PrivateUploadStore:
     def cleanup(self) -> None:
         with self.lock:
             current = now()
+            failed = False
             for job, record in list(self.records.items()):
                 if record.upload.expires_at <= current:
                     record.exports.clear()
                     record.diagnostic_result=None
-                    self.safe_path(record.path.name).unlink(missing_ok=True)
-                    for asset, path in record.derived.items():
-                        self.safe_path(path.name).unlink(missing_ok=True)
-                        self.assets.pop(asset, None)
-                    self.assets.pop(record.upload.asset_id, None)
-                    del self.records[job]
+                    try:
+                        self.safe_path(record.path.name).unlink(missing_ok=True)
+                        for asset, path in record.derived.items():
+                            self.safe_path(path.name).unlink(missing_ok=True)
+                            self.assets.pop(asset, None)
+                        self.assets.pop(record.upload.asset_id, None)
+                        del self.records[job]
+                    except OSError:
+                        # One locked Windows file must not starve other expired jobs.
+                        failed = True
             self.sessions = {key: value for key, value in self.sessions.items() if value > current}
             if self.root.is_dir():
                 # Only generated original files in this dedicated directory.
                 for path in self.root.iterdir():
                     if re.fullmatch(r"[a-f0-9]{32}\.(jpg|png)", path.name) and not path.is_symlink():
-                        safe = self.safe_path(path.name)
-                        if safe.stat().st_mtime <= (current - TTL).timestamp():
-                            safe.unlink(missing_ok=True)
+                        try:
+                            safe = self.safe_path(path.name)
+                            if safe.stat().st_mtime <= (current - TTL).timestamp():
+                                safe.unlink(missing_ok=True)
+                        except OSError:
+                            failed = True
+            if failed:
+                raise OSError('Temporary cleanup requires retry.')
