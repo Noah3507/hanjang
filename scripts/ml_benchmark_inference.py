@@ -42,8 +42,14 @@ def peak_memory_mb() -> float | None:
 
         counters = Counters()
         counters.cb = ctypes.sizeof(Counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        if not ctypes.windll.psapi.GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb):
+        # Declare the types: on 64-bit Windows ctypes would otherwise pass the process
+        # pseudo-handle as a 32-bit int, the call fails and the result was null.
+        kernel32 = ctypes.WinDLL("kernel32")
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        get_info = getattr(kernel32, "K32GetProcessMemoryInfo", None) or ctypes.WinDLL("psapi").GetProcessMemoryInfo
+        get_info.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+        get_info.restype = wintypes.BOOL
+        if not get_info(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
             return None
         return counters.PeakWorkingSetSize / 1e6
     import resource
