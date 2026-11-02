@@ -3,6 +3,7 @@ import re
 from app.schemas.copy import Variants, Copy, STRATEGIES
 from app.services.copy_contract import CopyFailure
 from app.services.copy_glyphs import supported_text
+from app.services.copy_particles import check_fact_particles
 
 CLAIMS = re.compile(
     r'할인|이벤트|특가|무료|증정|쿠폰|한정|국산|국내산|수입산|원산지|유기농|무첨가|저당|'
@@ -45,6 +46,7 @@ def validate_copy(raw: str, draft):
                 raise CopyFailure('COPY_FACTS_VIOLATION', True)
             if any(match.group() not in evidence for match in CLAIMS.finditer(remaining)):
                 raise CopyFailure('COPY_FACTS_VIOLATION', True)
+            check_fact_particles(text, allowed)
             values[field] = text
         try:
             variant.ad_copy = Copy.model_validate(values)  # recheck lengths after fact binding

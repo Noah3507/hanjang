@@ -40,3 +40,16 @@ it('rejects a duplicate strategy response', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('응답 형식')
 })
 vi.mock('./AdRendering', () => ({ default: () => null }))
+
+it('shows particle review failure without automatically submitting another generation', async () => {
+  const fetch = vi.fn().mockResolvedValueOnce(Response.json(pending)).mockResolvedValueOnce(Response.json({
+    ...pending, status: 'failed', error: { code: 'COPY_PARTICLE_INVALID', message: '가격·상품명 뒤의 한국어 조사를 확인해야 합니다.' },
+  }))
+  vi.stubGlobal('fetch', fetch)
+  render(<CopyGeneration handle={handle} draft={draft} asset="asset" disabled={false} />)
+  await waitFor(() => expect(screen.getByRole('button', { name: '4전략 카피 생성' })).toBeEnabled())
+  fireEvent.click(screen.getByRole('button', { name: '4전략 카피 생성' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('COPY_PARTICLE_INVALID')
+  expect(screen.queryByRole('article')).not.toBeInTheDocument()
+  expect(fetch.mock.calls.filter(([, options]) => options.method === 'POST')).toHaveLength(1)
+})

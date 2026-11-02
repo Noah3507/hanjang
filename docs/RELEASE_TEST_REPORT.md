@@ -1,5 +1,16 @@
 # 13단계 로컬 릴리스 검증 (2026-11-02)
 
+## 최종 보완: 조사와 기존 다운로드 검사
+
+- 추가 유료 호출·발표 서버 재시작·외부 공개 없음. 기존 원장7건·$0.01102125 보존, 누적 제한10회/$0.10. B 코드·환경·모델·사용자 다운로드 보존.
+- prompt version `copy-v3-particles`, 중립 문형 지시, 치환 후 최종 가격/상품명 경계 조사 검사 추가. 명확한 오류/발음 불확실은 별도 safe code·자동 재시도 없음. facts를 고치거나 미승인 재생성하지 않음.
+- 무료 backend130 PASS, frontend68 PASS, 타입·빌드 PASS. 조사 오류·직접 인용·ㄹ 예외·불확실 발음·유효 결합·세 필드·원문 보존·재시도 방지 포함. Playwright 합성 조사 오류1 PASS: 오류 표시·가격 원문·렌더링 비활성화·copy POST는 브라우저에서 대체. 최초 fixture asset 불일치로 엄격 locator 오류가 발생해 실제 요청 asset에 맞춘 후 재실행. 전체 실제 광고 생성 흐름은 다시 실행하지 않음.
+- 기존 사용자 PNG:1080×1350 RGB, verify/load 성공. 서버 저장 PNG와 SHA-256 일치. PDF:strict 구조 검사·1페이지 A4 약210×297mm·PDFium 실제 렌더링 성공. 내장 이미지1080×1350의 모든 RGB 픽셀이 다운로드 PNG와 동일. PDF는 여백/비율 축소 후 같은 내용을 표시하며 searchable/vector PDF로 주장하지 않음.
+- 로컬 PNG와 렌더링 PDF에서 요청된 편집 제목의 글자 반영을 육안 확인. 긴 상품명과 본문의 단어 중간 줄바꿈도 확인. 다운로드 시점r2 파일/저장 asset 일치는 확인했지만 현재 메모리의 최신 후보 JSON은 소유 세션 없이 조회할 수 없어 별도 대조가 남음. 인증 우회·브라우저 프로필 추출·Chrome Computer Use 재시도 없음.
+- PDF 검사 도구는 Git 제외 별도 `artifacts/release/file-review-tools-20261102`에 설치했으며 기존 가상환경을 변경하지 않음. 실제 사용자 파일·이미지·연락처·asset 식별자는 Git/CI artifact에 올리지 않음.
+- 결과는 로컬 `artifacts/release/final-file-review-20261102/`의 렌더링 PNG·report.json·테스트 로그에 보존. 구체적인 사용자 제목/파일 대조 정보는 로컬과 완료 보고에서만 제공.
+- 14단계 작업 후보는 [PHASE_14_BACKLOG](PHASE_14_BACKLOG.md)에 기록. 템플릿/디자인/폰트 변경은 이번 범위 아님. 최신 PR CI는 후속 commit의 Actions 결과 참조.
+
 ## 후속: OpenAI 발표 설정 준비 (추가 유료 호출 미승인)
 
 - 기본6회 유지, 명시적 누적 호출 상한10 지원. 예산0.10/기존 원장 유지. 발표 wrapper는 모델 고정·재시도0·provider/paid/max_requests를 자식 환경에 적용하고 종료 후 복원합니다.
