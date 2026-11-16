@@ -79,6 +79,7 @@ class Record:
     asset_hashes: dict = field(default_factory=dict)
     exports: dict = field(default_factory=dict)
     diagnostic_result: object | None = None
+    design_sets: dict = field(default_factory=dict)
 
 
 class PrivateUploadStore:

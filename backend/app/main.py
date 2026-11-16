@@ -34,6 +34,8 @@ from app.services.editor_store import EditorStore
 from app.services.export_service import ExportService
 from app.api.diagnostics import router as diagnostics_router
 from app.services.diagnostics_store import DiagnosticsStore
+from app.services.design_store import DesignStore
+from app.api.designs import router as designs_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -86,6 +88,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.editor_store = EditorStore(application.state.render_store)
     application.state.export_service = ExportService(application.state.render_store)
     application.state.diagnostics_store = DiagnosticsStore(application.state.render_store)
+    application.state.design_store = DesignStore(application.state.render_store,ranker)
     application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
     application.add_exception_handler(UploadError, upload_error)
     application.add_exception_handler(RequestValidationError, validation_error)
@@ -106,6 +109,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(ranking_router, prefix="/api/v1")
     application.include_router(editor_router, prefix="/api/v1")
     application.include_router(diagnostics_router, prefix="/api/v1")
+    application.include_router(designs_router, prefix="/api/v1")
     # Requested local health path; same response as the versioned contract.
     application.include_router(health_router, include_in_schema=False)
     application.include_router(readiness_router)

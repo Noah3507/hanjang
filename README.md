@@ -1,5 +1,10 @@
 # Hanjang
 
+Phase 15 adds a second stage: select an existing strategy → four v3 designs →
+reference ranking/diagnostics → per-design editing and PNG/PDF download. Existing
+v2 remains available. See [v3 service and local use](docs/DESIGNS_V3_SERVICE.md)
+and [local validation](docs/PHASE15_TEST_REPORT.md). No new paid call is needed.
+
 실제 상품 사진과 입력 사실을 보존하면서 `emotional / price / visual / brand` 광고를 만드는 서비스입니다. 현재 업로드·배경 제거·CLIP/대표색 분석·카피·1080×1350 PNG 네 장·실제 Bradley–Terry 선호 순위·문구 편집·PNG/PDF 다운로드·독립적인 가독성 진단까지 구현되어 있습니다. 선호 score는 확률·CTR·매출 예측이 아닙니다.
 
 13단계는 **Windows 노트북의 발표용 실행 및 로컬 검증**입니다. 빌드한 React와 FastAPI를 같은 loopback 주소에서 제공하며 Vite를 공개하지 않습니다. Cloudflare Tunnel과 실제 OpenAI 유료 smoke는 별도 승인 전 실행하지 않습니다. [배포 설정](docs/DEPLOYMENT.md) · [릴리스 체크리스트](docs/RELEASE_CHECKLIST.md) · [테스트 보고](docs/RELEASE_TEST_REPORT.md) · [3~5분 데모](docs/DEMO_GUIDE.md).

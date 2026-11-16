@@ -1,5 +1,10 @@
 # Phase 14: opt-in price templates v3
 
+Historical Phase 14 design record. Phase 15 implements the remaining twelve and
+adds service/UI integration; current behavior is documented in
+[DESIGNS_V3_SERVICE](DESIGNS_V3_SERVICE.md). The earlier implementation counts and
+slot geometry below describe commit `6cdd2ef`, not the updated Phase 15 CSS.
+
 ## Scope and compatibility
 
 Base: main `c7892d8` (PR #52 already merged). The existing `RenderExecution`,
