@@ -1,6 +1,7 @@
 import {fireEvent,render,screen,waitFor} from '@testing-library/react'
 import {beforeEach,expect,it,vi} from 'vitest'
 import DesignVariants from './DesignVariants'
+import {isTopDesignCloseCall,closeCallMessage} from './designRankingGuidance'
 import * as api from '../api/designs'
 import type {DesignState,Strategy} from '../api/designs'
 import type {RenderState} from '../api/rendering'
@@ -47,5 +48,50 @@ it('model failure keeps designs available and never displays fake model scores',
  fireEvent.click(await screen.findByRole('button',{name:'시안 ML 참고 순위 계산'}))
  expect(await screen.findByRole('alert')).toHaveTextContent('모델을 사용할 수 없습니다.')
  expect(screen.getAllByRole('button',{name:'시안 PNG 다운로드'})[0]).toBeEnabled()
+ expect(screen.queryByText(/상대 선호 score/)).not.toBeInTheDocument()
+})
+
+function ranked(strategy:Strategy='price',scores=[0.2,0,-1,-2]){
+ const s=state(strategy,'completed');s.ranking_status='completed';s.ranking_close_call_score_gap=0.2
+ s.ranking={source:'model',model_version:'bt-logistic-v1',revision:1,items:s.candidates.map((c,i)=>({candidate_id:c.candidate_id,rank:i+1,score:scores[i]}))}
+ return s
+}
+
+it('uses raw scores, inclusive manifest boundary, top two only, and no fallback threshold',()=>{
+ expect(isTopDesignCloseCall(ranked())).toBe(true)
+ expect(isTopDesignCloseCall(ranked('price',[1,0,-0.01,-0.02]))).toBe(false)
+ expect(isTopDesignCloseCall(ranked('price',[0.2001,0,-1,-2]))).toBe(false)
+ expect(isTopDesignCloseCall(ranked('price',[0.1999,0,-1,-2]))).toBe(true)
+ const s=ranked();s.ranking_close_call_score_gap=0.1;expect(isTopDesignCloseCall(s)).toBe(false)
+ s.ranking_close_call_score_gap=null;expect(isTopDesignCloseCall(s)).toBe(false)
+})
+
+it('never judges failed, missing, nonfinite, mismatched or stale results',()=>{
+ const cases=[{is_current:false},{editing:true},{ranking_status:'failed'},{ranking_error:{code:'failed',message:'failed'}},{ranking:null},{revision:2}]
+ for(const override of cases)expect(isTopDesignCloseCall({...ranked(),...override})).toBe(false)
+ const s=ranked();s.ranking!.items[0].score=NaN;expect(isTopDesignCloseCall(s)).toBe(false)
+ s.ranking!.items[0].score=undefined as unknown as number;expect(isTopDesignCloseCall(s)).toBe(false)
+ s.ranking!.items.pop();expect(isTopDesignCloseCall(s)).toBe(false)
+ expect(isTopDesignCloseCall(ranked(),true)).toBe(false)
+ const mock=ranked();mock.ranking!.source='mock';expect(isTopDesignCloseCall(mock)).toBe(false)
+})
+
+it.each(['emotional','price','visual','brand'] as Strategy[])('shows guidance and two-decimal model scores for %s',async strategy=>{
+ vi.mocked(api.getDesigns).mockResolvedValue(ranked(strategy))
+ render(<DesignVariants handle={handle} render={source} disabled={false} selectedStrategy={strategy}/> )
+ expect(await screen.findByRole('note')).toHaveTextContent(closeCallMessage)
+ expect(screen.getByText(/상대 선호 score 0.20/)).toBeInTheDocument()
+ expect(screen.getAllByRole('article')).toHaveLength(4)
+})
+
+it('hides rounded near scores and stale scores after source revision changes',async()=>{
+ vi.mocked(api.getDesigns).mockResolvedValue(ranked('price',[0.2001,0,-1,-2]))
+ const {rerender}=render(<DesignVariants handle={handle} render={source} disabled={false}/> )
+ expect(await screen.findByText(/상대 선호 score 0.20/)).toBeInTheDocument()
+ expect(screen.queryByRole('note')).not.toBeInTheDocument()
+ vi.mocked(api.getDesigns).mockResolvedValue({...ranked(),is_current:false})
+ rerender(<DesignVariants handle={handle} render={{...source,revision:2}} disabled={false}/> )
+ expect(await screen.findByText('이전 입력의 시안입니다. 최신 결과로 다시 생성해 주세요.')).toBeInTheDocument()
+ expect(screen.queryByRole('note')).not.toBeInTheDocument()
  expect(screen.queryByText(/상대 선호 score/)).not.toBeInTheDocument()
 })

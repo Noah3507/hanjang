@@ -8,7 +8,8 @@ export interface DesignState {
  operation:'designs_v3';strategy:Strategy;status:'pending'|'processing'|'completed'|'failed';revision:number;source_revision:number
  source_asset_id:string;copy_key:string|null;template_version:string;is_current:boolean;editing:boolean;snapshot:string|null;mock_copy:boolean
  candidates:DesignCandidate[];diagnostics:{candidate_id:string;coverage:string;rules:{rule_id:string;status:string;coverage:string;explanation:string}[]}[]
- ranking:{source:'model'|'mock'|'fallback_mock';model_version:string;items:{candidate_id:string;rank:number;score:number}[]}|null
+ ranking:{source:'model'|'mock'|'fallback_mock';model_version:string;revision?:number;items:{candidate_id:string;rank:number;score:number}[]}|null
+ ranking_close_call_score_gap?:number|null
  ranking_status:string;ranking_error:{code:string;message:string}|null;error:{code:string;message:string}|null
  failed_templates?:string[];failed_fields?:string[]
  promotion?:Promotion

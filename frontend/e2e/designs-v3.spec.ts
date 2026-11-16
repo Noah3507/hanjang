@@ -34,7 +34,13 @@ test('v2 to strategy variants, model and diagnostics, edit, downloads and restor
  await region.getByRole('button',{name:'시안 ML 참고 순위 계산'}).click()
  const ranked=await (await rankResponse).json()
  await writeFile(info.outputPath('ranking-evidence.json'),JSON.stringify({source:ranked.ranking?.source,model_version:ranked.ranking?.model_version,items:ranked.ranking?.items,error:ranked.ranking_error},null,2))
- if(process.env.PLAYWRIGHT_REQUIRE_RANKING_MODEL==='1')await expect(region.getByText(/bt-logistic-v1/)).toHaveCount(4,{timeout:60000})
+ if(process.env.PLAYWRIGHT_REQUIRE_RANKING_MODEL==='1'){
+  await expect(region.getByText(/bt-logistic-v1/)).toHaveCount(4,{timeout:60000})
+  const gap=ranked.ranking_close_call_score_gap
+  expect(typeof gap).toBe('number')
+  const items=[...ranked.ranking.items].sort((a,b)=>a.rank-b.rank)
+  await expect(region.getByRole('note')).toHaveCount(items[0].score-items[1].score<=gap?1:0)
+ }
  else await expect(region.getByText('시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다.')).toBeVisible()
  await expect(region.getByRole('article').locator('details')).toHaveCount(4)
  await region.getByRole('button',{name:'시안 A 편집',exact:true}).click()

@@ -4,6 +4,7 @@ import {preview,type RenderState} from '../api/rendering'
 import type {UploadHandle} from '../api/uploads'
 import type {AdCopy} from '../api/editing'
 import {strategyLabels} from './AdResults'
+import {currentDesignRanking,isTopDesignCloseCall,closeCallMessage} from './designRankingGuidance'
 
 function Preview({handle,asset,label}:{handle:UploadHandle;asset:string;label:string}){
  const [url,setUrl]=useState(''),[error,setError]=useState('')
@@ -58,6 +59,9 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
   finally{if(token===ticket.current)setBusy(false)}
  }
  const stale=Boolean(state&&state.status!=='pending'&&(!state.is_current||disabled))
+ const sourceMatches=state?.source_revision===render.revision&&state.source_asset_id===render.source_asset_id&&state.copy_key===render.copy_key
+ const rankingDisabled=disabled||!sourceMatches
+ const ranking=currentDesignRanking(state,rankingDisabled)
  const usable=Boolean(state?.status==='completed'&&state.is_current&&!disabled&&!busy&&!editing)
  const names:Record<string,string>={gallery:'갤러리',fade:'페이드',editorial:'에디토리얼',door:'문',circle:'원형컷',split:'상하분할','big-number':'빅넘버',stamp:'가격스탬프',wordmark:'워드마크',emblem:'엠블럼',pattern:'패턴','korean-wordmark':'국문워드마크','full-bleed':'풀블리드',polaroid:'폴라로이드',cinema:'시네마',film:'필름'}
  const ruleNames:Record<string,string>={contrast:'대비',font_size:'글자 크기',layout:'배치·겹침',density:'텍스트 밀도',subject_size:'피사체 크기',image_crop:'이미지 경계·가림'}
@@ -82,11 +86,12 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
    {state.ranking_status==='processing'&&<p role="status">모델 평가 중</p>}
    {state.ranking_error&&<p role="alert">{state.ranking_error.message}</p>}
    {state.ranking?.source==='mock'&&<p>시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다.</p>}
-   <div className="ad-cards">{state.candidates.map(c=>{const rank=state.ranking?.items.find(i=>i.candidate_id===c.candidate_id);const diagnostic=state.diagnostics.find(d=>d.candidate_id===c.candidate_id);return <article key={c.candidate_id} aria-label={`${c.template_id} 시안`}>
+   {isTopDesignCloseCall(state,rankingDisabled)&&<p role="note">{closeCallMessage}</p>}
+   <div className="ad-cards">{state.candidates.map(c=>{const rank=ranking?.items.find(i=>i.candidate_id===c.candidate_id);const diagnostic=state.diagnostics.find(d=>d.candidate_id===c.candidate_id);return <article key={c.candidate_id} aria-label={`${c.template_id} 시안`}>
     <h4>{c.template_id.split('_')[1].toUpperCase()} · {names[c.design_name]||c.design_name}</h4>
     <Preview handle={handle} asset={c.png.asset_id} label={`${strategyLabels[strategy]} ${c.template_id} 광고`}/>
     <p>{c.copy?.headline}</p><p>가격: {c.facts?.price_text} · 편집 {c.edit_revision}회</p>
-    {rank&&<p>{rank.rank}위 {state.ranking?.source==='model'?`· 상대 선호 score ${rank.score} · ${state.ranking.model_version}`:'· 시연용'}</p>}
+    {rank&&<p>{rank.rank}위 {ranking?.source==='model'?`· 상대 선호 score ${rank.score.toFixed(2)} · ${ranking.model_version}`:'· 시연용'}</p>}
     <details><summary>가독성 진단 · {statuses[diagnostic?.coverage||'unavailable']}</summary><ul>{diagnostic?.rules.map(r=><li key={r.rule_id}>{ruleNames[r.rule_id]||r.rule_id}: {statuses[r.status]||r.status} · {r.explanation}</li>)}</ul><p>의도된 사진·장식 겹침도 경고를 유지합니다. 미측정 대비는 정상 판정하지 않습니다.</p></details>
     <button data-edit-id={c.candidate_id} disabled={!usable||!c.copy} onClick={()=>{setEditing(c.candidate_id);setValues({...c.copy!});setPrice(c.facts?.price_text||'');setError('')}}>시안 {c.template_id.split('_')[1].toUpperCase()} 편집</button>{' '}
     <button disabled={!usable} onClick={()=>void download(c.candidate_id,'png')}>시안 PNG 다운로드</button>{' '}

@@ -155,3 +155,26 @@ def test_claim_rounding_and_hidden_price_preserve_raw():
     replace(d,price_text='가격 비공개',original_price='',discount_text='').validate()
     replace(d,price_text='',original_price='',discount_text='').validate()
     replace(d,original_price='11,700원',discount_text='10%',period_text='2026.11.16–11.20').validate()
+
+
+def test_v3_manifest_guidance_current_revision_only(designs,tmp_path):
+    import json
+    from app.schemas.ranking import Ranking
+    from app.ml_adapter.mock_ranker import ordered_items
+    app,c,h,m,b,body,v2=designs;p,s=generate(designs);store=app.state.design_store
+    (tmp_path/'manifest.json').write_text(json.dumps({'model_version':'test-bundle','close_call_score_gap':0.125}))
+    class Model:
+        mode='model'
+        model_file=tmp_path/'model.safetensors'
+        def rank_snapshot(self,candidates,revision,pngs):
+            return Ranking(source='model',model_version='test-bundle',feature_version='test-features',revision=revision,
+                items=ordered_items([(x.candidate_id,float(i)) for i,x in enumerate(candidates)]))
+    store.ranker=Model()
+    ranked=c.post(p+'/ranking',headers=h,json=snap(s)).json()
+    assert ranked['ranking_close_call_score_gap']==0.125
+    assert c.get(p,headers=h).json()['ranking_close_call_score_gap']==0.125
+    first=s['candidates'][0]
+    c.patch(p+'/candidates/'+first['candidate_id'],headers=h,json={**snap(s),'expected_asset_id':first['png']['asset_id'],'copy':first['copy'],'price_text':'20원'})
+    edited=c.get(p,headers=h).json()
+    assert edited['revision']==2 and edited['ranking_close_call_score_gap'] is None and edited['ranking'] is None
+    assert c.get(b+'/rendering',headers=h).json()==v2

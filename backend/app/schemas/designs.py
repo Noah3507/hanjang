@@ -62,6 +62,7 @@ class DesignResponse(StrictModel):
     candidates: list[DesignCandidate] = Field(default_factory=list)
     diagnostics: list[CandidateDiagnostics] = Field(default_factory=list)
     ranking: Ranking | None = None
+    ranking_close_call_score_gap: float | None = Field(default=None, gt=0, allow_inf_nan=False)
     ranking_status: Literal['pending','processing','completed','failed'] = 'pending'
     ranking_error: RenderError | None = None
     error: RenderError | None = None

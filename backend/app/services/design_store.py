@@ -17,6 +17,7 @@ from app.services.template_v3_claims import amount
 from app.services.export_service import PdfExecution
 from app.services.uploads import UploadError
 from app.ml_adapter.mock_ranker import ordered_items
+from app.services.ranking_guidance import close_call_gap
 
 
 @dataclass
@@ -56,6 +57,7 @@ class DesignStore:
                     source_asset_id=asset.asset_id,copy_key=copy.copy_key if copy else None,
                     template_version=VERSION,mock_copy=copy.provider=='mock' if copy else True,expires_at=record.upload.expires_at)
             result=entry.response.model_copy(deep=True)
+            result.ranking_close_call_score_gap=None
             result.editing=entry.edit_ticket is not None
             result.is_current=source.is_current and source.status=='completed' and entry.source_key==key
             if not result.is_current:
@@ -64,6 +66,12 @@ class DesignStore:
                 result.ranking=None;result.ranking_status='pending'
             elif result.status=='completed':
                 for c in result.candidates:self.asset(owner,job,record,c)
+            if (result.is_current and not result.editing and result.ranking_status=='completed'
+                    and result.ranking_error is None and result.ranking is not None
+                    and result.ranking.revision==result.revision):
+                result.ranking_close_call_score_gap=close_call_gap(self.ranker,result.ranking)
+                if entry.ranking_token!=self.ranker_token():
+                    result.ranking=None;result.ranking_close_call_score_gap=None;result.ranking_status='pending'
             return result
 
     def start(self, owner, job, strategy, body):
