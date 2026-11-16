@@ -45,11 +45,14 @@ try {
         const overlap = (a, b) => Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>1 && Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>1
         const collisions = text.flatMap((a,i) => text.slice(i+1).filter(b => overlap(a,b)).map(b => [a.field,b.field]))
         const outside = text.some(t => t.x < 0 || t.y < 0 || t.x+t.width > 1080.1 || t.y+t.height > 1350.1)
-        return { text, product: box(document.querySelector('.photo')), photo_frame: box(document.querySelector('.photo')),
+        const photo=box(document.querySelector('.photo'))
+        return { text, product: photo, photo_frame: photo,
           layout: 'fixed-slots-v3', image_fit: getComputedStyle(document.querySelector('.photo img')).objectFit, fit_steps: steps, text_collisions: collisions,
-          intentional_image_overlays: document.querySelector('.stamp') ? ['opaque-price-stamp'] : [],
+          intentional_image_overlays: text.filter(t=>overlap(t,photo)).map(t=>({field:t.field,classification:'template-overlay-needs-review'})),
+          decorative_text: [...document.querySelectorAll('[data-decoration]')].map(e=>({kind:e.dataset.decoration,bbox:box(e),text:e.textContent,excluded_from_reading_order:true})),
           invalid: outside || collisions.length > 0 || text.some(t => t.overflow || !t.visible) }
       })
+      measurement.template_id = item.template_id
       if (measurement.invalid) {
         const error = new Error('RENDER_LAYOUT_OVERFLOW'); error.measurement = measurement; throw error
       }

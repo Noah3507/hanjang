@@ -18,14 +18,14 @@ from app.services.render_execution import ROOT, FONT_HASH, RenderFailure, opaque
 from app.services.diagnostics_evidence import attach_contrast_evidence
 from app.services.diagnostics_engine import analyze
 
-VERSION = 'ad-templates-v3-price-1'
+VERSION = 'ad-templates-v3-16-layouts-2'
 BOLD_HASH = '5a6ceb287ed2fc6cfc6213144ebea68cbd94b20fc9eb873d8486493bf02d9bda'
 NAMES = {'emotional': ('gallery', 'fade', 'editorial', 'door'),
          'price': ('circle', 'split', 'big-number', 'stamp'),
          'brand': ('wordmark', 'emblem', 'pattern', 'korean-wordmark'),
          'visual': ('full-bleed', 'polaroid', 'cinema', 'film')}
 REGISTRY = {f'{strategy}_{letter}': {'strategy': strategy, 'variant': letter,
-             'name': name, 'implemented': strategy == 'price'}
+             'name': name, 'implemented': True}
             for strategy, names in NAMES.items() for letter, name in zip('abcd', names)}
 
 
@@ -59,8 +59,10 @@ class TemplateInput:
         for name, value in asdict(self).items():
             if not isinstance(value, str) or len(value) > 2000 or any(ord(c) < 32 for c in value):
                 raise RenderFailure('RENDER_INVALID_INPUT')
-        if any(not getattr(self, k).strip() for k in ('store_name', 'product_name', 'price_text', 'headline')):
+        if any(not getattr(self, k).strip() for k in ('store_name', 'product_name', 'headline')):
             raise RenderFailure('RENDER_INVALID_INPUT')
+        from app.services.template_v3_claims import validate_promotion
+        validate_promotion(self)
 
 
 def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeout=90):
@@ -97,7 +99,10 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
             if source.width * source.height > 24_000_000:
                 raise ValueError('image limit')
             image = ImageOps.exif_transpose(source).convert('RGBA')
-            photo_fit = 'contain' if image.getchannel('A').getextrema()[0] < 255 else 'cover'
+            # No automatic subject detector: conservative contain with padding.
+            # Full-bleed designs keep a secondary background copy, never crop the foreground product.
+            transparent = image.getchannel('A').getextrema()[0] < 255
+            photo_fit = 'contain'
             stream = BytesIO()
             image.save(stream, 'PNG')
     except Exception:
@@ -105,9 +110,10 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
     uri = 'data:image/png;base64,' + base64.b64encode(stream.getvalue()).decode()
     env = Environment(loader=FileSystemLoader(ROOT/'templates/v3'),
                       autoescape=select_autoescape(['html']), undefined=StrictUndefined)
-    css = (ROOT/'templates/v3/price.css').read_text(encoding='utf-8') + ''.join(faces)
+    css = (ROOT/'templates/v3/price.css').read_text(encoding='utf-8')
+    css += (ROOT/'templates/v3/collection.css').read_text(encoding='utf-8') + ''.join(faces)
     pages = [{'template_id': t, 'html': env.get_template(t+'.html').render(
-        css=css, data=data, photo=uri, photo_fit=photo_fit, template_id=t)} for t in ids]
+        css=css, data=data, photo=uri, photo_fit=photo_fit, transparent=transparent, template_id=t)} for t in ids]
     node = shutil.which('node')
     if not node:
         raise RenderFailure('RENDER_UNAVAILABLE')
@@ -134,9 +140,9 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
             row.pop('background_png', None)
             candidate_id, asset_id = uuid4().hex, uuid4().hex
             row.update(candidate_id=candidate_id, asset_id=asset_id, revision=1,
-                       strategy='price', template_version=VERSION, input_snapshot=snapshot,
+                       strategy=REGISTRY[row['template_id']]['strategy'], template_version=VERSION, input_snapshot=snapshot,
                        png_sha256=sha256(row['png']).hexdigest())
-            row['diagnostics'] = measured_diagnostics(candidate_id, asset_id, 'price', row['measurement'], row['png_sha256'])
+            row['diagnostics'] = measured_diagnostics(candidate_id, asset_id, row['strategy'], row['measurement'], row['png_sha256'])
         return rows
     except subprocess.TimeoutExpired:
         raise RenderFailure('RENDER_TIMEOUT') from None

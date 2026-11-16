@@ -18,14 +18,14 @@ def photo():
 
 
 def test_registry_and_real_bold():
-    assert len(REGISTRY)==16 and sum(v['implemented'] for v in REGISTRY.values())==4
+    assert len(REGISTRY)==16 and all(v['implemented'] for v in REGISTRY.values())
     assert sha256((ROOT/'templates/fonts/NotoSansKR-Bold.otf').read_bytes()).hexdigest()==BOLD_HASH
     from fontTools.ttLib import TTFont
     with TTFont(ROOT/'templates/fonts/NotoSansKR-Bold.otf') as f:
         assert f['OS/2'].usWeightClass==700
 
 
-@pytest.mark.parametrize('ids',[[],['price_a','price_a'],['../price_a'],['brand_a']])
+@pytest.mark.parametrize('ids',[[],['price_a','price_a'],['../price_a'],['brand_e']])
 def test_invalid_template(ids):
     with pytest.raises(RenderFailure) as e:render_templates(data(),photo(),ids)
     assert e.value.code=='RENDER_INVALID_TEMPLATE'
@@ -68,9 +68,31 @@ def test_long_final_text_fails_without_truncating():
 def test_promotion_and_long_mixed_text():
     original=replace(data(),product_name='아침과 저녁에 사용하는 데일리 보습 로션',
         body='매일 사용하는 상품입니다. 구성과 가격을 확인하고 나에게 맞는 상품을 선택하세요.',
-        original_price='11,700원',discount_text='10%',promotion_text='테스트 행사',period_text='2026.11.16–11.20')
+        original_price='15,000원',discount_text='30%',promotion_text='테스트 행사',period_text='2026.11.16–2026.11.20')
     rows=render_templates(original,photo())
     for row in rows:
         texts={t['field']:t['text'] for t in row['measurement']['text']}
         assert texts=={k:v for k,v in original.__dict__.items() if v}
         assert not row['measurement']['text_collisions']
+
+
+@pytest.mark.skipif(os.getenv('RUN_RENDER_TESTS')!='1',reason='Explicit installed Chromium opt-in')
+def test_all_sixteen_mixed_text_and_hidden_price():
+    for strategy in ('emotional','price','brand','visual'):
+        original=replace(data(),product_name='로션 A&B (2+1)',price_text='',headline='일상에 더하는 선택')
+        for row in render_templates(original,photo(),[strategy+'_'+c for c in 'abcd']):
+            assert row['strategy']==strategy
+            texts={t['field']:t for t in row['measurement']['text']}
+            assert texts['product_name']['text']==original.product_name
+            assert 'price_text' not in texts
+            assert not row['measurement']['invalid']
+
+
+@pytest.mark.skipif(os.getenv('RUN_RENDER_TESTS')!='1',reason='Explicit installed Chromium opt-in')
+def test_fade_promotion_has_measured_contrast_backplate():
+    original=replace(data(),original_price='15,000원',discount_text='30%',promotion_text='테스트 행사')
+    row=render_templates(original,photo(),['emotional_b'])[0]
+    contrast=next(r for r in row['diagnostics']['rules'] if r['rule_id']=='contrast')
+    assert not any(i['status']=='problem' for i in contrast['measured_value']['items'])
+    measured=next(t for t in row['measurement']['text'] if t['field']=='discount_text')['contrast_evidence']
+    assert measured['status']=='verified' and measured['background_rgb']==[38,61,46]

@@ -54,8 +54,8 @@ def main():
         photo = sample(kind,size,transparent,dark); (folder/'source.png').write_bytes(photo)
         body = '상품 구성과 가격을 확인하세요.' if index != 3 else '매일 사용하는 상품입니다. 구성과 가격을 확인하고 나에게 맞는 상품을 선택하세요.'
         data = TemplateInput('한장 테스트 상점',name,'10,500원','일상에 더하는 선택',body,'상품 보기',
-                             '10%' if promo else '', '11,700원' if promo else '', '테스트 행사' if promo else '',
-                             '2026.11.16–11.20' if promo else '')
+                             '30%' if promo else '', '15,000원' if promo else '', '테스트 행사' if promo else '',
+                             '2026.11.16–2026.11.20' if promo else '')
         draft = InputDraft.model_validate({'facts':{'store_name':data.store_name,'product_name':name,'price_text':data.price_text},'mood':'warm'})
         variants = SimpleNamespace(variants=[SimpleNamespace(strategy=s,ad_copy=SimpleNamespace(
             model_dump=lambda:{'headline':data.headline,'body':body,'cta':data.cta})) for s in ORDERS])
