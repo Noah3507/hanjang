@@ -46,6 +46,21 @@ describe('product input', () => {
     expect(screen.getByLabelText('가게명')).toHaveValue(facts.store_name)
     expect(screen.getByLabelText('가격')).toHaveValue(facts.price_text)
   })
+  it('starts with the price strategy and a warm mood so only the photo and three facts are required', () => {
+    render(<ProductInput />)
+    expect(screen.getByRole('radio', { name: /가격 전략/ })).toBeChecked()
+    expect(screen.getAllByRole('radio')).toHaveLength(4)
+    expect(screen.getByLabelText('광고 분위기')).toHaveValue('warm')
+    expect(screen.getByLabelText('상품 사진')).toHaveAccessibleDescription(/JPG, PNG/)
+  })
+  it('hands the chosen strategy to the design step of the saved job', async () => {
+    render(<ProductInput />); fill()
+    fireEvent.click(screen.getByRole('radio', { name: /비주얼 전략/ }))
+    fireEvent.click(screen.getByRole('button', { name: '상품 정보와 사진 저장' }))
+    await waitFor(() => expect(screen.getByRole('region', { name: '저장된 상품 정보' })).toBeInTheDocument())
+    expect(sessionStorage.getItem('hanjang-v3-strategy:job')).toBe('visual')
+    expect(saveInput).toHaveBeenCalledWith(handle, facts, 'warm', { product_features: null, use_address_for_copy: false })
+  })
   it('rejects unsupported file types before uploading', () => {
     render(<ProductInput />)
     fireEvent.change(screen.getByLabelText('상품 사진'), { target: { files: [new File(['svg'], 'photo.svg', { type: 'image/svg+xml' })] } })
