@@ -1,5 +1,10 @@
 # Phase 15–16 — 16 designs and second-stage service
 
+PR #53 ML feedback: the additive nullable `ranking_close_call_score_gap` comes
+from the active manifest for valid current model rankings. V3 compares raw
+top-two gap inclusively, displays scores to two decimals, and keeps v2 unchanged.
+See [policy, shared comparison data and B handoff](V3_RANKING_REVIEW.md).
+
 Phase 16 renderer version: `ad-templates-v3-alpha-quality-3`. Guarded alpha
 support placement and measured image diagnostics supplement the existing v3
 flow; opaque photos retain their full frame and unknown subject extent. See

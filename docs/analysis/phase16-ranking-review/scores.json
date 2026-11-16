@@ -1,0 +1,763 @@
+{
+  "model_version": "bt-logistic-v1",
+  "feature_version": "ViT-B-32-openai-qg-pad-square-v1-stats-v1",
+  "close_call_score_gap": 0.2,
+  "rank_gain_definition": "before_rank - after_rank (positive means moved up)",
+  "verification": {
+    "source_photo_identical": true,
+    "copy_identical": true,
+    "model_and_feature_versions_identical": true,
+    "final_pngs_identical": false,
+    "weight_identity": "Same local RealRanker instance/bundle in Phase16 runner; no per-inference weight hash in source JSON, so historical equality not independently provable"
+  },
+  "candidates": [
+    {
+      "strategy": "emotional",
+      "template_id": "emotional_a",
+      "candidate_id": "phase16-emotional_a",
+      "before_render_candidate_id": "b0aaa42cb506454da68eb6be455ebe3f",
+      "after_render_candidate_id": "edf96b881ec04b9ebe40c46ecd25506a",
+      "before_score": -0.5565670540377116,
+      "after_score": -0.3900482284300424,
+      "before_rank": 2,
+      "after_rank": 3,
+      "score_change": 0.16651882560766917,
+      "rank_gain": -1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "emotional",
+      "template_id": "emotional_b",
+      "candidate_id": "phase16-emotional_b",
+      "before_render_candidate_id": "52cab83882774a638e8f047273b74329",
+      "after_render_candidate_id": "252d06b977eb48fb9b0e92752553095b",
+      "before_score": -0.5793012135710253,
+      "after_score": -0.3570209042322894,
+      "before_rank": 3,
+      "after_rank": 2,
+      "score_change": 0.22228030933873588,
+      "rank_gain": 1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "emotional",
+      "template_id": "emotional_c",
+      "candidate_id": "phase16-emotional_c",
+      "before_render_candidate_id": "90ebd11f180846d9ad6a5e661db12dbc",
+      "after_render_candidate_id": "d08392193853416d8d4c558116a159c7",
+      "before_score": -1.0624866310454186,
+      "after_score": -0.7510278831506685,
+      "before_rank": 4,
+      "after_rank": 4,
+      "score_change": 0.31145874789475014,
+      "rank_gain": 0,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "emotional",
+      "template_id": "emotional_d",
+      "candidate_id": "phase16-emotional_d",
+      "before_render_candidate_id": "a421b35d272b435796e478380332ec31",
+      "after_render_candidate_id": "8e95a5a01a884433aaa76d061d95d82b",
+      "before_score": -0.1515601253806387,
+      "after_score": 0.09728042967514829,
+      "before_rank": 1,
+      "after_rank": 1,
+      "score_change": 0.248840555055787,
+      "rank_gain": 0,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "price",
+      "template_id": "price_a",
+      "candidate_id": "phase16-price_a",
+      "before_render_candidate_id": "5e3e847082f141659a7c05476019a69d",
+      "after_render_candidate_id": "92c808fd8ebc42ed8931138c5ea098c2",
+      "before_score": -1.00118804635806,
+      "after_score": -0.30849797612603497,
+      "before_rank": 4,
+      "after_rank": 2,
+      "score_change": 0.6926900702320251,
+      "rank_gain": 2,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "price",
+      "template_id": "price_b",
+      "candidate_id": "phase16-price_b",
+      "before_render_candidate_id": "f533dc7fb98948098c8b065b294329c4",
+      "after_render_candidate_id": "99cd0078c829401d9aff084c61d97444",
+      "before_score": -0.34601709764873023,
+      "after_score": -0.4344530282236877,
+      "before_rank": 1,
+      "after_rank": 3,
+      "score_change": -0.08843593057495747,
+      "rank_gain": -2,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "price",
+      "template_id": "price_c",
+      "candidate_id": "phase16-price_c",
+      "before_render_candidate_id": "ccc38a3646af4f9490e1d5d2b058dadd",
+      "after_render_candidate_id": "0bca29cb005a43d1a9bc5eafb7448487",
+      "before_score": -0.6672981213722395,
+      "after_score": -0.24154619870663294,
+      "before_rank": 2,
+      "after_rank": 1,
+      "score_change": 0.4257519226656066,
+      "rank_gain": 1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "price",
+      "template_id": "price_d",
+      "candidate_id": "phase16-price_d",
+      "before_render_candidate_id": "707114eabe5a40c99655fad157b804c6",
+      "after_render_candidate_id": "3e3e525ec21d4b17b5f49f72da7477ad",
+      "before_score": -0.8590178343305815,
+      "after_score": -0.7373910896007487,
+      "before_rank": 3,
+      "after_rank": 4,
+      "score_change": 0.12162674472983281,
+      "rank_gain": -1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "brand",
+      "template_id": "brand_a",
+      "candidate_id": "phase16-brand_a",
+      "before_render_candidate_id": "7163e5c828a74497a37335344030551e",
+      "after_render_candidate_id": "9622ba9872274c7da70837d4d173f930",
+      "before_score": -0.7829697375722002,
+      "after_score": -0.8926759217400979,
+      "before_rank": 3,
+      "after_rank": 4,
+      "score_change": -0.10970618416789768,
+      "rank_gain": -1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "brand",
+      "template_id": "brand_b",
+      "candidate_id": "phase16-brand_b",
+      "before_render_candidate_id": "18c0e872669447a18a18a6bce038d52a",
+      "after_render_candidate_id": "b472d0f74b3c4f31810cc2f542c83ec8",
+      "before_score": -0.5407961175202157,
+      "after_score": -0.41738023193901874,
+      "before_rank": 2,
+      "after_rank": 2,
+      "score_change": 0.12341588558119698,
+      "rank_gain": 0,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "brand",
+      "template_id": "brand_c",
+      "candidate_id": "phase16-brand_c",
+      "before_render_candidate_id": "01fa51fe38674afa89983de04b4eabcf",
+      "after_render_candidate_id": "20ed411fc2764669b607d978774b6629",
+      "before_score": -0.28152296590150433,
+      "after_score": -0.3682612268993387,
+      "before_rank": 1,
+      "after_rank": 1,
+      "score_change": -0.08673826099783438,
+      "rank_gain": 0,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "brand",
+      "template_id": "brand_d",
+      "candidate_id": "phase16-brand_d",
+      "before_render_candidate_id": "d60134914bf64b20850ae80312dcf00d",
+      "after_render_candidate_id": "e1f467d6aa5b4956b6055a78944f1303",
+      "before_score": -1.4339001560337754,
+      "after_score": -0.7408245619572835,
+      "before_rank": 4,
+      "after_rank": 3,
+      "score_change": 0.6930755940764919,
+      "rank_gain": 1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "visual",
+      "template_id": "visual_a",
+      "candidate_id": "phase16-visual_a",
+      "before_render_candidate_id": "68565982340b40d5879c62b64098af94",
+      "after_render_candidate_id": "bfea58cafc4f4a92968553866b20bea5",
+      "before_score": -0.25611028061131236,
+      "after_score": -0.34147881739721975,
+      "before_rank": 2,
+      "after_rank": 3,
+      "score_change": -0.08536853678590739,
+      "rank_gain": -1,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "visual",
+      "template_id": "visual_b",
+      "candidate_id": "phase16-visual_b",
+      "before_render_candidate_id": "7ae0ee7be9464bd8b5fb5b57e19f7945",
+      "after_render_candidate_id": "03d0185992d14eb5ac37e8d5652475ef",
+      "before_score": -0.9464116975191649,
+      "after_score": -0.9765854910672019,
+      "before_rank": 4,
+      "after_rank": 4,
+      "score_change": -0.030173793548037064,
+      "rank_gain": 0,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "visual",
+      "template_id": "visual_c",
+      "candidate_id": "phase16-visual_c",
+      "before_render_candidate_id": "3ab6baba96994f28b53bf16973f4f507",
+      "after_render_candidate_id": "f9f1133df6b846a59764eb18ba9607e3",
+      "before_score": 0.05981250003122332,
+      "after_score": 0.2752837125992211,
+      "before_rank": 1,
+      "after_rank": 1,
+      "score_change": 0.21547121256799776,
+      "rank_gain": 0,
+      "copy_identical": true,
+      "png_identical": false
+    },
+    {
+      "strategy": "visual",
+      "template_id": "visual_d",
+      "candidate_id": "phase16-visual_d",
+      "before_render_candidate_id": "53e35301bfb64478bfbc096ac652af38",
+      "after_render_candidate_id": "590fe32414f84cd0af9918d5ca368063",
+      "before_score": -0.321366880376345,
+      "after_score": -0.1953217654194505,
+      "before_rank": 3,
+      "after_rank": 2,
+      "score_change": 0.12604511495689447,
+      "rank_gain": 1,
+      "copy_identical": true,
+      "png_identical": false
+    }
+  ],
+  "pairs": [
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "template_a": "emotional_a",
+      "template_b": "emotional_b",
+      "absolute_score_gap": 0.022734159533313703,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "template_a": "emotional_a",
+      "template_b": "emotional_c",
+      "absolute_score_gap": 0.5059195770077071,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "template_a": "emotional_a",
+      "template_b": "emotional_d",
+      "absolute_score_gap": 0.4050069286570729,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "template_a": "emotional_b",
+      "template_b": "emotional_c",
+      "absolute_score_gap": 0.48318541747439336,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "template_a": "emotional_b",
+      "template_b": "emotional_d",
+      "absolute_score_gap": 0.4277410881903866,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "template_a": "emotional_c",
+      "template_b": "emotional_d",
+      "absolute_score_gap": 0.91092650566478,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "template_a": "emotional_a",
+      "template_b": "emotional_b",
+      "absolute_score_gap": 0.033027324197753005,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "template_a": "emotional_a",
+      "template_b": "emotional_c",
+      "absolute_score_gap": 0.3609796547206261,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "template_a": "emotional_a",
+      "template_b": "emotional_d",
+      "absolute_score_gap": 0.48732865810519066,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "template_a": "emotional_b",
+      "template_b": "emotional_c",
+      "absolute_score_gap": 0.3940069789183791,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "template_a": "emotional_b",
+      "template_b": "emotional_d",
+      "absolute_score_gap": 0.45430133390743765,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "template_a": "emotional_c",
+      "template_b": "emotional_d",
+      "absolute_score_gap": 0.8483083128258168,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "template_a": "price_a",
+      "template_b": "price_b",
+      "absolute_score_gap": 0.6551709487093298,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "template_a": "price_a",
+      "template_b": "price_c",
+      "absolute_score_gap": 0.3338899249858205,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "template_a": "price_a",
+      "template_b": "price_d",
+      "absolute_score_gap": 0.14217021202747848,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "template_a": "price_b",
+      "template_b": "price_c",
+      "absolute_score_gap": 0.3212810237235093,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "template_a": "price_b",
+      "template_b": "price_d",
+      "absolute_score_gap": 0.5130007366818513,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "template_a": "price_c",
+      "template_b": "price_d",
+      "absolute_score_gap": 0.191719712958342,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "template_a": "price_a",
+      "template_b": "price_b",
+      "absolute_score_gap": 0.12595505209765273,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "template_a": "price_a",
+      "template_b": "price_c",
+      "absolute_score_gap": 0.06695177741940203,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "template_a": "price_a",
+      "template_b": "price_d",
+      "absolute_score_gap": 0.42889311347471376,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "template_a": "price_b",
+      "template_b": "price_c",
+      "absolute_score_gap": 0.19290682951705476,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "template_a": "price_b",
+      "template_b": "price_d",
+      "absolute_score_gap": 0.30293806137706103,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "template_a": "price_c",
+      "template_b": "price_d",
+      "absolute_score_gap": 0.49584489089411576,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "template_a": "brand_a",
+      "template_b": "brand_b",
+      "absolute_score_gap": 0.2421736200519845,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "template_a": "brand_a",
+      "template_b": "brand_c",
+      "absolute_score_gap": 0.5014467716706958,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "template_a": "brand_a",
+      "template_b": "brand_d",
+      "absolute_score_gap": 0.6509304184615752,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "template_a": "brand_b",
+      "template_b": "brand_c",
+      "absolute_score_gap": 0.2592731516187114,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "template_a": "brand_b",
+      "template_b": "brand_d",
+      "absolute_score_gap": 0.8931040385135597,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "template_a": "brand_c",
+      "template_b": "brand_d",
+      "absolute_score_gap": 1.152377190132271,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "template_a": "brand_a",
+      "template_b": "brand_b",
+      "absolute_score_gap": 0.47529568980107917,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "template_a": "brand_a",
+      "template_b": "brand_c",
+      "absolute_score_gap": 0.5244146948407592,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "template_a": "brand_a",
+      "template_b": "brand_d",
+      "absolute_score_gap": 0.1518513597828144,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "template_a": "brand_b",
+      "template_b": "brand_c",
+      "absolute_score_gap": 0.04911900503968003,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "template_a": "brand_b",
+      "template_b": "brand_d",
+      "absolute_score_gap": 0.3234443300182648,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "template_a": "brand_c",
+      "template_b": "brand_d",
+      "absolute_score_gap": 0.3725633350579448,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "template_a": "visual_a",
+      "template_b": "visual_b",
+      "absolute_score_gap": 0.6903014169078525,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "template_a": "visual_a",
+      "template_b": "visual_c",
+      "absolute_score_gap": 0.31592278064253565,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "template_a": "visual_a",
+      "template_b": "visual_d",
+      "absolute_score_gap": 0.06525659976503262,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "template_a": "visual_b",
+      "template_b": "visual_c",
+      "absolute_score_gap": 1.0062241975503883,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "template_a": "visual_b",
+      "template_b": "visual_d",
+      "absolute_score_gap": 0.6250448171428199,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "template_a": "visual_c",
+      "template_b": "visual_d",
+      "absolute_score_gap": 0.38117938040756827,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "template_a": "visual_a",
+      "template_b": "visual_b",
+      "absolute_score_gap": 0.6351066736699822,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "template_a": "visual_a",
+      "template_b": "visual_c",
+      "absolute_score_gap": 0.6167625299964408,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "template_a": "visual_a",
+      "template_b": "visual_d",
+      "absolute_score_gap": 0.14615705197776924,
+      "within_manifest_policy": true,
+      "below_analysis_0_2": true
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "template_a": "visual_b",
+      "template_b": "visual_c",
+      "absolute_score_gap": 1.251869203666423,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "template_a": "visual_b",
+      "template_b": "visual_d",
+      "absolute_score_gap": 0.7812637256477515,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "template_a": "visual_c",
+      "template_b": "visual_d",
+      "absolute_score_gap": 0.4706054780186716,
+      "within_manifest_policy": false,
+      "below_analysis_0_2": false
+    }
+  ],
+  "summaries": [
+    {
+      "strategy": "emotional",
+      "version": "before",
+      "pairs": 6,
+      "within_manifest_count": 1,
+      "within_manifest_ratio": 0.16666666666666666,
+      "below_0_2_count": 1,
+      "below_0_2_ratio": 0.16666666666666666
+    },
+    {
+      "strategy": "emotional",
+      "version": "after",
+      "pairs": 6,
+      "within_manifest_count": 1,
+      "within_manifest_ratio": 0.16666666666666666,
+      "below_0_2_count": 1,
+      "below_0_2_ratio": 0.16666666666666666
+    },
+    {
+      "strategy": "price",
+      "version": "before",
+      "pairs": 6,
+      "within_manifest_count": 2,
+      "within_manifest_ratio": 0.3333333333333333,
+      "below_0_2_count": 2,
+      "below_0_2_ratio": 0.3333333333333333
+    },
+    {
+      "strategy": "price",
+      "version": "after",
+      "pairs": 6,
+      "within_manifest_count": 3,
+      "within_manifest_ratio": 0.5,
+      "below_0_2_count": 3,
+      "below_0_2_ratio": 0.5
+    },
+    {
+      "strategy": "brand",
+      "version": "before",
+      "pairs": 6,
+      "within_manifest_count": 0,
+      "within_manifest_ratio": 0.0,
+      "below_0_2_count": 0,
+      "below_0_2_ratio": 0.0
+    },
+    {
+      "strategy": "brand",
+      "version": "after",
+      "pairs": 6,
+      "within_manifest_count": 2,
+      "within_manifest_ratio": 0.3333333333333333,
+      "below_0_2_count": 2,
+      "below_0_2_ratio": 0.3333333333333333
+    },
+    {
+      "strategy": "visual",
+      "version": "before",
+      "pairs": 6,
+      "within_manifest_count": 1,
+      "within_manifest_ratio": 0.16666666666666666,
+      "below_0_2_count": 1,
+      "below_0_2_ratio": 0.16666666666666666
+    },
+    {
+      "strategy": "visual",
+      "version": "after",
+      "pairs": 6,
+      "within_manifest_count": 1,
+      "within_manifest_ratio": 0.16666666666666666,
+      "below_0_2_count": 1,
+      "below_0_2_ratio": 0.16666666666666666
+    }
+  ]
+}
