@@ -127,6 +127,9 @@ class CopyStore:
                     response.error = CopyError(code=error.code, message=message, retryable=error.retryable)
                 else:
                     response.status, response.variants = 'completed', variants
+                    if response.provider=='openai':
+                        from app.services.copy_quality import review_ad_copy
+                        response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants)]))
         except Exception:
             with self.locked():
                 try:

@@ -8,6 +8,15 @@ const pending = { operation: 'copy_generation', status: 'pending', provider: 'mo
 const variants = ['emotional', 'price', 'visual', 'brand'].map(strategy => ({ strategy, copy: { headline: strategy+' 예시', body: '', cta: '' } }))
 afterEach(() => vi.unstubAllGlobals())
 
+it('explains advisory copy-quality warnings without an extra generation call',async()=>{
+  const fetch=vi.fn().mockResolvedValue(Response.json({...pending,...draft,status:'completed',variants,provider:'openai',model:'gpt-5.4-mini-2026-03-17',warnings:['COPY_SERVICE_LANGUAGE_REVIEW','COPY_REPETITION_REVIEW']}))
+  vi.stubGlobal('fetch',fetch)
+  render(<CopyGeneration handle={handle} draft={draft} asset="asset" disabled={false}/> )
+  expect(await screen.findByText(/기능 안내처럼 들리는 문구/)).toBeInTheDocument()
+  expect(screen.getByText(/의미가 중복될 수 있습니다/)).toBeInTheDocument()
+  expect(fetch.mock.calls.filter(([,o])=>o?.method==='POST')).toHaveLength(0)
+})
+
 it('explicitly shows Mock and submits the exact saved extended snapshot', async () => {
   const fetch = vi.fn().mockResolvedValueOnce(Response.json(pending)).mockResolvedValueOnce(Response.json({ ...pending, ...draft, status: 'completed', variants }))
   vi.stubGlobal('fetch', fetch)

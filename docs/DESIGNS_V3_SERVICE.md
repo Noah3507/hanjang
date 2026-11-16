@@ -1,4 +1,11 @@
-# Phase 15 — 16 designs and second-stage service
+# Phase 15–16 — 16 designs and second-stage service
+
+Phase 16 renderer version: `ad-templates-v3-alpha-quality-3`. Guarded alpha
+support placement and measured image diagnostics supplement the existing v3
+flow; opaque photos retain their full frame and unknown subject extent. See
+[quality report](PHASE16_QUALITY_REPORT.md) and [local PR draft](PR_AD_TEMPLATES_V3.md)
+for evidence, warnings and the paid-copy validation limit. V2 contracts and B
+model code remain unchanged.
 
 ## Scope and authorization
 
@@ -157,9 +164,11 @@ download in Phase 15. Emotional designs use the existing licensed sans rather
 than the source Noto Serif ExtraLight; price/brand use Noto rather than Pretendard.
 These substitutions and the extra product/price/copy slots change source fidelity.
 
-All foreground images now conservatively **contain** the full selected image,
-centered with safe padding; no invented subject detector. Circles have extra
-inset. Full-bleed/cinema references use bounded contained image fields and
+Phase 15 contained the full selected image with fixed padding. Phase 16 instead
+measures alpha support, conditionally trims faint transparent margins with an
+alpha-mass guard and fits all meaningful support inside the slot. Opaque photos
+still contain the full frame; their true subject size remains unknown. Circles
+use measured ellipse containment. Full-bleed/cinema references use bounded contained image fields and
 contrast-safe text lanes, so they are less edge-to-edge than the source. This
 is a documented subject-protection tradeoff, not pixel-identical reconstruction.
 The service reuses the photo currently selected through the existing rembg
@@ -169,7 +178,7 @@ existing processed transparent photo before generating the source/v3 sets.
 
 Price improvements: A uses an inset contained circle; B shortens the photo field
 to reserve aligned text lanes and larger information spacing; C grows its circle
-from 425 to 540px while retaining big-price hierarchy; D moves a smaller stamp
+from 425 to 550px by Phase 16 while retaining big-price hierarchy; D moves a smaller stamp
 below the photo and separates claims inside it. Source yellow/black/red design
 identities remain. Same-image/copy before/after evidence is outside Git.
 
