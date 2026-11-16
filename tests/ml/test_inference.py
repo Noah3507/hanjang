@@ -384,3 +384,12 @@ def test_smoke_check_fails_when_the_result_or_bundle_differs(bundle, tmp_path, d
     path.write_text(json.dumps(expected))
     with pytest.raises(SystemExit):
         smoke.main(args, repo_root=tmp_path)
+
+
+def test_benchmark_reports_times_and_memory(bundle, tmp_path):
+    spec = importlib.util.spec_from_file_location("ml_benchmark_inference", ROOT / "scripts/ml_benchmark_inference.py")
+    bench = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bench)
+    result = bench.main(["--bundle", str(bundle), "--images", str(ADS), "--repeats", "2"], repo_root=tmp_path)
+    assert result["load_seconds"] > 0 and result["rank_ads_warm_seconds"]["repeats"] == 2
+    assert result["peak_memory_mb"] and result["peak_memory_mb"] > 0  # null would mean the measurement failed
