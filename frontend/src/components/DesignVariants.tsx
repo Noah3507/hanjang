@@ -60,7 +60,7 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
  const stale=Boolean(state&&state.status!=='pending'&&(!state.is_current||disabled))
  const usable=Boolean(state?.status==='completed'&&state.is_current&&!disabled&&!busy&&!editing)
  const names:Record<string,string>={gallery:'갤러리',fade:'페이드',editorial:'에디토리얼',door:'문',circle:'원형컷',split:'상하분할','big-number':'빅넘버',stamp:'가격스탬프',wordmark:'워드마크',emblem:'엠블럼',pattern:'패턴','korean-wordmark':'국문워드마크','full-bleed':'풀블리드',polaroid:'폴라로이드',cinema:'시네마',film:'필름'}
- const ruleNames:Record<string,string>={contrast:'대비',font_size:'글자 크기',layout:'배치·겹침',density:'텍스트 밀도'}
+ const ruleNames:Record<string,string>={contrast:'대비',font_size:'글자 크기',layout:'배치·겹침',density:'텍스트 밀도',subject_size:'피사체 크기',image_crop:'이미지 경계·가림'}
  const statuses:Record<string,string>={normal:'정상',caution:'주의',problem:'문제',unavailable:'측정 불가',complete:'측정 완료',partial:'일부 측정'}
  return <section ref={region} className="design-variants" aria-label="전략별 디자인 4종">
   <h3>마음에 드는 전략으로 디자인 4종 더 보기</h3>

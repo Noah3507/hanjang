@@ -4,7 +4,7 @@
 <div class="photo {{ photo_fit }}"><img src="{{ photo }}" alt=""></div>
 <div class="text headline" data-field="headline">{{ data.headline }}</div>
 <div class="text body" data-field="body">{{ data.body }}</div>
-<div class="stamp">
+<div class="stamp{% if not data.original_price and not data.discount_text and not data.promotion_text %} simple-stamp{% endif %}">
 {% if data.original_price %}<div class="text original" data-field="original_price">{{ data.original_price }}</div>{% endif %}
 <div class="text price" data-field="price_text">{{ data.price_text }}</div>
 {% if data.discount_text %}<div class="text discount" data-field="discount_text">{{ data.discount_text }}</div>{% endif %}

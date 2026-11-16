@@ -3,7 +3,7 @@ from hashlib import sha256
 from io import BytesIO
 import os
 
-from PIL import Image
+from PIL import Image,ImageDraw
 import pytest
 from app.services.template_v3 import TemplateInput, REGISTRY, render_templates, BOLD_HASH, ROOT
 from app.services.render_execution import RenderFailure
@@ -14,7 +14,7 @@ def data():
 
 
 def photo():
-    s=BytesIO();Image.new('RGBA',(400,700),(255,255,255,0)).save(s,'PNG');return s.getvalue()
+    s=BytesIO();image=Image.new('RGBA',(400,700));ImageDraw.Draw(image).rounded_rectangle((100,60,300,640),radius=20,fill='white');image.save(s,'PNG');return s.getvalue()
 
 
 def test_registry_and_real_bold():
@@ -96,3 +96,12 @@ def test_fade_promotion_has_measured_contrast_backplate():
     assert not any(i['status']=='problem' for i in contrast['measured_value']['items'])
     measured=next(t for t in row['measurement']['text'] if t['field']=='discount_text')['contrast_evidence']
     assert measured['status']=='verified' and measured['background_rgb']==[38,61,46]
+
+
+@pytest.mark.skipif(os.getenv('RUN_RENDER_TESTS')!='1',reason='Explicit installed Chromium opt-in')
+def test_long_product_fits_even_when_template_font_is_important():
+    original=replace(data(),product_name='나만의 시간에 사용하는 데일리 로션')
+    row=render_templates(original,photo(),['brand_a'])[0]
+    measured=next(t for t in row['measurement']['text'] if t['field']=='product_name')
+    assert measured['text']==original.product_name and not measured['overflow']
+    assert measured['font_size_px']<70 and measured['font_size_px']>=70*.76-.01

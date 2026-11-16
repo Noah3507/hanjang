@@ -18,7 +18,7 @@ from app.services.render_execution import ROOT, FONT_HASH, RenderFailure, opaque
 from app.services.diagnostics_evidence import attach_contrast_evidence
 from app.services.diagnostics_engine import analyze
 
-VERSION = 'ad-templates-v3-16-layouts-2'
+VERSION = 'ad-templates-v3-alpha-quality-3'
 BOLD_HASH = '5a6ceb287ed2fc6cfc6213144ebea68cbd94b20fc9eb873d8486493bf02d9bda'
 NAMES = {'emotional': ('gallery', 'fade', 'editorial', 'door'),
          'price': ('circle', 'split', 'big-number', 'stamp'),
@@ -39,7 +39,12 @@ def measured_diagnostics(candidate_id, asset_id, strategy, measurement, png_hash
         boxes.append(box)
     candidate = {'candidate_id': candidate_id, 'strategy': strategy, 'png': {'asset_id': asset_id},
                  'renderer': {'text_boxes': boxes, 'product_bbox': measurement['product']}}
-    return analyze(candidate, measurement, png_hash).model_dump(mode='json')
+    result=analyze(candidate, measurement, png_hash)
+    from app.services.product_diagnostics import image_rules
+    result.rules.extend(image_rules(measurement))
+    coverage=[r.coverage for r in result.rules]
+    result.coverage='complete' if all(v=='complete' for v in coverage) else 'unavailable' if all(v=='unavailable' for v in coverage) else 'partial'
+    return result.model_dump(mode='json')
 
 
 @dataclass(frozen=True)
@@ -94,24 +99,15 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
             raise
         except Exception:
             raise RenderFailure('RENDER_FONT_UNAVAILABLE') from None
-    try:
-        with Image.open(BytesIO(photo)) as source:
-            if source.width * source.height > 24_000_000:
-                raise ValueError('image limit')
-            image = ImageOps.exif_transpose(source).convert('RGBA')
-            # No automatic subject detector: conservative contain with padding.
-            # Full-bleed designs keep a secondary background copy, never crop the foreground product.
-            transparent = image.getchannel('A').getextrema()[0] < 255
-            photo_fit = 'contain'
-            stream = BytesIO()
-            image.save(stream, 'PNG')
-    except Exception:
-        raise RenderFailure('RENDER_INVALID_IMAGE') from None
-    uri = 'data:image/png;base64,' + base64.b64encode(stream.getvalue()).decode()
+    from app.services.product_geometry import prepare_product
+    prepared,photo_info=prepare_product(photo)
+    transparent=photo_info['transparent'];photo_fit='contain'
+    uri = 'data:image/png;base64,' + base64.b64encode(prepared).decode()
     env = Environment(loader=FileSystemLoader(ROOT/'templates/v3'),
                       autoescape=select_autoescape(['html']), undefined=StrictUndefined)
     css = (ROOT/'templates/v3/price.css').read_text(encoding='utf-8')
     css += (ROOT/'templates/v3/collection.css').read_text(encoding='utf-8') + ''.join(faces)
+    css += (ROOT/'templates/v3/quality.css').read_text(encoding='utf-8')
     pages = [{'template_id': t, 'html': env.get_template(t+'.html').render(
         css=css, data=data, photo=uri, photo_fit=photo_fit, transparent=transparent, template_id=t)} for t in ids]
     node = shutil.which('node')
@@ -122,7 +118,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
         start_new_session=os.name != 'nt')
     try:
-        stdout, _ = process.communicate(json.dumps({'pages': pages}).encode(), timeout=timeout)
+        stdout, _ = process.communicate(json.dumps({'pages': pages,'photo_info':photo_info}).encode(), timeout=timeout)
         result = json.loads(stdout)
         if process.returncode or result.get('error'):
             code = result.get('error')

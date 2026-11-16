@@ -14,7 +14,37 @@ try {
     try {
       await page.setContent(item.html, { waitUntil: 'load' })
       await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())) })
-      const measurement = await page.evaluate(() => {
+      const placement=task.photo_info?await page.evaluate(info=>{
+        const frame=document.querySelector('.photo'),img=frame.querySelector('img'),style=getComputedStyle(frame)
+        const w=frame.clientWidth,h=frame.clientHeight,pw=img.naturalWidth,ph=img.naturalHeight
+        const tid=document.querySelector('.ad').classList[1]
+        const circle=['price_a','price_c','emotional_d','brand_a','brand_b'].includes(tid)
+        const full=['emotional_b','visual_a','visual_c','visual_d'].includes(tid)
+        const inset=circle?Math.max(10,Math.min(w,h)*.035):full?8:Math.max(12,Math.min(w,h)*.025)
+        const b=info.support_in_prepared||[0,0,pw,ph],cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2
+        let scale=Math.min((w-2*inset)/pw,(h-2*inset)/ph)
+        let norm=0
+        if(circle){
+          const rx=w/2-inset,ry=h/2-inset
+          const add=(x,y)=>{norm=Math.max(norm,((x-cx)/rx)**2+((y-cy)/ry)**2)}
+          if(info.support_rows?.length){for(const [y,l,r] of info.support_rows){for(const x of [l,r]){add(x,y);add(x,y+1)}}}
+          else for(const x of [0,pw])for(const y of [0,ph])add(x,y)
+          scale=Math.min(scale,.985/Math.sqrt(norm||1))
+        }
+        const left=w/2-cx*scale,top=h/2-cy*scale
+        Object.assign(img.style,{position:'absolute',width:`${pw*scale}px`,height:`${ph*scale}px`,left:`${left}px`,top:`${top}px`,padding:'0',maxWidth:'none',maxHeight:'none',objectFit:'contain'})
+        const fr=frame.getBoundingClientRect(),borderL=parseFloat(style.borderLeftWidth),borderT=parseFloat(style.borderTopWidth)
+        const bbox={x:fr.x+borderL+left+b[0]*scale,y:fr.y+borderT+top+b[1]*scale,width:(b[2]-b[0])*scale,height:(b[3]-b[1])*scale}
+        const clipped=circle?norm*scale*scale>1.00001:left+b[0]*scale<0||top+b[1]*scale<0||left+b[2]*scale>w+.01||top+b[3]*scale>h+.01
+        const decorativeOcclusions=[...document.querySelectorAll('.decoration')].filter(e=>Number(getComputedStyle(e).zIndex)>0).map(e=>{
+          const r=e.getBoundingClientRect();return {kind:'intentional-front-gradient',x:r.x,y:r.y,width:r.width,height:r.height}
+        }).filter(r=>Math.min(r.x+r.width,bbox.x+bbox.width)>Math.max(r.x,bbox.x)&&Math.min(r.y+r.height,bbox.y+bbox.height)>Math.max(r.y,bbox.y))
+        return {policy:circle?'alpha-ellipse-safe':full?'full-frame-safe':'rectangle-safe',subject_known:info.subject_detection==='alpha-support',
+          source:info.subject_detection,scale,subject_bbox:bbox,subject_linear_occupancy:Math.max(bbox.width/w,bbox.height/h),
+          unintended_clip:clipped,discarded_low_alpha_mass_ratio:info.discarded_low_alpha_mass_ratio,canvas_padding_px:inset,
+          decorative_occlusions:decorativeOcclusions,preparation:Object.fromEntries(Object.entries(info).filter(([k])=>k!=='support_rows'))}
+      },task.photo_info):null
+      const measurement = await page.evaluate(usePriority => {
         const box = e => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } }
         const steps = []
         const text = [...document.querySelectorAll('[data-field]')].filter(e => e.textContent.length).map(e => {
@@ -27,10 +57,10 @@ try {
           }
           // Slot sizes and photo geometry stay fixed; natural wrapping comes first.
           let fit = fits(), stage = 'natural-wrap'
-          if (!fit) { e.style.letterSpacing = '-.035em'; e.style.lineHeight = '1.15'; fit = fits(); stage = 'spacing' }
+          if (!fit) { e.style.setProperty('letter-spacing','-.035em',usePriority?'important':''); e.style.setProperty('line-height','1.15',usePriority?'important':''); fit = fits(); stage = 'spacing' }
           for (const scale of [.94, .88, .82, .76]) {
             if (fit) break
-            e.style.fontSize = `${Math.max(e.dataset.field === 'price_text' ? 42 : 22, size * scale)}px`
+            e.style.setProperty('font-size',`${Math.max(e.dataset.field === 'price_text' ? 42 : 22, size * scale)}px`,usePriority?'important':'')
             fit = fits(); stage = `size-${scale}`
           }
           const s = getComputedStyle(e), r = document.createRange(); r.selectNodeContents(e)
@@ -51,8 +81,9 @@ try {
           intentional_image_overlays: text.filter(t=>overlap(t,photo)).map(t=>({field:t.field,classification:'template-overlay-needs-review'})),
           decorative_text: [...document.querySelectorAll('[data-decoration]')].map(e=>({kind:e.dataset.decoration,bbox:box(e),text:e.textContent,excluded_from_reading_order:true})),
           invalid: outside || collisions.length > 0 || text.some(t => t.overflow || !t.visible) }
-      })
+      },Boolean(task.photo_info))
       measurement.template_id = item.template_id
+      if(placement){measurement.image_placement=placement;measurement.product=placement.subject_bbox}
       if (measurement.invalid) {
         const error = new Error('RENDER_LAYOUT_OVERFLOW'); error.measurement = measurement; throw error
       }

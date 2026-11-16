@@ -11,10 +11,13 @@ test('v2 to strategy variants, model and diagnostics, edit, downloads and restor
  let paid=0
  page.on('request',r=>{if(r.url().includes('api.openai.com'))paid++})
  await page.goto('/')
- const image=execFileSync(python,['-c',"from PIL import Image;import io,sys;s=io.BytesIO();Image.new('RGB',(600,800),'#b7bca8').save(s,'PNG');sys.stdout.buffer.write(s.getvalue())"])
+ const realPhoto=process.env.PLAYWRIGHT_V3_PHOTO
+ const product=realPhoto?'아부라소바':'데일리 로션'
+ const editedHeadline='새롭게 만나는 '+product
+ const image=realPhoto?await readFile(realPhoto):execFileSync(python,['-c',"from PIL import Image;import io,sys;s=io.BytesIO();Image.new('RGB',(600,800),'#b7bca8').save(s,'PNG');sys.stdout.buffer.write(s.getvalue())"])
  await page.getByLabel('상품 사진',{exact:true}).setInputFiles({name:'v3.png',mimeType:'image/png',buffer:image})
- await page.getByLabel('가게명',{exact:true}).fill('한장 상점')
- await page.getByLabel('상품명',{exact:true}).fill('데일리 로션')
+ await page.getByLabel('가게명',{exact:true}).fill(realPhoto?'쿠지라스토랑':'한장 상점')
+ await page.getByLabel('상품명',{exact:true}).fill(product)
  await page.getByLabel('가격',{exact:true}).fill('10,500원')
  await page.getByLabel('광고 분위기').selectOption('warm')
  await page.getByRole('button',{name:'상품 정보와 사진 저장'}).click()
@@ -35,10 +38,10 @@ test('v2 to strategy variants, model and diagnostics, edit, downloads and restor
  else await expect(region.getByText('시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다.')).toBeVisible()
  await expect(region.getByRole('article').locator('details')).toHaveCount(4)
  await region.getByRole('button',{name:'시안 A 편집',exact:true}).click()
- await region.getByLabel('v3 제목',{exact:true}).fill('새롭게 만나는 데일리 로션')
+ await region.getByLabel('v3 제목',{exact:true}).fill(editedHeadline)
  await region.getByRole('button',{name:'시안 적용하고 재렌더링'}).click()
  await expect(region.getByText('시안 상태: completed · revision 2',{exact:true})).toBeVisible({timeout:60000})
- await expect(region.getByRole('article').first()).toContainText('새롭게 만나는 데일리 로션')
+ await expect(region.getByRole('article').first()).toContainText(editedHeadline)
  await region.getByRole('button',{name:'시안 B 편집',exact:true}).click()
  await region.getByLabel('v3 가격',{exact:true}).fill('12,000원')
  await region.getByRole('button',{name:'시안 적용하고 재렌더링'}).click()
@@ -59,7 +62,7 @@ test('v2 to strategy variants, model and diagnostics, edit, downloads and restor
  await region.getByLabel('v3 제목',{exact:true}).fill('취소할 문구')
  await region.getByRole('button',{name:'시안 편집 취소'}).click()
  await expect(region.getByRole('button',{name:'시안 A 편집',exact:true})).toBeFocused()
- await expect(region.getByText('새롭게 만나는 데일리 로션',{exact:true})).toBeVisible()
+ await expect(region.getByText(editedHeadline,{exact:true})).toBeVisible()
  await page.reload();await page.getByRole('button',{name:'저장 정보 다시 조회'}).click()
  await expect(region.getByText('시안 상태: completed · revision 3',{exact:true})).toBeVisible({timeout:30000})
  const v2=page.getByRole('region',{name:'광고 편집 및 다운로드'})
