@@ -10,7 +10,7 @@ test('desktop: actual API connection and explicit unimplemented feature notice',
   })
   await test.step('open the React page and verify a real connected state', async () => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'Hanjang', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '한장', exact: true })).toBeVisible()
     await expect(page.getByRole('status')).toHaveText('백엔드 연결됨')
     await expect(page.getByRole('button', { name: '연결 다시 확인' })).toBeEnabled()
   })
