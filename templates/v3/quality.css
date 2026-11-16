@@ -1,0 +1,21 @@
+/* Phase 16: typography/spacing refinements; alpha placement is measured in worker. */
+.price_a .photo{left:510px;top:300px;width:550px;height:550px;border-radius:50%}
+.price_b .body{top:935px;height:70px;font-size:34px}.price_b .original{top:1012px;height:42px}.price_b .price{top:1060px;height:160px;font-size:126px}
+.price_c .body{height:80px;font-size:32px}.price_c .photo{left:265px;top:670px;width:550px;height:550px}
+.price_d .stamp{left:750px;top:950px;width:260px;height:260px;border-radius:50%}
+.price_d .stamp .original{left:28px;top:18px;width:204px;height:42px;font-size:26px}
+.price_d .stamp .price{left:18px;top:72px;width:224px;height:80px;font-size:54px}
+.price_d .stamp .discount{left:28px;top:155px;width:204px;height:42px;font-size:28px}
+.price_d .stamp .promotion{left:28px;top:203px;width:204px;height:42px;font-size:24px}
+.price_d .stamp.simple-stamp .price{top:86px;height:90px;font-size:58px}
+footer .cta{font-size:32px}footer .period{font-size:28px}.price_c footer .cta,.price_c .store{font-size:28px}.price_c .period{font-size:26px}
+.ad:is([class*=emotional_],[class*=brand_],[class*=visual_]) .body{font-size:32px!important}
+.ad:is([class*=emotional_],[class*=brand_],[class*=visual_]) .cta{font-size:32px}
+.ad:is([class*=emotional_],[class*=brand_],[class*=visual_]) .period{top:1304px;height:40px;font-size:26px}
+.visual_a .body,.visual_c .body,.visual_d .body{top:1165px!important;height:65px!important}
+.brand_a .photo{left:670px!important;top:235px!important;width:340px!important;height:340px!important}
+.brand_a .store{width:570px!important;height:300px!important;font-size:92px!important}
+.brand_a .product{left:70px!important;top:520px!important;width:570px!important;height:200px!important}
+.brand_a .headline{top:730px!important}.brand_a .body{top:850px!important;height:120px!important}
+.brand_c .headline,.brand_c .body{background:#143d30;padding:3px 8px}
+.visual_b .photo{border-width:16px!important}

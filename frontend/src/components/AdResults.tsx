@@ -4,7 +4,7 @@ import type { UploadHandle } from '../api/uploads'
 
 export const strategyLabels = { emotional: '감성', price: '가격', visual: '비주얼', brand: '브랜드' }
 
-function ResultCard({ candidate, handle }: { candidate: RenderCandidate; handle: UploadHandle }) {
+function ResultCard({ candidate, handle, onSelectStrategy, selectedStrategy }: { candidate: RenderCandidate; handle: UploadHandle; onSelectStrategy?:(strategy:RenderCandidate['strategy'])=>void;selectedStrategy?:RenderCandidate['strategy'] }) {
   const [url, setUrl] = useState(''); const [error, setError] = useState(''); const [attempt, setAttempt] = useState(0)
   const dialog = useRef<HTMLDialogElement>(null); const trigger = useRef<HTMLButtonElement>(null)
   const label = strategyLabels[candidate.strategy]
@@ -19,6 +19,7 @@ function ResultCard({ candidate, handle }: { candidate: RenderCandidate; handle:
   function imageFailed() { dialog.current?.close(); setError('광고 이미지를 표시하지 못했습니다.'); setUrl('') }
   return <article aria-label={`${label} 광고 결과`}>
     <h4>{label} · {candidate.strategy}</h4>
+    {onSelectStrategy&&<button type="button" aria-pressed={selectedStrategy===candidate.strategy} onClick={()=>onSelectStrategy(candidate.strategy)}>{label} 디자인 전략으로 선택</button>}
     {error ? <><p role="alert">{error}</p><button onClick={() => setAttempt(n => n+1)}>이미지 다시 조회 · {label}</button></>
       : url ? <><button className="ad-preview-button" ref={trigger} aria-label={`${label} 광고 확대 보기`} onClick={() => dialog.current?.showModal()}>
         <img src={url} alt={`${label} 전략 광고 PNG`} width="1080" height="1350" onError={imageFailed} />
@@ -32,6 +33,6 @@ function ResultCard({ candidate, handle }: { candidate: RenderCandidate; handle:
   </article>
 }
 
-export default function AdResults({ candidates, handle, snapshot }: { candidates: RenderCandidate[]; handle: UploadHandle; snapshot: string }) {
-  return <div className="ad-cards">{candidates.map(c => <ResultCard key={`${snapshot}:${c.candidate_id}:${c.png.asset_id}`} candidate={c} handle={handle} />)}</div>
+export default function AdResults({ candidates, handle, snapshot, onSelectStrategy, selectedStrategy }: { candidates: RenderCandidate[]; handle: UploadHandle; snapshot: string; onSelectStrategy?:(strategy:RenderCandidate['strategy'])=>void;selectedStrategy?:RenderCandidate['strategy'] }) {
+  return <div className="ad-cards">{candidates.map(c => <ResultCard key={`${snapshot}:${c.candidate_id}:${c.png.asset_id}`} candidate={c} handle={handle} onSelectStrategy={onSelectStrategy} selectedStrategy={selectedStrategy} />)}</div>
 }

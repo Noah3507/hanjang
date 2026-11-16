@@ -1,5 +1,15 @@
 # API와 Ranking 계약 초안
 
+## Phase 15 additive v3 계약
+
+사용자의 Phase 15 승인으로 `/api/v1/jobs/{job_id}/designs/{strategy}` POST/GET,
+하위 ranking POST/GET·diagnostics GET·candidate PATCH·revision/snapshot 기반
+download GET을 별도로 추가했습니다. 기존 v2 Candidate/Ranking/API는 그대로입니다.
+v3는 동일 전략 네 변형을 고유 instance ID로 구분하며 B에는 기존 ID/PNG 계약만
+전달합니다. 가격 편집은 v3 candidate의 명시적인 override로 원래 InputDraft/v2를
+변경하지 않습니다. 상세 필드·상태·오류·호환성은
+[DESIGNS_V3_SERVICE](DESIGNS_V3_SERVICE.md)를 따릅니다.
+
 ## 12단계 실제 모델 적용
 
 POST/GET ranking 및 Candidate/Ranking v1.1 shape는 변경하지 않는다. 기존 source=model과 score/model_version/feature_version/pairwise를 실제 B 출력으로 채우고 warnings에 실행 모드를 구분한다. 모델 실패는 기존 failed/error/ranking=null이며 자동 Mock fallback은 없다. 편집·다운로드·진단 API는 유지한다. 상세는 [RANKING_SERVICE](RANKING_SERVICE.md)를 따른다.

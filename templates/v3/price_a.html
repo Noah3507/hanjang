@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block design %}
+<header><div class="text store" data-field="store_name">{{ data.store_name }}</div></header>
+<div class="photo {{ photo_fit }}"><img src="{{ photo }}" alt=""></div>
+{% if data.promotion_text %}<div class="text promotion" data-field="promotion_text">{{ data.promotion_text }}</div>{% endif %}
+<div class="text product" data-field="product_name">{{ data.product_name }}</div>
+<div class="text headline" data-field="headline">{{ data.headline }}</div>
+<div class="text body" data-field="body">{{ data.body }}</div>
+{% if data.original_price %}<div class="text original" data-field="original_price">{{ data.original_price }}</div>{% endif %}
+<div class="text price" data-field="price_text">{{ data.price_text }}</div>
+{% if data.discount_text %}<div class="badge"><div class="text discount" data-field="discount_text">{{ data.discount_text }}</div></div>{% endif %}
+<footer><div class="text cta" data-field="cta">{{ data.cta }}</div><div class="text period" data-field="period_text">{{ data.period_text }}</div></footer>
+{% endblock %}

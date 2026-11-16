@@ -1,0 +1,32 @@
+{
+  "aburasoba": {
+    "facts": {"store_name": "쿠지라스토랑", "product_name": "아부라소바", "price_text": "10,500원"},
+    "product_features": "진한 풍미 (사용자가 제시한 광고 검토용 테스트 정보)",
+    "variants": [
+      {"strategy": "emotional", "copy": {"headline": "한 그릇에 담은 진한 풍미", "body": "아부라소바의 매력을 한 그릇에서 만나보세요.", "cta": "오늘의 한 그릇"}},
+      {"strategy": "price", "copy": {"headline": "오늘의 한 그릇을 고르다", "body": "아부라소바의 매력을 한 그릇에서 만나보세요.", "cta": "한 그릇 만나기"}},
+      {"strategy": "visual", "copy": {"headline": "아부라소바, 한눈에 담다", "body": "한 그릇의 인상을 오늘의 장면에 더해보세요.", "cta": "오늘의 장면"}},
+      {"strategy": "brand", "copy": {"headline": "[[store_name]], 한 그릇의 기억", "body": "아부라소바와 만나는 나만의 시간을 떠올려보세요.", "cta": "[[store_name]] 만나기"}}
+    ]
+  },
+  "cosmetic": {
+    "facts": {"store_name": "한장 스튜디오", "product_name": "데일리 로션", "price_text": "12,000원"},
+    "product_features": "용기형 제품 (합성 테스트 정보)",
+    "variants": [
+      {"strategy": "emotional", "copy": {"headline": "나를 위한 차분한 순간", "body": "나만의 시간에 데일리 로션을 더해보세요.", "cta": "나의 순간 만나기"}},
+      {"strategy": "price", "copy": {"headline": "나의 기준으로 고르는 한 가지", "body": "일상의 한 자리에 데일리 로션을 놓아보세요.", "cta": "나의 선택 만나기"}},
+      {"strategy": "visual", "copy": {"headline": "한눈에 담는 나의 공간", "body": "데일리 로션과 함께할 나만의 장면을 그려보세요.", "cta": "나의 장면 담기"}},
+      {"strategy": "brand", "copy": {"headline": "[[store_name]], 나의 선택", "body": "데일리 로션과 만나는 한장 스튜디오의 이름을 기억해 보세요.", "cta": "브랜드 만나기"}}
+    ]
+  },
+  "clothing": {
+    "facts": {"store_name": "한장 스튜디오", "product_name": "데일리 셔츠", "price_text": "29,000원"},
+    "product_features": "상의 의류 (합성 테스트 정보)",
+    "variants": [
+      {"strategy": "emotional", "copy": {"headline": "오늘의 차림, 나의 리듬", "body": "오늘의 차림에 데일리 셔츠를 더해보세요.", "cta": "나의 차림 만나기"}},
+      {"strategy": "price", "copy": {"headline": "오늘의 차림을 고르다", "body": "나만의 차림에 더할 데일리 셔츠를 만나보세요.", "cta": "오늘의 선택"}},
+      {"strategy": "visual", "copy": {"headline": "내일의 장면을 그려보세요", "body": "데일리 셔츠와 함께할 나만의 장면을 떠올려보세요.", "cta": "나의 장면 담기"}},
+      {"strategy": "brand", "copy": {"headline": "나의 차림에, [[store_name]]", "body": "데일리 셔츠와 만나는 한장 스튜디오의 이름을 기억해 보세요.", "cta": "브랜드 만나기"}}
+    ]
+  }
+}

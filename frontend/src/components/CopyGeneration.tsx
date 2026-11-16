@@ -3,6 +3,7 @@ import { copyState, type CopyState } from '../api/copy'
 import type { Draft, UploadHandle } from '../api/uploads'
 import AdRendering from './AdRendering'
 const labels = { emotional: '감성', price: '가격', visual: '비주얼', brand: '브랜드' }
+const qualityNotices:Record<string,string>={COPY_SERVICE_LANGUAGE_REVIEW:'기능 안내처럼 들리는 문구가 있습니다. 광고 메시지를 검토해 주세요.',COPY_REPETITION_REVIEW:'제목·본문·CTA의 의미가 중복될 수 있습니다. 문구를 검토해 주세요.'}
 
 export default function CopyGeneration({ handle, draft, asset, disabled }: { handle: UploadHandle; draft: Draft; asset: string; disabled: boolean }) {
   const [state, setState] = useState<CopyState | null>(null)
@@ -43,7 +44,7 @@ export default function CopyGeneration({ handle, draft, asset, disabled }: { han
     {error && <p role="alert">{error}</p>}
     {state?.error && <p role="alert">{state.error.code}: {state.error.message}</p>}
     {state && state.status !== 'pending' && (!state.is_current || state.source_asset_id !== asset) && <p role="alert">이전 입력 또는 사진의 카피입니다. 후속 광고 렌더링에 사용할 수 없습니다. 저장 후 다시 생성해 주세요.</p>}
-    {state?.warnings.length ? <p>안내: {state.warnings.join(', ')}</p> : null}
+    {state?.warnings.length ? <p>안내: {state.warnings.map(w=>qualityNotices[w]||w).join(', ')}</p> : null}
     {state?.status === 'completed' && <>
       <p>원문 사실: {state.facts.store_name} / {state.facts.product_name} / {state.facts.price_text}</p>
       <p style={{ whiteSpace: 'pre-wrap' }}>사용자 제공 특징: {state.product_features ?? '미입력'}</p>
