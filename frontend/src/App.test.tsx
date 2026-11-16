@@ -10,7 +10,8 @@ describe('backend connection status', () => {
       ok: true, json: async () => ({ status: 'ok', api_version: 'v1-draft' }),
     }))
     render(<App />)
-    expect(screen.getByRole('heading', { name: 'Hanjang' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '한장' })).toBeInTheDocument()
+    expect(screen.queryByText(/SERVICE FOUNDATION|FastAPI/)).not.toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('백엔드 연결 확인 중')
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('백엔드 연결됨'))
     expect(screen.getByText(/가독성 진단은 모델 점수와 별개입니다/)).toBeInTheDocument()
@@ -23,8 +24,11 @@ describe('backend connection status', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'ok', api_version: 'v1-draft' }) }))
     render(<App />)
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('백엔드 연결 불가'))
+    expect(screen.getByRole('heading', { name: '서버 연결 상태' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '연결 다시 확인' }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('백엔드 연결됨'))
+    expect(screen.queryByRole('heading', { name: '서버 연결 상태' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '연결 다시 확인' })).toBeEnabled()
   })
 
   it.each([
