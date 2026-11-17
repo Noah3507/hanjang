@@ -35,8 +35,9 @@ class ProviderResult:
 
 
 class CopyFailure(Exception):
-    def __init__(self, code: str, retryable: bool = False, usage: ProviderUsage | None = None):
-        self.code, self.retryable, self.usage = code, retryable, usage
+    def __init__(self, code: str, retryable: bool = False, usage: ProviderUsage | None = None, reason: str | None = None):
+        # reason names the rule and, for vocabulary/number rules, the offending token. It never holds private input.
+        self.code, self.retryable, self.usage, self.reason = code, retryable, usage, reason
         super().__init__(code)
 
 
