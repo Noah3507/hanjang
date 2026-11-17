@@ -130,3 +130,89 @@ textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .form-actions{display:grid;gap:8px;margin-top:20px}
 .form-actions button{width:100%;margin:0}
 .fine-print{font-size:12px}
+/* One-click generation */
+.generation-progress{padding:36px 0 8px;text-align:center}
+.generation-progress h2{margin:0 0 8px;font-size:22px}
+.generation-sub{margin:0 0 28px;color:var(--ink-soft);font-size:14px;line-height:1.6}
+.progress-track{height:8px;overflow:hidden;border-radius:999px;background:var(--field)}
+.progress-track span{display:block;height:100%;border-radius:inherit;background:var(--accent);transition:width .25s linear}
+.progress-caption{display:flex;justify-content:space-between;margin:8px 0 22px;color:var(--ink-soft);font-size:12px}
+.progress-caption span:last-child{color:var(--ink);font-weight:700}
+.step-list{display:grid;gap:14px;margin:0;padding:0;list-style:none;text-align:left}
+.step{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;color:var(--ink-soft)}
+.step-mark{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line-strong);font-size:12px;font-weight:700;flex-shrink:0}
+.step.running{color:var(--ink)}
+.step.running .step-mark{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.step.done{color:var(--ink)}
+.step.done .step-mark{border-color:var(--ink);background:var(--ink);color:#fff}
+.step.failed{color:var(--danger)}
+.step.failed .step-mark{border-color:var(--danger);color:var(--danger)}
+.approval,.generation-error{display:grid;gap:8px;margin-top:24px;padding:16px;text-align:left;background:var(--field);border-radius:var(--radius)}
+.approval p,.generation-error p{margin:0 0 4px;font-size:14px;line-height:1.6}
+.approval button,.generation-error button{width:100%;margin:0}
+.generation-tip{margin:32px 0 0;padding:14px 16px;text-align:left;font-size:13px;line-height:1.6;background:var(--accent-soft);border-radius:var(--radius)}
+/* Results-only view after one-click generation: the step-by-step sections stay mounted but only the four designs show.
+   Interim until the results screen (UI 4/5) replaces this markup. */
+.results-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.results-header h2{margin:0;font-size:20px}
+.results-header button{margin:0}
+.results-only .photo-processing>:not(.copy-generation),
+.results-only .copy-generation>:not(.ad-rendering),
+.results-only .ad-rendering>:not(.design-variants),
+.results-only .variants-intro,
+.results-only .back-to-v2,
+.results-only>.fine-print{display:none}
+.results-only .variants-status{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.results-only .photo-processing,.results-only .copy-generation,.results-only .ad-rendering,.results-only .design-variants{margin:0;padding:0;border:0}
+.results-only .design-variants{margin-top:16px}
+@media (prefers-reduced-motion: reduce){.progress-track span{transition:none}}
+/* Design results carousel */
+.variants-status{color:var(--ink-soft);font-size:12px}
+.carousel-wrap{position:relative;margin-top:16px}
+.results-only .carousel-wrap{margin-left:-20px;margin-right:-20px}
+.carousel{position:relative;display:flex;gap:12px;overflow-x:auto;padding:4px 8% 12px;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.carousel::-webkit-scrollbar{display:none}
+.carousel>article{flex:0 0 100%;min-width:0;scroll-snap-align:center;opacity:.55;transition:opacity .2s}
+.carousel>article.active{opacity:1}
+.slide-shot{position:relative;overflow:hidden;border-radius:22px;background:var(--field);box-shadow:0 8px 22px rgba(23,24,26,.14)}
+.slide-shot img{display:block;width:100%;height:auto;aspect-ratio:4/5}
+.slide-shot p{display:grid;place-items:center;margin:0;aspect-ratio:4/5;color:var(--ink-soft);font-size:14px}
+.rank-badge{position:absolute;left:12px;top:12px;z-index:1;padding:4px 11px;border-radius:999px;background:var(--ink);color:#f3d98a;font-size:13px;font-weight:700}
+.slide-info{margin-top:12px;padding:16px;background:var(--accent-soft);border-radius:var(--radius)}
+.slide-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.slide-title h4{margin:0;font-size:17px}
+.slide-info p{margin:6px 0 0;font-size:14px;line-height:1.5}
+.slide-rank{font-weight:700}
+.slide-price{color:var(--ink-soft)}
+.meter{display:inline-flex;gap:3px}
+.meter i{width:5px;height:14px;border-radius:2px;background:var(--accent-line)}
+.meter i.on{background:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:4px 10px;border-radius:999px;background:var(--surface);font-size:12px;font-weight:600}
+.chip.caution{background:#fde6bd}
+.chip.problem{background:#f6cfc6}
+.slide-info details{margin-top:10px;font-size:13px}
+.slide-info summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+.slide-actions,.manage-actions{display:grid;gap:8px;margin-top:10px}
+.slide-actions button,.manage-actions button{width:100%;margin:0}
+.slide-actions .secondary{background:var(--surface)}
+.carousel-arrows{position:absolute;left:0;right:0;top:4px;aspect-ratio:100/105;display:flex;align-items:center;justify-content:space-between;padding:0 6px;pointer-events:none}
+.carousel-arrows button{pointer-events:auto;width:44px;height:44px;min-height:0;margin:0;padding:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:18px;box-shadow:0 2px 10px rgba(23,24,26,.22)}
+.carousel-arrows button:disabled{opacity:0;cursor:default}
+.carousel-dots{display:flex;justify-content:center;gap:6px;margin:2px 0 14px}
+.carousel-dots span{width:6px;height:6px;border-radius:999px;background:var(--line-strong);opacity:.5}
+.carousel-dots span.on{width:20px;background:var(--ink);opacity:1}
+.thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.thumbs button{display:grid;gap:6px;min-height:0;margin:0;padding:0;background:transparent;color:var(--ink-soft);font-size:12px;font-weight:600}
+.thumbs img,.thumb-empty{display:block;width:100%;height:auto;aspect-ratio:4/5;border-radius:8px;background:var(--field)}
+.thumbs button[aria-pressed=true]{color:var(--ink)}
+.thumbs button[aria-pressed=true] img,.thumbs button[aria-pressed=true] .thumb-empty{outline:2.5px solid var(--ink);outline-offset:2px}
+.design-variants>.fine-print{margin:14px 0 0;color:var(--ink-soft);line-height:1.6;text-align:center}
+.save-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.save-actions button{margin:0;padding:10px 8px}
+.variants-manage{margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
+.variants-manage h4{margin:0 0 10px;font-size:15px}
+.variants-manage details{margin:8px 0}
+.variants-manage summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:14px;font-weight:600}
+.variants-manage .fine-print{color:var(--ink-soft)}
+@media (prefers-reduced-motion: reduce){.carousel>article{transition:none}}
