@@ -1,4 +1,4 @@
-import {test,expect} from './fixtures'
+import {test,expect,openOptional} from './fixtures'
 import {execFileSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {readFile,writeFile} from 'node:fs/promises'
@@ -19,6 +19,7 @@ test('v2 to strategy variants, model and diagnostics, edit, downloads and restor
  await page.getByLabel('가게명',{exact:true}).fill(realPhoto?'쿠지라스토랑':'한장 상점')
  await page.getByLabel('상품명',{exact:true}).fill(product)
  await page.getByLabel('가격',{exact:true}).fill('10,500원')
+ await openOptional(page)
  await page.getByLabel('광고 분위기').selectOption('warm')
  await page.getByRole('button',{name:'상품 정보와 사진 저장'}).click()
  await page.getByRole('button',{name:'4전략 카피 생성'}).click()

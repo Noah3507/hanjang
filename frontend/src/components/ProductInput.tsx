@@ -20,6 +20,7 @@ export default function ProductInput() {
   const [facts, setFacts] = useState<Facts>(empty)
   const [mood, setMood] = useState<Mood | ''>('warm')
   const [strategy, setStrategy] = useState<Strategy>(defaultStrategy)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [features, setFeatures] = useState('')
   const [useAddress, setUseAddress] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -69,6 +70,7 @@ export default function ProductInput() {
 
   async function save(): Promise<{ handle: UploadHandle; draft: Draft } | null> {
     const next = validate(); setErrors(next); setGenerated(false)
+    if (['address', 'instagram_handle', 'mood', 'product_features'].some((key) => key in next)) setMoreOpen(true)
     if (Object.keys(next).length) { setStatus('error'); setMessage('입력 항목을 확인해 주세요.'); return null }
     setStatus('saving'); setMessage('원본 사진과 상품 정보를 저장하고 있습니다.')
     try {
@@ -126,7 +128,8 @@ export default function ProductInput() {
     try {
       const result = await getInput(handle)
       const original = await getOriginal(handle)
-      setFacts(result.facts); setMood(result.mood); setFeatures(result.product_features ?? ''); setUseAddress(result.use_address_for_copy ?? false); setDraft(result); setFile(null); needsUpload.current = false
+      setFacts(result.facts); setMood(result.mood); setFeatures(result.product_features ?? ''); setUseAddress(result.use_address_for_copy ?? false);
+      if (result.product_features || result.facts.address || result.facts.instagram_handle || result.use_address_for_copy) setMoreOpen(true); setDraft(result); setFile(null); needsUpload.current = false
       setPreview(URL.createObjectURL(original)); setStatus('saved'); setMessage('서버에서 저장된 상품 정보와 원본 사진을 다시 조회했습니다.')
     } catch (error) { fail(error) }
   }
@@ -171,7 +174,7 @@ export default function ProductInput() {
           </div>
           <small>고른 전략으로 시안 4개를 만들어요. 결과를 본 뒤 다른 전략으로 다시 만들 수 있어요.</small>
         </fieldset>
-        <details className="optional-fields" open>
+        <details className="optional-fields" open={moreOpen} onToggle={(event) => setMoreOpen(event.currentTarget.open)}>
           <summary>추가 정보 (선택)</summary>
           <div className="fields">{field('address')}{field('instagram_handle')}</div>
           <label htmlFor="mood">광고 분위기</label>

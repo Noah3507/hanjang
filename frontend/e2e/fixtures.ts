@@ -26,5 +26,11 @@ export const test = base.extend<{ diagnostics: void }>({
   }, { auto: true }],
 })
 
+/** "추가 정보 (선택)" starts closed; open it before filling a field inside it. Safe to call when it is already open. */
+export async function openOptional(page: import('@playwright/test').Page) {
+  const details = page.locator('details.optional-fields')
+  if (!await details.evaluate((element) => (element as HTMLDetailsElement).open)) await details.locator('summary').click()
+}
+
 
 export { expect }

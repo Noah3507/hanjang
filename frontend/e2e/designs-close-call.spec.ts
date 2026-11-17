@@ -1,4 +1,4 @@
-import {test,expect} from './fixtures'
+import {test,expect,openOptional} from './fixtures'
 import {execFileSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 
@@ -26,6 +26,7 @@ test('simulated model guidance: four strategies, raw boundary, failure and stale
  await page.getByLabel('가게명',{exact:true}).fill('테스트 상점')
  await page.getByLabel('상품명',{exact:true}).fill('테스트 상품')
  await page.getByLabel('가격',{exact:true}).fill('10원')
+ await openOptional(page)
  await page.getByLabel('광고 분위기').selectOption('warm')
  await page.getByRole('button',{name:'상품 정보와 사진 저장'}).click()
  await page.getByRole('button',{name:'4전략 카피 생성'}).click()

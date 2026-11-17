@@ -110,6 +110,18 @@ describe('product input', () => {
     await waitFor(() => expect(screen.getByRole('status', { name: '업로드 상태' })).toHaveTextContent('광고 생성을 중단했습니다.'))
     expect(generateAds).toHaveBeenCalledTimes(2)
   })
+  it('keeps the optional fields folded until the user opens them, and opens them for an error inside', () => {
+    render(<ProductInput />)
+    const more = screen.getByText('추가 정보 (선택)').closest('details')!
+    expect(more).not.toHaveAttribute('open')
+    fireEvent.click(screen.getByText('추가 정보 (선택)'))
+    expect(more).toHaveAttribute('open')
+    fireEvent.click(screen.getByText('추가 정보 (선택)'))
+    expect(more).not.toHaveAttribute('open')
+    fill(); fireEvent.change(screen.getByLabelText('상품 특징·강조 포인트 (선택)'), { target: { value: '   ' } })
+    fireEvent.click(screen.getByRole('button', { name: '상품 정보와 사진 저장' }))
+    expect(more).toHaveAttribute('open')
+  })
   it('rejects unsupported file types before uploading', () => {
     render(<ProductInput />)
     fireEvent.change(screen.getByLabelText('상품 사진'), { target: { files: [new File(['svg'], 'photo.svg', { type: 'image/svg+xml' })] } })

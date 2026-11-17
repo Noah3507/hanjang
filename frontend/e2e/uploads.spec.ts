@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { test, expect } from './fixtures'
+import { test, expect, openOptional } from './fixtures'
 
 const root = fileURLToPath(new URL('../..', import.meta.url))
 const python = process.env.PLAYWRIGHT_PYTHON || (process.platform === 'win32' ? `${root}/.venv/Scripts/python.exe` : 'python')
@@ -12,6 +12,7 @@ async function fill(page: import('@playwright/test').Page) {
   await page.getByLabel('가게명', { exact: true }).fill('  테스트 가게  ')
   await page.getByLabel('상품명', { exact: true }).fill('한글 메뉴 🍜')
   await page.getByLabel('가격', { exact: true }).fill(' 10,500 원 ')
+  await openOptional(page)
   await page.getByLabel('광고 분위기').selectOption('warm')
 }
 test.beforeEach(async ({ page }) => { await page.goto('/') })

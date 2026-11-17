@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, openOptional } from './fixtures'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../..', import.meta.url))
@@ -10,6 +10,7 @@ async function save(page: import('@playwright/test').Page) {
   await page.getByLabel('가게명', { exact: true }).fill('쿠지라스토랑')
   await page.getByLabel('상품명', { exact: true }).fill('아부라소바')
   await page.getByLabel('가격', { exact: true }).fill(' 10,500 원 ')
+  await openOptional(page)
   await page.getByLabel('광고 분위기').selectOption('warm')
   await page.getByLabel('주소 (선택)').fill('서울 테스트 거리 123')
   await page.getByLabel('Instagram (선택)').fill('@fixture_shop')
@@ -36,6 +37,7 @@ test('actual API + Mock copy + real Chromium PNGs: render, reload, stale, re-ren
   await page.screenshot({ path: info.outputPath('render-four.png'), fullPage: true })
   await page.reload(); await page.getByRole('button', { name: '저장 정보 다시 조회' }).click()
   await expect(panel.getByRole('img')).toHaveCount(4)
+  await openOptional(page)
   await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('새 사용자 특징')
   await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
   await expect(panel.getByRole('alert')).toContainText('최신 결과가 아닙니다')

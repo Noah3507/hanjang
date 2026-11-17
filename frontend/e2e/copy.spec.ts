@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, openOptional } from './fixtures'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../..', import.meta.url))
@@ -10,6 +10,7 @@ async function saved(page: import('@playwright/test').Page) {
   await page.getByLabel('가게명', { exact: true }).fill('  테스트 가게  ')
   await page.getByLabel('상품명', { exact: true }).fill('사용자 입력 상품')
   await page.getByLabel('가격', { exact: true }).fill(' 10,500 원 ')
+  await openOptional(page)
   await page.getByLabel('광고 분위기').selectOption('warm')
   await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('바삭한 식감\n사용자 제공 설명')
   await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
@@ -32,6 +33,7 @@ test('actual local API with Mock provider: four copies, reload, stale features a
   await page.getByRole('button', { name: '저장 정보 다시 조회' }).click()
   await expect(page.getByLabel('상품 특징·강조 포인트 (선택)')).toHaveValue('바삭한 식감\n사용자 제공 설명')
   await expect(panel.getByText('카피 상태: completed')).toBeVisible()
+  await openOptional(page)
   await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('고소한 식감')
   await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
   await expect(panel.getByRole('alert')).toContainText('이전 입력 또는 사진')
@@ -66,6 +68,7 @@ test('mobile optional feature limit and copy cards fit viewport', async ({ page 
   await expect(page.getByRole('region', { name: '4전략 광고 카피' }).getByRole('article')).toHaveCount(4)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath('copy-mobile.png'), fullPage: true })
+  await openOptional(page)
   await page.getByLabel('상품 특징·강조 포인트 (선택)').fill('가'.repeat(501))
   await page.getByRole('button', { name: '상품 정보와 사진 저장' }).click()
   await expect(page.getByText('상품 특징은 공백만 입력하지 말고 최대 500자로 작성해 주세요.')).toBeVisible()
