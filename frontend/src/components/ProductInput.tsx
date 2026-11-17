@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import PhotoProcessing from './PhotoProcessing'
+import { strategyLabels } from './AdResults'
+import { defaultStrategy, strategies, strategyHints, strategyStorageKey } from './strategyChoice'
+import type { Strategy } from '../api/designs'
 import { ApiError, getInput, getOriginal, saveInput, uploadPhoto, type Draft, type Facts, type Mood, type UploadHandle } from '../api/uploads'
 
 const empty: Facts = { store_name: '', product_name: '', price_text: '', address: null, instagram_handle: null }
@@ -13,7 +16,8 @@ function restored(): UploadHandle | null {
 
 export default function ProductInput() {
   const [facts, setFacts] = useState<Facts>(empty)
-  const [mood, setMood] = useState<Mood | ''>('')
+  const [mood, setMood] = useState<Mood | ''>('warm')
+  const [strategy, setStrategy] = useState<Strategy>(defaultStrategy)
   const [features, setFeatures] = useState('')
   const [useAddress, setUseAddress] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -66,6 +70,7 @@ export default function ProductInput() {
       }
       if (!current) throw new Error('사진을 다시 선택해 주세요.')
       await saveInput(current, facts, mood as Mood, { product_features: features === '' ? null : features, use_address_for_copy: useAddress })
+      try { sessionStorage.setItem(strategyStorageKey(current.upload.job_id), strategy) } catch { /* The design step falls back to its default. */ }
       const result = await getInput(current) // Verify through the read endpoint, not the submitted object.
       setDraft(result); setStatus('saved'); setMessage('상품 정보와 원본 사진이 저장됐습니다. 광고 생성은 시작하지 않았습니다.')
     } catch (error) { fail(error) }
@@ -88,40 +93,62 @@ export default function ProductInput() {
   }
 
   const labels: Record<keyof Facts, string> = { store_name: '가게명', product_name: '상품명', price_text: '가격', address: '주소 (선택)', instagram_handle: 'Instagram (선택)' }
+  const changed = () => { setDraft(null); setStatus('idle'); setMessage('') }
+  const field = (key: keyof Facts) => <div key={key}>
+    <label htmlFor={key}>{labels[key]}</label>
+    <input id={key} value={facts[key] || ''} required={['store_name', 'product_name', 'price_text'].includes(key)}
+      onChange={(event) => { setFacts({ ...facts, [key]: event.target.value || (['address', 'instagram_handle'].includes(key) ? null : '') }); changed() }}
+      aria-invalid={!!errors[key]} aria-describedby={`${key}-error`} />
+    {key === 'price_text' && <small>예: 10,500원. 입력한 표기 그대로 저장합니다.</small>}
+    {errors[key] && <p id={`${key}-error`} className="field-error">{errors[key]}</p>}
+  </div>
   return <section className="product-input" aria-labelledby="input-title">
-    <h2 id="input-title">상품 정보 입력 및 이미지 업로드</h2>
-    <p className="help">원본을 그대로 저장합니다. JPG/PNG · 최대 10 MiB · 24MP 이하 · 가로/세로 256px 이상</p>
+    <h2 id="input-title" className="visually-hidden">상품 정보 입력 및 이미지 업로드</h2>
     <form onSubmit={submit} noValidate>
       <fieldset disabled={busy}>
         <label htmlFor="photo">상품 사진</label>
-        <input id="photo" type="file" accept="image/jpeg,image/png" onChange={(event) => changePhoto(event.target.files?.[0])} aria-describedby="photo-error" />
-        {errors.photo && <p id="photo-error" className="field-error">{errors.photo}</p>}
-        {preview && <img className="photo-preview" src={preview} alt="원본 상품 사진 미리보기" />}
-        <div className="fields">
-          {(Object.keys(labels) as (keyof Facts)[]).map((key) => <div key={key}>
-            <label htmlFor={key}>{labels[key]}</label>
-            <input id={key} value={facts[key] || ''} required={['store_name', 'product_name', 'price_text'].includes(key)}
-              onChange={(event) => { setFacts({ ...facts, [key]: event.target.value || (['address', 'instagram_handle'].includes(key) ? null : '') }); setDraft(null); setStatus('idle'); setMessage('') }}
-              aria-invalid={!!errors[key]} aria-describedby={`${key}-error`} />
-            {key === 'price_text' && <small>예: 10,500원. 입력한 표기 그대로 저장합니다.</small>}
-            {errors[key] && <p id={`${key}-error`} className="field-error">{errors[key]}</p>}
-          </div>)}
-          <div><label htmlFor="mood">광고 분위기</label>
-            <select id="mood" value={mood} onChange={(event) => { setMood(event.target.value as Mood | ''); setDraft(null); setStatus('idle'); setMessage('') }} aria-invalid={!!errors.mood}>
-              <option value="">선택해 주세요</option><option value="warm">따뜻한 감성</option><option value="minimal">깔끔한 미니멀</option><option value="vivid">활기찬 강렬함</option><option value="premium">고급스러움</option>
-            </select>{errors.mood && <p className="field-error">{errors.mood}</p>}
-          </div>
+        <div className={`dropzone${preview ? ' has-photo' : ''}`}>
+          <input id="photo" type="file" accept="image/jpeg,image/png" onChange={(event) => changePhoto(event.target.files?.[0])} aria-describedby="photo-hint photo-error" />
+          {preview
+            ? <img className="photo-preview" src={preview} alt="원본 상품 사진 미리보기" />
+            : <span className="dropzone-icon" aria-hidden="true" />}
+          <span className="dropzone-title" aria-hidden="true">{preview ? '다른 사진으로 바꾸기' : '상품 사진 올리기'}</span>
+          <span id="photo-hint" className="dropzone-hint">사진은 원본 그대로 저장돼요 · JPG, PNG · 10MB 이하 · 한 변 256px 이상</span>
         </div>
-        <label htmlFor="product_features">상품 특징·강조 포인트 (선택)</label>
-        <textarea id="product_features" value={features} rows={3} placeholder="직접 확인한 맛·식감·재료·상품 장점을 적어 주세요."
-          aria-invalid={!!errors.product_features} onChange={event => { setFeatures(event.target.value); setDraft(null); setStatus('idle'); setMessage('') }} />
-        <small>최대 500자. 사용자 제공 정보로 원문 저장하며, 사진 추정과 구분합니다.</small>
-        {errors.product_features && <p className="field-error">{errors.product_features}</p>}
-        <label><input type="checkbox" checked={useAddress} onChange={event => { setUseAddress(event.target.checked); setDraft(null); setStatus('idle'); setMessage('') }} /> 지역 홍보 카피에 주소 사용</label>
-        <small>이 옵션은 LLM 전송 여부입니다. 저장한 주소와 Instagram은 광고의 별도 정보 영역에 표시되며, 입력하지 않으면 숨깁니다.</small>
-        <small>기본은 주소 미전송입니다. 실제 LLM 모드를 승인해 켠 경우에만 가게명·상품명·가격·특징·분위기·현재 사진 단서가 전송됩니다. Instagram과 사진은 전송하지 않습니다.</small>
-        <button type="submit">{status === 'saving' ? '저장 중…' : '상품 정보와 사진 저장'}</button>
-        <button className="secondary" type="button" disabled={!handle} onClick={reload}>저장 정보 다시 조회</button>
+        {errors.photo && <p id="photo-error" className="field-error">{errors.photo}</p>}
+        {field('store_name')}
+        <div className="fields">{field('product_name')}{field('price_text')}</div>
+        <fieldset className="strategy-cards">
+          <legend>광고 전략</legend>
+          <div className="strategy-grid">
+            {strategies.map((value) => <label key={value} className="strategy-card">
+              <input type="radio" name="strategy" value={value} checked={strategy === value} onChange={() => setStrategy(value)} />
+              <span className="strategy-name">{strategyLabels[value]} 전략</span>
+              <span className="strategy-hint">{strategyHints[value]}</span>
+            </label>)}
+          </div>
+          <small>고른 전략은 시안 4개를 만드는 단계에서 먼저 선택돼요. 그 단계에서 바꿀 수 있어요.</small>
+        </fieldset>
+        <details className="optional-fields" open>
+          <summary>추가 정보 (선택)</summary>
+          <div className="fields">{field('address')}{field('instagram_handle')}</div>
+          <label htmlFor="mood">광고 분위기</label>
+          <select id="mood" value={mood} onChange={(event) => { setMood(event.target.value as Mood | ''); changed() }} aria-invalid={!!errors.mood}>
+            <option value="">선택해 주세요</option><option value="warm">따뜻한 감성</option><option value="minimal">깔끔한 미니멀</option><option value="vivid">활기찬 강렬함</option><option value="premium">고급스러움</option>
+          </select>{errors.mood && <p className="field-error">{errors.mood}</p>}
+          <label htmlFor="product_features">상품 특징·강조 포인트 (선택)</label>
+          <textarea id="product_features" value={features} rows={3} placeholder="직접 확인한 맛·식감·재료·상품 장점을 적어 주세요."
+            aria-invalid={!!errors.product_features} onChange={event => { setFeatures(event.target.value); changed() }} />
+          <small>최대 500자. 사용자 제공 정보로 원문 저장하며, 사진 추정과 구분합니다.</small>
+          {errors.product_features && <p className="field-error">{errors.product_features}</p>}
+          <label className="check"><input type="checkbox" checked={useAddress} onChange={event => { setUseAddress(event.target.checked); changed() }} /> 지역 홍보 카피에 주소 사용</label>
+          <small>이 옵션은 LLM 전송 여부입니다. 저장한 주소와 Instagram은 광고의 별도 정보 영역에 표시되며, 입력하지 않으면 숨깁니다.</small>
+          <small>기본은 주소 미전송입니다. 실제 LLM 모드를 승인해 켠 경우에만 가게명·상품명·가격·특징·분위기·현재 사진 단서가 전송됩니다. Instagram과 사진은 전송하지 않습니다.</small>
+        </details>
+        <div className="form-actions">
+          <button type="submit">{status === 'saving' ? '저장 중…' : '상품 정보와 사진 저장'}</button>
+          <button className="secondary" type="button" disabled={!handle} onClick={reload}>저장 정보 다시 조회</button>
+        </div>
       </fieldset>
     </form>
     {message && <p role={status === 'error' ? 'alert' : 'status'} aria-label="업로드 상태">{message}</p>}
@@ -134,6 +161,6 @@ export default function ProductInput() {
       <p>만료: {new Date(draft.expires_at).toLocaleString('ko-KR')} · 사진/입력은 24시간 임시 저장됩니다.</p>
     </section>}
     {draft && handle && <PhotoProcessing key={handle.upload.job_id} handle={handle} draft={draft} />}
-    <p className="help">이 탭의 세션으로 다시 조회할 수 있습니다. 서버 재시작·배포 시 작업 정보가 유실될 수 있습니다. 새 사진은 새 작업으로 저장되며 이전 사진도 만료 시 정리됩니다.</p>
+    <p className="help fine-print">이 탭의 세션으로 다시 조회할 수 있습니다. 서버 재시작·배포 시 작업 정보가 유실될 수 있습니다. 새 사진은 새 작업으로 저장되며 이전 사진도 만료 시 정리됩니다.</p>
   </section>
 }

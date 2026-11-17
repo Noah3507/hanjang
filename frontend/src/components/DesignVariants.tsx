@@ -4,6 +4,7 @@ import {preview,type RenderState} from '../api/rendering'
 import type {UploadHandle} from '../api/uploads'
 import type {AdCopy} from '../api/editing'
 import {strategyLabels} from './AdResults'
+import {storedStrategy,strategyStorageKey} from './strategyChoice'
 import {currentDesignRanking,isTopDesignCloseCall,closeCallMessage} from './designRankingGuidance'
 
 function Preview({handle,asset,label}:{handle:UploadHandle;asset:string;label:string}){
@@ -13,9 +14,9 @@ function Preview({handle,asset,label}:{handle:UploadHandle;asset:string;label:st
 }
 
 export default function DesignVariants({handle,render,disabled,selectedStrategy,onSelectedStrategy,onEditingChange}:{handle:UploadHandle;render:RenderState;disabled:boolean;selectedStrategy?:Strategy;onSelectedStrategy?:(s:Strategy)=>void;onEditingChange?:(v:boolean)=>void}){
- const storage=`hanjang-v3-strategy:${handle.upload.job_id}`
+ const storage=strategyStorageKey(handle.upload.job_id)
  const formId=useId()
- const [strategy,setStrategy]=useState<Strategy>(()=>{const s=sessionStorage.getItem(storage);return ['emotional','price','visual','brand'].includes(s||'')?s as Strategy:'price'})
+ const [strategy,setStrategy]=useState<Strategy>(()=>storedStrategy(handle.upload.job_id))
  const [state,setState]=useState<DesignState|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('')
  const emptyPromotion={original_price:'',discount_text:'',promotion_text:'',period_text:''}
  const [promotion,setPromotion]=useState<Promotion>(emptyPromotion)
