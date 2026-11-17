@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import PhotoProcessing from './PhotoProcessing'
+import GenerationProgress from './GenerationProgress'
+import { generateAds, GenerationCancelled, stepOrder, type StepId, type StepState } from '../flow/generate'
 import { strategyLabels } from './AdResults'
 import { defaultStrategy, strategies, strategyHints, strategyStorageKey } from './strategyChoice'
 import type { Strategy } from '../api/designs'
@@ -29,6 +31,14 @@ export default function ProductInput() {
   const [message, setMessage] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const busy = status === 'saving' || status === 'loading'
+  const waiting = () => Object.fromEntries(stepOrder.map((id) => [id, 'waiting'])) as Record<StepId, StepState>
+  const [mode, setMode] = useState<'form' | 'generating' | 'failed'>('form')
+  const [steps, setSteps] = useState<Record<StepId, StepState>>(waiting)
+  const [generationError, setGenerationError] = useState('')
+  const [approval, setApproval] = useState<{ approve: () => void; decline: () => void } | null>(null)
+  const [generated, setGenerated] = useState(false)
+  const run = useRef(0)
+  useEffect(() => () => { run.current++ }, [])
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 
   function changePhoto(next: File | undefined) {
@@ -57,10 +67,9 @@ export default function ProductInput() {
     return next
   }
 
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    const next = validate(); setErrors(next)
-    if (Object.keys(next).length) { setStatus('error'); setMessage('입력 항목을 확인해 주세요.'); return }
+  async function save(): Promise<{ handle: UploadHandle; draft: Draft } | null> {
+    const next = validate(); setErrors(next); setGenerated(false)
+    if (Object.keys(next).length) { setStatus('error'); setMessage('입력 항목을 확인해 주세요.'); return null }
     setStatus('saving'); setMessage('원본 사진과 상품 정보를 저장하고 있습니다.')
     try {
       let current = handle
@@ -73,8 +82,38 @@ export default function ProductInput() {
       try { sessionStorage.setItem(strategyStorageKey(current.upload.job_id), strategy) } catch { /* The design step falls back to its default. */ }
       const result = await getInput(current) // Verify through the read endpoint, not the submitted object.
       setDraft(result); setStatus('saved'); setMessage('상품 정보와 원본 사진이 저장됐습니다. 광고 생성은 시작하지 않았습니다.')
-    } catch (error) { fail(error) }
+      return { handle: current, draft: result }
+    } catch (error) { fail(error); return null }
   }
+  async function submit(event: FormEvent) { event.preventDefault(); await save() }
+
+  /** Save, then run every step for the chosen strategy. Each click is one explicit request by the user. */
+  async function generate() {
+    const saved = await save()
+    if (!saved) return
+    const id = ++run.current
+    setMode('generating'); setSteps(waiting()); setGenerationError(''); setApproval(null); setMessage('')
+    try {
+      const result = await generateAds(saved.handle, saved.draft, strategy, {
+        onStep: (step, state) => { if (id === run.current) setSteps((value) => ({ ...value, [step]: state })) },
+        approvePaidCopy: () => new Promise<boolean>((resolve) => {
+          if (id !== run.current) { resolve(false); return }
+          setApproval({ approve: () => { setApproval(null); resolve(true) }, decline: () => { setApproval(null); resolve(false) } })
+        }),
+        cancelled: () => id !== run.current,
+      })
+      if (id !== run.current) return
+      setGenerated(true); setMode('form'); setStatus('saved')
+      setMessage(result.rankingError
+        ? `시안 4개를 만들었습니다. 순위는 계산하지 못했습니다: ${result.rankingError}`
+        : '시안 4개와 참고 순위가 준비됐습니다.')
+    } catch (error) {
+      if (id !== run.current) return
+      if (error instanceof GenerationCancelled) { setMode('form'); setStatus('saved'); setMessage('광고 생성을 중단했습니다. 저장한 정보는 그대로 있습니다.'); return }
+      setGenerationError(error instanceof Error ? error.message : '광고를 만들지 못했습니다. 다시 시도해 주세요.'); setMode('failed')
+    }
+  }
+  function backToForm() { run.current++; setApproval(null); setMode('form'); setStatus('saved'); setMessage('입력을 확인한 뒤 다시 시도해 주세요.') }
 
   function fail(error: unknown) {
     setStatus('error'); setDraft(null)
@@ -102,9 +141,12 @@ export default function ProductInput() {
     {key === 'price_text' && <small>예: 10,500원. 입력한 표기 그대로 저장합니다.</small>}
     {errors[key] && <p id={`${key}-error`} className="field-error">{errors[key]}</p>}
   </div>
-  return <section className="product-input" aria-labelledby="input-title">
+  const resultsOnly = generated && mode === 'form'
+  return <section className={`product-input${resultsOnly ? ' results-only' : ''}`} aria-labelledby="input-title">
     <h2 id="input-title" className="visually-hidden">상품 정보 입력 및 이미지 업로드</h2>
-    <form onSubmit={submit} noValidate>
+    {mode !== 'form' && <GenerationProgress steps={steps} productName={facts.product_name.trim() || '상품'} strategyName={strategyLabels[strategy]}
+      error={mode === 'failed' ? generationError : ''} approval={approval} onRetry={() => void generate()} onBack={backToForm} />}
+    <form onSubmit={submit} noValidate hidden={mode !== 'form' || generated}>
       <fieldset disabled={busy}>
         <label htmlFor="photo">상품 사진</label>
         <div className={`dropzone${preview ? ' has-photo' : ''}`}>
@@ -127,7 +169,7 @@ export default function ProductInput() {
               <span className="strategy-hint">{strategyHints[value]}</span>
             </label>)}
           </div>
-          <small>고른 전략은 시안 4개를 만드는 단계에서 먼저 선택돼요. 그 단계에서 바꿀 수 있어요.</small>
+          <small>고른 전략으로 시안 4개를 만들어요. 결과를 본 뒤 다른 전략으로 다시 만들 수 있어요.</small>
         </fieldset>
         <details className="optional-fields" open>
           <summary>추가 정보 (선택)</summary>
@@ -146,13 +188,18 @@ export default function ProductInput() {
           <small>기본은 주소 미전송입니다. 실제 LLM 모드를 승인해 켠 경우에만 가게명·상품명·가격·특징·분위기·현재 사진 단서가 전송됩니다. Instagram과 사진은 전송하지 않습니다.</small>
         </details>
         <div className="form-actions">
-          <button type="submit">{status === 'saving' ? '저장 중…' : '상품 정보와 사진 저장'}</button>
+          <button type="button" onClick={() => void generate()}>광고 생성하기</button>
+          <button className="secondary" type="submit">{status === 'saving' ? '저장 중…' : '상품 정보와 사진 저장'}</button>
           <button className="secondary" type="button" disabled={!handle} onClick={reload}>저장 정보 다시 조회</button>
         </div>
       </fieldset>
     </form>
-    {message && <p role={status === 'error' ? 'alert' : 'status'} aria-label="업로드 상태">{message}</p>}
-    {draft && <section aria-label="저장된 상품 정보" className="saved-input">
+    {resultsOnly && <div className="results-header">
+      <h2>{strategyLabels[strategy]} 전략 시안 4개</h2>
+      <button type="button" className="secondary" onClick={() => { setGenerated(false); setMessage('') }}>입력 수정하고 다시 만들기</button>
+    </div>}
+    {message && mode === 'form' && <p role={status === 'error' ? 'alert' : 'status'} aria-label="업로드 상태">{message}</p>}
+    {draft && mode === 'form' && !generated && <section aria-label="저장된 상품 정보" className="saved-input">
       <h3>서버에 저장된 입력</h3>
       <dl>{(Object.keys(labels) as (keyof Facts)[]).map((key) => <div key={key}><dt>{labels[key]}</dt><dd>{draft.facts[key] ?? '미입력'}</dd></div>)}</dl>
       <p>작업 상태: {draft.status} · 분위기: {draft.mood}</p>
@@ -160,7 +207,7 @@ export default function ProductInput() {
       <p>주소 카피 활용: {draft.use_address_for_copy ? '사용' : '사용하지 않음'}</p>
       <p>만료: {new Date(draft.expires_at).toLocaleString('ko-KR')} · 사진/입력은 24시간 임시 저장됩니다.</p>
     </section>}
-    {draft && handle && <PhotoProcessing key={handle.upload.job_id} handle={handle} draft={draft} />}
+    {draft && handle && mode === 'form' && <PhotoProcessing key={handle.upload.job_id} handle={handle} draft={draft} />}
     <p className="help fine-print">이 탭의 세션으로 다시 조회할 수 있습니다. 서버 재시작·배포 시 작업 정보가 유실될 수 있습니다. 새 사진은 새 작업으로 저장되며 이전 사진도 만료 시 정리됩니다.</p>
   </section>
 }

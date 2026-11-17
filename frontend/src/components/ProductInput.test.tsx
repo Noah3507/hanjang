@@ -2,7 +2,9 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ProductInput from './ProductInput'
 import { ApiError, getInput, getOriginal, saveInput, uploadPhoto } from '../api/uploads'
+import { generateAds, GenerationCancelled } from '../flow/generate'
 
+vi.mock('../flow/generate', async (load) => ({ ...await load<typeof import('../flow/generate')>(), generateAds: vi.fn() }))
 vi.mock('../api/uploads', async (load) => ({ ...await load<typeof import('../api/uploads')>(),
   getInput: vi.fn(), getOriginal: vi.fn(), saveInput: vi.fn(), uploadPhoto: vi.fn(),
 }))
@@ -60,6 +62,53 @@ describe('product input', () => {
     await waitFor(() => expect(screen.getByRole('region', { name: '저장된 상품 정보' })).toBeInTheDocument())
     expect(sessionStorage.getItem('hanjang-v3-strategy:job')).toBe('visual')
     expect(saveInput).toHaveBeenCalledWith(handle, facts, 'warm', { product_features: null, use_address_for_copy: false })
+  })
+  it('does not start generation while the input is incomplete', () => {
+    render(<ProductInput />)
+    fireEvent.click(screen.getByRole('button', { name: '광고 생성하기' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('입력 항목')
+    expect(generateAds).not.toHaveBeenCalled()
+  })
+  it('saves, shows real step progress, then returns with the result notice', async () => {
+    let finish: (value: unknown) => void = () => {}
+    vi.mocked(generateAds).mockImplementation((_handle, _draft, _strategy, options) => {
+      options.onStep('photo', 'done'); options.onStep('copy', 'running')
+      return new Promise((resolve) => { finish = resolve as (value: unknown) => void })
+    })
+    render(<ProductInput />); fill()
+    fireEvent.click(screen.getByRole('radio', { name: /브랜드 전략/ }))
+    fireEvent.click(screen.getByRole('button', { name: '광고 생성하기' }))
+    await waitFor(() => expect(screen.getByRole('heading', { name: '광고를 만들고 있습니다' })).toBeInTheDocument())
+    expect(generateAds).toHaveBeenCalledWith(handle, saved, 'brand', expect.anything())
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('배경 정리 · 완료')
+    expect(screen.queryByRole('region', { name: '사진 전처리' })).not.toBeInTheDocument()
+    finish({ rankingError: null })
+    await waitFor(() => expect(screen.getByRole('status', { name: '업로드 상태' })).toHaveTextContent('시안 4개와 참고 순위가 준비됐습니다.'))
+    expect(screen.getByRole('heading', { name: '브랜드 전략 시안 4개' })).toBeInTheDocument()
+    expect(document.querySelector('.product-input')).toHaveClass('results-only')
+    expect(screen.queryByRole('button', { name: '광고 생성하기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: '저장된 상품 정보' })).not.toBeInTheDocument()
+    expect(document.querySelector('.photo-processing')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '입력 수정하고 다시 만들기' }))
+    expect(document.querySelector('.product-input')).not.toHaveClass('results-only')
+    expect(screen.getByRole('button', { name: '광고 생성하기' })).toBeInTheDocument()
+    expect(screen.getByLabelText('가게명')).toHaveValue(facts.store_name)
+  })
+  it('reports a ranking failure without hiding the designs', async () => {
+    vi.mocked(generateAds).mockResolvedValue({ rankingError: '모델을 사용할 수 없습니다.' } as never)
+    render(<ProductInput />); fill()
+    fireEvent.click(screen.getByRole('button', { name: '광고 생성하기' }))
+    await waitFor(() => expect(screen.getByRole('status', { name: '업로드 상태' })).toHaveTextContent('순위는 계산하지 못했습니다: 모델을 사용할 수 없습니다.'))
+  })
+  it('shows a failed step with retry, and returns quietly after a declined paid call', async () => {
+    vi.mocked(generateAds).mockRejectedValueOnce(new Error('문구를 만들지 못했습니다.'))
+    render(<ProductInput />); fill()
+    fireEvent.click(screen.getByRole('button', { name: '광고 생성하기' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('문구를 만들지 못했습니다.'))
+    vi.mocked(generateAds).mockRejectedValueOnce(new GenerationCancelled())
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }))
+    await waitFor(() => expect(screen.getByRole('status', { name: '업로드 상태' })).toHaveTextContent('광고 생성을 중단했습니다.'))
+    expect(generateAds).toHaveBeenCalledTimes(2)
   })
   it('rejects unsupported file types before uploading', () => {
     render(<ProductInput />)
