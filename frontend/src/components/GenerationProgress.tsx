@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { stepOrder, type StepId, type StepState } from '../flow/generate'
 
-export const stepLabels: Record<StepId, string> = { photo: '배경 정리', copy: '문구 작성', designs: '시안 4개 렌더링', ranking: '순위 매기기' }
+export const stepLabels: Record<StepId, string> = { photo: '배경 정리', analysis: '사진 분석', copy: '문구 작성', designs: '시안 4개 렌더링', ranking: '순위 매기기' }
 const stateText: Record<StepState, string> = { waiting: '대기', running: '진행 중', done: '완료', failed: '실패' }
 
 /** Share of the bar that is certain: finished steps only. */

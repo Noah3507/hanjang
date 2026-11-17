@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateAds, GenerationCancelled, type StepId, type StepState } from './generate'
 import { photoState } from '../api/photos'
+import { analysisState } from '../api/analysis'
 import { copyState } from '../api/copy'
 import { rendering } from '../api/rendering'
 import { createDesigns, getDesigns, rankDesigns } from '../api/designs'
 
 vi.mock('../api/photos', () => ({ photoState: vi.fn() }))
+vi.mock('../api/analysis', () => ({ analysisState: vi.fn() }))
 vi.mock('../api/copy', () => ({ copyState: vi.fn() }))
 vi.mock('../api/rendering', () => ({ rendering: vi.fn() }))
 vi.mock('../api/designs', () => ({ createDesigns: vi.fn(), getDesigns: vi.fn(), rankDesigns: vi.fn() }))
@@ -16,6 +18,7 @@ const photo = (status: string, source = 'processed') => ({ status, photo_source:
 const copy = (status: string, extra = {}) => ({ status, provider: 'mock', is_current: true, source_asset_id: 'cut', copy_key: 'k1', error: null, ...extra }) as never
 const render = (status: string, extra = {}) => ({ status, is_current: true, source_asset_id: 'cut', copy_key: 'k1', revision: 3, error: null, ...extra }) as never
 const designs = (status: string, extra = {}) => ({ status, is_current: true, source_revision: 3, source_asset_id: 'cut', copy_key: 'k1', ranking: null, ranking_error: null, error: null, ...extra }) as never
+const analysis = (status: string, extra = {}) => ({ status, is_current: true, source_asset_id: 'cut', clip: { status: 'unavailable', cues: [] }, palette: { status: 'available', colors: [] }, ...extra }) as never
 const ranking = { source: 'model', model_version: 'bt-logistic-v1', items: [] }
 
 function options(approve = true) {
@@ -25,6 +28,7 @@ function options(approve = true) {
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(photoState).mockResolvedValueOnce(photo('pending')).mockResolvedValueOnce(photo('processing')).mockResolvedValue(photo('completed'))
+  vi.mocked(analysisState).mockResolvedValueOnce(analysis('pending')).mockResolvedValueOnce(analysis('processing')).mockResolvedValue(analysis('completed'))
   vi.mocked(copyState).mockResolvedValueOnce(copy('pending')).mockResolvedValueOnce(copy('processing')).mockResolvedValue(copy('completed'))
   vi.mocked(rendering).mockResolvedValueOnce(render('pending')).mockResolvedValueOnce(render('processing')).mockResolvedValue(render('completed'))
   vi.mocked(getDesigns).mockResolvedValueOnce(designs('pending')).mockResolvedValue(designs('completed'))
@@ -36,8 +40,10 @@ describe('one-click generation', () => {
   it('runs every step in order with the processed photo and the chosen strategy', async () => {
     const o = options()
     const result = await generateAds(handle, draft, 'visual', o)
-    expect(o.steps).toEqual([['photo', 'running'], ['photo', 'done'], ['copy', 'running'], ['copy', 'done'], ['designs', 'running'], ['designs', 'done'], ['ranking', 'running'], ['ranking', 'done']])
+    expect(o.steps).toEqual([['photo', 'running'], ['photo', 'done'], ['analysis', 'running'], ['analysis', 'done'], ['copy', 'running'], ['copy', 'done'], ['designs', 'running'], ['designs', 'done'], ['ranking', 'running'], ['ranking', 'done']])
     expect(photoState).toHaveBeenNthCalledWith(2, handle, true)
+    expect(analysisState).toHaveBeenNthCalledWith(2, handle, 'cut')
+    expect(result.analysis?.status).toBe('completed')
     expect(copyState).toHaveBeenNthCalledWith(2, handle, { asset: 'cut', draft })
     expect(rendering).toHaveBeenNthCalledWith(2, handle, expect.objectContaining({ asset: 'cut' }))
     expect(createDesigns).toHaveBeenCalledWith(handle, 'visual', expect.objectContaining({ revision: 3 }))
@@ -48,12 +54,14 @@ describe('one-click generation', () => {
   })
   it('reuses finished current results instead of starting them again', async () => {
     vi.mocked(photoState).mockReset().mockResolvedValue(photo('completed'))
+    vi.mocked(analysisState).mockReset().mockResolvedValue(analysis('completed'))
     vi.mocked(copyState).mockReset().mockResolvedValue(copy('completed', { provider: 'openai' }))
     vi.mocked(rendering).mockReset().mockResolvedValue(render('completed'))
     vi.mocked(getDesigns).mockReset().mockResolvedValue(designs('completed', { ranking }))
     const o = options()
     await generateAds(handle, draft, 'price', o)
     expect(photoState).toHaveBeenCalledTimes(1)
+    expect(analysisState).toHaveBeenCalledTimes(1)
     expect(copyState).toHaveBeenCalledTimes(1)
     expect(rendering).toHaveBeenCalledTimes(1)
     expect(createDesigns).not.toHaveBeenCalled()
@@ -62,10 +70,12 @@ describe('one-click generation', () => {
   })
   it('keeps the original photo when the server did not select the processed one', async () => {
     vi.mocked(photoState).mockReset().mockResolvedValue(photo('completed', 'original'))
+    vi.mocked(analysisState).mockReset().mockResolvedValueOnce(analysis('pending')).mockResolvedValue(analysis('completed', { source_asset_id: 'orig' }))
     vi.mocked(copyState).mockReset().mockResolvedValueOnce(copy('pending')).mockResolvedValue(copy('completed', { source_asset_id: 'orig' }))
     vi.mocked(rendering).mockReset().mockResolvedValueOnce(render('pending')).mockResolvedValue(render('completed', { source_asset_id: 'orig' }))
     vi.mocked(getDesigns).mockReset().mockResolvedValue(designs('completed', { source_asset_id: 'orig', ranking }))
     await generateAds(handle, draft, 'price', options())
+    expect(analysisState).toHaveBeenNthCalledWith(2, handle, 'orig')
     expect(copyState).toHaveBeenNthCalledWith(2, handle, { asset: 'orig', draft })
   })
   it('never starts a paid copy call without approval', async () => {
@@ -96,6 +106,15 @@ describe('one-click generation', () => {
     expect(result.designs.ranking).toBeNull()
     expect(result.rankingError).toBe('모델을 사용할 수 없습니다.')
     expect(o.steps.at(-1)).toEqual(['ranking', 'failed'])
+  })
+  it('goes on without analysis when the analysis server is busy or fails', async () => {
+    vi.mocked(analysisState).mockReset().mockResolvedValueOnce(analysis('pending')).mockRejectedValueOnce(new Error('다른 사진을 분석 중입니다.'))
+    const o = options()
+    const result = await generateAds(handle, draft, 'price', o)
+    expect(result.analysis).toBeNull()
+    expect(o.steps).toContainEqual(['analysis', 'failed'])
+    expect(o.steps.at(-1)).toEqual(['ranking', 'done'])
+    expect(createDesigns).toHaveBeenCalled()
   })
   it('stops between steps once cancelled', async () => {
     let cancelled = false

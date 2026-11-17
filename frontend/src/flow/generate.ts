@@ -1,14 +1,15 @@
 import { photoState, type PhotoState } from '../api/photos'
+import { analysisState, type AnalysisState } from '../api/analysis'
 import { copyState, type CopyState } from '../api/copy'
 import { rendering, type RenderState } from '../api/rendering'
 import { createDesigns, getDesigns, rankDesigns, type DesignState, type Strategy } from '../api/designs'
 import type { Draft, UploadHandle } from '../api/uploads'
 
 /** One click runs the same API calls as the step-by-step buttons, in the same order. */
-export type StepId = 'photo' | 'copy' | 'designs' | 'ranking'
+export type StepId = 'photo' | 'analysis' | 'copy' | 'designs' | 'ranking'
 export type StepState = 'waiting' | 'running' | 'done' | 'failed'
-export const stepOrder: StepId[] = ['photo', 'copy', 'designs', 'ranking']
-export interface GenerateResult { photo: PhotoState; copy: CopyState; render: RenderState; designs: DesignState; rankingError: string | null }
+export const stepOrder: StepId[] = ['photo', 'analysis', 'copy', 'designs', 'ranking']
+export interface GenerateResult { photo: PhotoState; analysis: AnalysisState | null; copy: CopyState; render: RenderState; designs: DesignState; rankingError: string | null }
 export interface GenerateOptions {
   onStep: (step: StepId, state: StepState) => void
   /** Asked only when the server would make a paid copy call. Resolve false to stop before spending. */
@@ -47,6 +48,20 @@ export async function generateAds(handle: UploadHandle, draft: Draft, strategy: 
     return poll(state, (s) => s.status === 'pending' || s.status === 'processing', () => photoState(handle), 130, '배경 정리 시간이 초과됐습니다. 다시 시도해 주세요.')
   })
   const asset = photo.photo_source === 'processed' && photo.processed ? photo.processed.asset_id : photo.original.asset_id
+
+  // Photo analysis gives the copy step its visual hints and palette. It is optional: a failure is shown and the run goes on.
+  check(); options.onStep('analysis', 'running')
+  let analysis: AnalysisState | null = null
+  try {
+    let state = await analysisState(handle)
+    const reusable = state.status === 'completed' && state.is_current && state.source_asset_id === asset
+    if (!reusable) {
+      if (state.status !== 'processing' || state.source_asset_id !== asset) state = await analysisState(handle, asset)
+      state = await poll(state, (s) => s.status === 'processing', () => analysisState(handle), 150, '사진 분석 시간이 초과됐습니다.')
+    }
+    analysis = state.status === 'completed' ? state : null
+  } catch (error) { if (error instanceof GenerationCancelled) throw error }
+  options.onStep('analysis', analysis ? 'done' : 'failed')
 
   const copy = await step('copy', async () => {
     let state = await copyState(handle)
@@ -92,5 +107,5 @@ export async function generateAds(handle: UploadHandle, draft: Draft, strategy: 
     if (!ranked.ranking) rankingError = ranked.ranking_error?.message || '순위를 계산하지 못했습니다.'
   } catch (error) { rankingError = error instanceof Error ? error.message : '순위를 계산하지 못했습니다.' }
   options.onStep('ranking', rankingError ? 'failed' : 'done')
-  return { photo, copy, render, designs: ranked, rankingError }
+  return { photo, analysis, copy, render, designs: ranked, rankingError }
 }

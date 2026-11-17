@@ -1,4 +1,4 @@
-import {test,expect} from './fixtures'
+import {test,expect,openOptional} from './fixtures'
 import {execFileSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 const root=fileURLToPath(new URL('../..',import.meta.url))
@@ -20,6 +20,7 @@ test('OpenAI configuration visible without any generation POST',async({page,requ
  await page.getByLabel('가게명',{exact:true}).fill('Synthetic shop')
  await page.getByLabel('상품명',{exact:true}).fill('Synthetic product')
  await page.getByLabel('가격',{exact:true}).fill('3,000 KRW')
+ await openOptional(page)
  await page.getByLabel('광고 분위기').selectOption('warm')
  await page.getByRole('button',{name:'상품 정보와 사진 저장'}).click()
  await expect(page.getByText('OpenAI 모드 · gpt-5.4-mini-2026-03-17')).toBeVisible()
