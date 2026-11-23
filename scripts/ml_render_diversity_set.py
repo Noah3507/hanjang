@@ -14,6 +14,13 @@ kind is the group a person assigns (noodle_soup, fried_grill, rice_meal, fresh_l
 dessert_bakery, drink, nonfood, general_food); it is recorded, not used to render.
 
 Copy is always the fixed Mock copy, so only the design differs between runs.
+
+With --style-mood warm|minimal|vivid|premium, each ad also gets the per-product style
+from backend/app/services/design_style.py (kind from the product name, accent from the
+photo palette), injected as CSS variables the same way the service will. Without it the
+templates render exactly as in the service today (the baseline):
+  .venv/bin/python scripts/ml_render_diversity_set.py --products ... \
+      --output artifacts/diversity/style-v1-warm --style-mood warm
 No API calls, no uploads. Photos and PNGs stay under artifacts/ (ignored by git).
 
 Writes <output>/<product id>/<template id>.png and <output>/manifest.json, which
@@ -26,15 +33,17 @@ import csv
 import json
 import re
 import sys
+from contextlib import contextmanager
 from hashlib import sha256
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 KINDS = ('noodle_soup', 'fried_grill', 'rice_meal', 'fresh_light', 'dessert_bakery', 'drink', 'nonfood', 'general_food')
 STRATEGIES = ('emotional', 'price', 'visual', 'brand')
 COLUMNS = ['photo', 'product_name', 'price_text', 'kind']
 RENDER_SOURCES = ('backend/app/services/template_v3.py', 'backend/app/services/template_v3_claims.py',
-                  'scripts/service_render_v3_worker.mjs')
+                  'backend/app/services/design_style.py', 'scripts/service_render_v3_worker.mjs')
 
 
 def read_products(path: Path) -> list[dict]:
@@ -81,7 +90,35 @@ def rule_statuses(diagnostics) -> dict:
     return {rule['rule_id']: rule['status'] for rule in data['rules']}
 
 
-def render_set(products: list[dict], output: Path, store_name: str, remove_background, render) -> dict:
+def product_style(product: dict, png: bytes, mood: str) -> dict:
+    """Styles for all 16 templates, scoped per template so one CSS string serves a whole render call."""
+    from app.services.analysis_palette import extract_palette
+    from app.services.design_style import STYLE_VERSION, StyleInput, resolve_style
+    from app.services.template_v3 import REGISTRY
+    palette = tuple((c.hex, c.proportion) for c in extract_palette(png).colors)
+    styles = {t: resolve_style(StyleInput(t, mood, product['product_name'], palette)) for t in sorted(REGISTRY)}
+    first = next(iter(styles.values()))
+    css = ''.join(style.css().replace('.ad{', f'.ad.{t}{{', 1) for t, style in styles.items())
+    return {'version': STYLE_VERSION, 'mood': mood, 'kind': first.kind, 'kind_source': first.kind_source,
+            'palette': [[h, round(share, 4)] for h, share in palette], 'css': css,
+            'templates': {t: {'accent_source': s.accent_source, 'variables': s.variables} for t, s in styles.items()}}
+
+
+@contextmanager
+def extra_template_css(css: str):
+    """Append CSS after quality.css while the renderer reads the template files (preview only)."""
+    original = Path.read_text
+
+    def read_text(self, *args, **kwargs):
+        text = original(self, *args, **kwargs)
+        return text + css if css and self.name == 'quality.css' and self.parent.name == 'v3' else text
+
+    with mock.patch.object(Path, 'read_text', read_text):
+        yield
+
+
+def render_set(products: list[dict], output: Path, store_name: str, remove_background, render,
+               mood: str | None = None) -> dict:
     from app.services.template_v3 import TemplateInput, VERSION
     from app.services.render_execution import RenderFailure
     copies = mock_copy()
@@ -89,6 +126,7 @@ def render_set(products: list[dict], output: Path, store_name: str, remove_backg
     output.mkdir(parents=True)
     manifest = {'purpose': 'design-diversity measurement set', 'copy': 'mock-copy-v1 (fixed)',
                 'template_version': VERSION, 'store_name': store_name, 'renderer_source_hashes': hashes,
+                'style': {'mood': mood} if mood else 'none (templates as in the service)',
                 'products': [], 'ads': []}
     for product in products:
         raw = product['photo'].read_bytes()
@@ -101,6 +139,10 @@ def render_set(products: list[dict], output: Path, store_name: str, remove_backg
             manifest['products'].append(entry)
             print(f'{product["id"]}: background removal failed {processed.warnings}', file=sys.stderr)
             continue
+        style = product_style(product, processed.png, mood) if mood else None
+        if style:
+            entry.update(recognized_kind=style['kind'], recognized_source=style['kind_source'],
+                         style_version=style['version'], palette=style['palette'])
         folder = output / product['id']
         folder.mkdir()
         failures = []
@@ -110,7 +152,8 @@ def render_set(products: list[dict], output: Path, store_name: str, remove_backg
                                  text['headline'], text['body'], text['cta'])
             ids = [f'{strategy}_{c}' for c in 'abcd']
             try:
-                rows = render(data, processed.png, ids)
+                with extra_template_css(style['css'] if style else ''):
+                    rows = render(data, processed.png, ids)
             except RenderFailure as error:
                 failures.append({'strategy': strategy, 'error': error.code})
                 print(f'{product["id"]} {strategy}: {error.code}', file=sys.stderr)
@@ -123,7 +166,8 @@ def render_set(products: list[dict], output: Path, store_name: str, remove_backg
                     'strategy': row['strategy'], 'file': f'{product["id"]}/{name}',
                     'png_sha256': sha256(row['png']).hexdigest(),
                     'diagnostics': rule_statuses(row['diagnostics']),
-                    'fit_steps': row.get('measurement', {}).get('fit_steps')})
+                    'fit_steps': row.get('measurement', {}).get('fit_steps'),
+                    'style': style['templates'][row['template_id']] if style else None})
         entry['status'] = 'rendered' if not failures else 'partial'
         entry['render_failures'] = failures
         manifest['products'].append(entry)
@@ -138,6 +182,8 @@ def main() -> None:
     parser.add_argument('--products', type=Path, required=True, help='products.csv')
     parser.add_argument('--output', type=Path, required=True, help='new folder, e.g. artifacts/diversity/baseline')
     parser.add_argument('--store-name', default='한장 테스트 가게')
+    parser.add_argument('--style-mood', choices=['warm', 'minimal', 'vivid', 'premium'],
+                        help='apply design_style.py with this mood (omit for the baseline)')
     args = parser.parse_args()
     if args.output.exists():
         parser.error('output folder already exists; choose a new name so earlier results are kept')
@@ -151,7 +197,7 @@ def main() -> None:
     products = read_products(args.products)
     remove = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
     manifest = render_set(products, args.output, args.store_name, remove,
-                          lambda data, png, ids: render_templates(data, png, ids, timeout=180))
+                          lambda data, png, ids: render_templates(data, png, ids, timeout=180), args.style_mood)
     print(json.dumps({'products': len(manifest['products']), 'ads': len(manifest['ads']),
                       'output': str(args.output)}, ensure_ascii=False))
 
