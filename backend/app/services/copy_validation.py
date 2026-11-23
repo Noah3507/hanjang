@@ -53,6 +53,11 @@ def validate_copy(raw: str, draft):
                 if number not in known:
                     raise CopyFailure('COPY_FACTS_VIOLATION', True, reason=f'unsupplied number {number}')
             for match in CLAIMS.finditer(remaining):
+                # A desire is not a claim about daily production/freshness.
+                # Only these literal constructions are exempt; every later
+                # ingredient/offer/frequency match is still checked separately.
+                if match.group() == '매일' and re.match(r'매일\s+(?:먹고|마시고)\s+싶은', remaining[match.start():]):
+                    continue
                 if match.group() not in evidence:
                     raise CopyFailure('COPY_FACTS_VIOLATION', True, reason=f'unsupplied claim {match.group()}')
             check_fact_particles(text, allowed)

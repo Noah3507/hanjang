@@ -1,0 +1,394 @@
+[
+  {
+    "case_id": "jajang-no-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "골목반점",
+        "product_name": "짜장면",
+        "price_text": "7,000원"
+      },
+      "mood": "warm",
+      "product_features": null
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "점심엔 [[product_name]] 한 그릇",
+            "body": "쫄깃한 한 젓가락으로 쉬어가는 점심.",
+            "cta": "오늘 점심은 [[product_name]]"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]], [[product_name]] 한 그릇",
+            "body": "한 끼 메뉴를 고민한다면 오늘은 [[product_name]].",
+            "cta": "[[product_name]]으로 골라요"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "쫄깃하게 감기는 한 젓가락",
+            "body": "[[product_name]] 생각나는 날, 고소한 한입을 떠올려요.",
+            "cta": "[[product_name]] 한 젓가락"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]], [[product_name]] 생각나는 이름",
+            "body": "[[product_name]] 먹고 싶은 날 기억해 둘 곳.",
+            "cta": "[[store_name]]에서 만나요"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "jajang-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "골목반점",
+        "product_name": "짜장면",
+        "price_text": "7,000원"
+      },
+      "mood": "warm",
+      "product_features": "주문 후 면을 삶아요. 곱빼기 선택 가능. 포장 가능."
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "점심엔 [[product_name]] 한 그릇",
+            "body": "주문 후 삶는 면으로 점심 한 그릇을 준비해요.",
+            "cta": "오늘 점심은 [[product_name]]"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]], [[product_name]] 한 그릇",
+            "body": "곱빼기도 선택할 수 있어요. 포장도 가능해요.",
+            "cta": "[[product_name]]으로 골라요"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "쫄깃하게 감기는 한 젓가락",
+            "body": "한 젓가락의 쫄깃함을 떠올리며, 포장으로도 만나세요.",
+            "cta": "[[product_name]] 한 젓가락"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]], [[product_name]] 생각나는 이름",
+            "body": "[[product_name]]이 생각나는 날, 포장도 가능해요.",
+            "cta": "[[store_name]]에서 만나요"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "chicken-no-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "저녁치킨",
+        "product_name": "후라이드 치킨",
+        "price_text": "18,000원"
+      },
+      "mood": "vivid",
+      "product_features": null
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "오늘 저녁엔 [[product_name]]",
+            "body": "바삭한 한입이 생각나는 저녁, 식탁의 즐거운 제안.",
+            "cta": "저녁 메뉴는 후라이드"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]]으로 고르는 바삭함",
+            "body": "[[product_name]] 먹고 싶은 날의 선택.",
+            "cta": "[[product_name]] 골라요"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "바삭, 다음 한입이 생각나는 소리",
+            "body": "[[product_name]]의 고소한 매력을 떠올려 보세요.",
+            "cta": "바삭한 후라이드로"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]]에서 기억할 바삭함",
+            "body": "[[product_name]] 생각날 때 떠올릴 이름.",
+            "cta": "[[store_name]]으로 만나요"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "chicken-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "저녁치킨",
+        "product_name": "후라이드 치킨",
+        "price_text": "18,000원"
+      },
+      "mood": "vivid",
+      "product_features": "주문 후 조리. 뼈 또는 순살 선택. 포장 가능."
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "오늘 저녁엔 [[product_name]]",
+            "body": "주문 후 조리하는 후라이드로 저녁 메뉴를 골라봐요.",
+            "cta": "저녁 메뉴는 후라이드"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]]으로 고르는 바삭함",
+            "body": "[[product_name]], 뼈 또는 순살로 선택하세요.",
+            "cta": "[[product_name]] 골라요"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "바삭, 다음 한입이 생각나는 소리",
+            "body": "[[product_name]]의 바삭함을 포장으로도 만나세요.",
+            "cta": "바삭한 후라이드로"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]]에서 기억할 바삭함",
+            "body": "[[product_name]], 뼈와 순살 중 취향대로 골라요.",
+            "cta": "[[store_name]]으로 만나요"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "coffee-no-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "모퉁이커피",
+        "product_name": "아이스 아메리카노",
+        "price_text": "4,000원"
+      },
+      "mood": "minimal",
+      "product_features": null
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "쉬는 시간, 시원한 한 모금",
+            "body": "[[product_name]] 한 잔으로 잠깐의 틈을 만들어 봐요.",
+            "cta": "아이스 한 잔으로 쉬어요"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]], 오늘의 커피 선택",
+            "body": "커피가 당기는 시간엔 [[product_name]].",
+            "cta": "[[product_name]]로"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "시원하고 깔끔한 첫 모금",
+            "body": "[[product_name]]의 쌉싸름한 매력을 떠올려요.",
+            "cta": "시원한 아메리카노로"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]], 커피 생각나는 모퉁이",
+            "body": "[[product_name]] 한 잔과 기억해 둘 이름.",
+            "cta": "모퉁이에서 커피 한 잔"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "coffee-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "모퉁이커피",
+        "product_name": "아이스 아메리카노",
+        "price_text": "4,000원"
+      },
+      "mood": "minimal",
+      "product_features": "브라질산 원두. 산미가 낮은 편. 테이크아웃 가능."
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "쉬는 시간, 시원한 한 모금",
+            "body": "[[product_name]]로 쉬어가요. 산미는 낮은 편이에요.",
+            "cta": "아이스 한 잔으로 쉬어요"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]], 오늘의 커피 선택",
+            "body": "[[product_name]] 테이크아웃도 가능해요.",
+            "cta": "[[product_name]]로"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "시원하고 깔끔한 첫 모금",
+            "body": "[[product_name]], 브라질산 원두로 만나세요.",
+            "cta": "시원한 아메리카노로"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]], 커피 생각나는 모퉁이",
+            "body": "[[product_name]] 한 잔으로 기억할 [[store_name]].",
+            "cta": "모퉁이에서 커피 한 잔"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "cake-no-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "오후케이크",
+        "product_name": "딸기 케이크",
+        "price_text": "6,500원"
+      },
+      "mood": "premium",
+      "product_features": null
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "[[product_name]]로 쉬어가는 오후",
+            "body": "달콤함이 당기는 날, 잠시 쉬어가요.",
+            "cta": "오후엔 [[product_name]]"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]], 오늘의 달콤한 선택",
+            "body": "[[product_name]] 생각나는 날의 작은 제안.",
+            "cta": "[[product_name]]로 골라요"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "달콤하고 부드러운 딸기의 매력",
+            "body": "[[product_name]] 한입을 천천히 즐겨 보세요.",
+            "cta": "[[product_name]] 한입"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]], 딸기를 기억하는 오후",
+            "body": "[[product_name]] 먹고 싶은 날 떠올릴 이름.",
+            "cta": "[[store_name]]에서 만나요"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "cake-features",
+    "provenance": "human_authored_target_not_llm_output",
+    "input": {
+      "facts": {
+        "store_name": "오후케이크",
+        "product_name": "딸기 케이크",
+        "price_text": "6,500원"
+      },
+      "mood": "premium",
+      "product_features": "동물성 생크림 사용. 조각 판매. 예약 포장 가능."
+    },
+    "reference": {
+      "variants": [
+        {
+          "strategy": "emotional",
+          "copy": {
+            "headline": "[[product_name]]로 쉬어가는 오후",
+            "body": "조각으로 즐기는 케이크로 오후의 쉼을 골라봐요.",
+            "cta": "오후엔 [[product_name]]"
+          }
+        },
+        {
+          "strategy": "price",
+          "copy": {
+            "headline": "[[price_text]], 오늘의 달콤한 선택",
+            "body": "조각으로 즐기는 [[product_name]]예요.",
+            "cta": "[[product_name]]로 골라요"
+          }
+        },
+        {
+          "strategy": "visual",
+          "copy": {
+            "headline": "달콤하고 부드러운 딸기의 매력",
+            "body": "동물성 생크림을 사용한 [[product_name]]를 만나세요.",
+            "cta": "[[product_name]] 한입"
+          }
+        },
+        {
+          "strategy": "brand",
+          "copy": {
+            "headline": "[[store_name]], 딸기를 기억하는 오후",
+            "body": "[[product_name]] 예약 포장도 가능해요.",
+            "cta": "[[store_name]]에서 만나요"
+          }
+        }
+      ]
+    }
+  }
+]

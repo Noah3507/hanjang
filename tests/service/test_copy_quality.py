@@ -16,7 +16,11 @@ def test_fixed_advertising_copy_is_fact_bound_and_fixture_only():
         draft=InputDraft.model_validate({'facts':case['facts'],'mood':'warm','product_features':case['product_features']})
         before=draft.model_dump()
         result=validate_copy(json.dumps({'variants':case['variants']},ensure_ascii=False),draft)
-        assert len(result.variants)==4 and not review_ad_copy(result.variants)
+        assert len(result.variants)==4
+        # Historical Phase16 fixtures repeat bodies across strategies; the new
+        # advisory must identify that repetition, not certify these as LLM quality.
+        repeated=len({v.ad_copy.body for v in result.variants})<4
+        assert review_ad_copy(result.variants)==(['COPY_REPETITION_REVIEW'] if repeated else [])
         assert draft.model_dump()==before
         assert all('[[' not in t for v in result.variants for t in v.ad_copy.model_dump().values())
     mock=json.loads(MockCopyProvider().generate({}).text)
