@@ -1,4 +1,9 @@
-# Copy quality Phase 2: paid approval pending
+# Copy quality Phase 2: preparation protocol
+
+The separately approved two-call experiment completed on 2026-11-23.
+See [actual results and diagnosis](COPY_QUALITY_PHASE2_RESULTS.md).
+The commands below document the original gate; they are not permission to rerun.
+The selected plan's execution fence exists and the ledger is now at 10 calls.
 
 ## Fixed experiment
 

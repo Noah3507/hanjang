@@ -11,6 +11,25 @@ from app.services import copy_prompt,copy_openai
 from test_openai_validation import no_network
 
 
+@pytest.fixture(autouse=True)
+def isolated_git_history(monkeypatch):
+    """CI shallow checkouts need no historical fetch for synthetic safety tests.
+
+    The real CLI still extracts the pinned historical prompts. Here only the
+    git-show boundary is faked; AST parsing and all experiment guards still run.
+    These strings are test fixtures, never claimed as actual v5/v6 output.
+    """
+    fixture=(ab.ROOT/'tests/fixtures/copy/menu_quality_phase1.json').read_bytes()
+    def show(args,*,cwd):
+        assert cwd==ab.ROOT and args[:2]==['git','show']
+        if args[2]==ab.V6+':tests/fixtures/copy/menu_quality_phase1.json':return fixture
+        for ref,version in [(ab.V5,'copy-v5-sensory-allowed'),(ab.V6,'copy-v6-menu-identity')]:
+            if args[2]==ref+':backend/app/services/copy_prompt.py':
+                return f'PROMPT_VERSION={version!r}\nSYSTEM_PROMPT={f"synthetic test instructions {version}"!r}\n'.encode()
+        raise AssertionError('Unexpected historical read')
+    monkeypatch.setattr(ab.subprocess,'check_output',show)
+
+
 @pytest.fixture
 def prepared(tmp_path):
     ledger=tmp_path/'synthetic-ledger.json'
