@@ -56,7 +56,7 @@ def test_supplied_feature_words_and_price_placeholder_pass():
 
 
 def test_prompt_names_the_evidence_rule_and_still_fits_the_input_limit():
-    assert PROMPT_VERSION == 'copy-v5-sensory-allowed'
+    assert PROMPT_VERSION == 'copy-v6-menu-identity'
     assert '맛·식감 표현은 써도 된다' in SYSTEM_PROMPT and '입력에 같은 말이 있을 때만' in SYSTEM_PROMPT and '[[price_text]]' in SYSTEM_PROMPT
     typical = DRAFT.model_copy(update={'product_features': '가' * 300})
     assert input_bound(provider_payload(typical, {'visual_hints': []})) <= 6000

@@ -1,0 +1,1084 @@
+{
+  "baseline_ref": "c8cb74a",
+  "prompt_version": "copy-v6-menu-identity",
+  "paid_calls": 0,
+  "llm_before_after_comparison": "NOT RUN — requires separate paid approval",
+  "cases": [
+    {
+      "case_id": "jajang-no-features",
+      "input": {
+        "facts": {
+          "store_name": "골목반점",
+          "product_name": "짜장면",
+          "price_text": "7,000원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "warm",
+        "product_features": null,
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4456,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "점심엔 짜장면 한 그릇",
+              "body": "쫄깃한 한 젓가락으로 쉬어가는 점심.",
+              "cta": "오늘 점심은 짜장면"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "7,000원, 짜장면 한 그릇",
+              "body": "한 끼 메뉴를 고민한다면 오늘은 짜장면.",
+              "cta": "짜장면으로 골라요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "쫄깃하게 감기는 한 젓가락",
+              "body": "짜장면 생각나는 날, 고소한 한입을 떠올려요.",
+              "cta": "짜장면 한 젓가락"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "골목반점, 짜장면 생각나는 이름",
+              "body": "짜장면 먹고 싶은 날 기억해 둘 곳.",
+              "cta": "골목반점에서 만나요"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "jajang-features",
+      "input": {
+        "facts": {
+          "store_name": "골목반점",
+          "product_name": "짜장면",
+          "price_text": "7,000원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "warm",
+        "product_features": "주문 후 면을 삶아요. 곱빼기 선택 가능. 포장 가능.",
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4522,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "점심엔 짜장면 한 그릇",
+              "body": "주문 후 삶는 면으로 점심 한 그릇을 준비해요.",
+              "cta": "오늘 점심은 짜장면"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "7,000원, 짜장면 한 그릇",
+              "body": "곱빼기도 선택할 수 있어요. 포장도 가능해요.",
+              "cta": "짜장면으로 골라요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "쫄깃하게 감기는 한 젓가락",
+              "body": "한 젓가락의 쫄깃함을 떠올리며, 포장으로도 만나세요.",
+              "cta": "짜장면 한 젓가락"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "골목반점, 짜장면 생각나는 이름",
+              "body": "짜장면이 생각나는 날, 포장도 가능해요.",
+              "cta": "골목반점에서 만나요"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "chicken-no-features",
+      "input": {
+        "facts": {
+          "store_name": "저녁치킨",
+          "product_name": "후라이드 치킨",
+          "price_text": "18,000원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "vivid",
+        "product_features": null,
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4468,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "오늘 저녁엔 후라이드 치킨",
+              "body": "바삭한 한입이 생각나는 저녁, 식탁의 즐거운 제안.",
+              "cta": "저녁 메뉴는 후라이드"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "18,000원으로 고르는 바삭함",
+              "body": "후라이드 치킨 먹고 싶은 날의 선택.",
+              "cta": "후라이드 치킨 골라요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "바삭, 다음 한입이 생각나는 소리",
+              "body": "후라이드 치킨의 고소한 매력을 떠올려 보세요.",
+              "cta": "바삭한 후라이드로"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "저녁치킨에서 기억할 바삭함",
+              "body": "후라이드 치킨 생각날 때 떠올릴 이름.",
+              "cta": "저녁치킨으로 만나요"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "chicken-features",
+      "input": {
+        "facts": {
+          "store_name": "저녁치킨",
+          "product_name": "후라이드 치킨",
+          "price_text": "18,000원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "vivid",
+        "product_features": "주문 후 조리. 뼈 또는 순살 선택. 포장 가능.",
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4525,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "오늘 저녁엔 후라이드 치킨",
+              "body": "주문 후 조리하는 후라이드로 저녁 메뉴를 골라봐요.",
+              "cta": "저녁 메뉴는 후라이드"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "18,000원으로 고르는 바삭함",
+              "body": "후라이드 치킨, 뼈 또는 순살로 선택하세요.",
+              "cta": "후라이드 치킨 골라요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "바삭, 다음 한입이 생각나는 소리",
+              "body": "후라이드 치킨의 바삭함을 포장으로도 만나세요.",
+              "cta": "바삭한 후라이드로"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "저녁치킨에서 기억할 바삭함",
+              "body": "후라이드 치킨, 뼈와 순살 중 취향대로 골라요.",
+              "cta": "저녁치킨으로 만나요"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "coffee-no-features",
+      "input": {
+        "facts": {
+          "store_name": "모퉁이커피",
+          "product_name": "아이스 아메리카노",
+          "price_text": "4,000원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "minimal",
+        "product_features": null,
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4478,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "쉬는 시간, 시원한 한 모금",
+              "body": "아이스 아메리카노 한 잔으로 잠깐의 틈을 만들어 봐요.",
+              "cta": "아이스 한 잔으로 쉬어요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "4,000원, 오늘의 커피 선택",
+              "body": "커피가 당기는 시간엔 아이스 아메리카노.",
+              "cta": "아이스 아메리카노로"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "시원하고 깔끔한 첫 모금",
+              "body": "아이스 아메리카노의 쌉싸름한 매력을 떠올려요.",
+              "cta": "시원한 아메리카노로"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "모퉁이커피, 커피 생각나는 모퉁이",
+              "body": "아이스 아메리카노 한 잔과 기억해 둘 이름.",
+              "cta": "모퉁이에서 커피 한 잔"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "coffee-features",
+      "input": {
+        "facts": {
+          "store_name": "모퉁이커피",
+          "product_name": "아이스 아메리카노",
+          "price_text": "4,000원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "minimal",
+        "product_features": "브라질산 원두. 산미가 낮은 편. 테이크아웃 가능.",
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4542,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "쉬는 시간, 시원한 한 모금",
+              "body": "아이스 아메리카노로 쉬어가요. 산미는 낮은 편이에요.",
+              "cta": "아이스 한 잔으로 쉬어요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "4,000원, 오늘의 커피 선택",
+              "body": "아이스 아메리카노 테이크아웃도 가능해요.",
+              "cta": "아이스 아메리카노로"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "시원하고 깔끔한 첫 모금",
+              "body": "아이스 아메리카노, 브라질산 원두로 만나세요.",
+              "cta": "시원한 아메리카노로"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "모퉁이커피, 커피 생각나는 모퉁이",
+              "body": "아이스 아메리카노 한 잔으로 기억할 모퉁이커피.",
+              "cta": "모퉁이에서 커피 한 잔"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "cake-no-features",
+      "input": {
+        "facts": {
+          "store_name": "오후케이크",
+          "product_name": "딸기 케이크",
+          "price_text": "6,500원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "premium",
+        "product_features": null,
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4469,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "딸기 케이크로 쉬어가는 오후",
+              "body": "달콤함이 당기는 날, 잠시 쉬어가요.",
+              "cta": "오후엔 딸기 케이크"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "6,500원, 오늘의 달콤한 선택",
+              "body": "딸기 케이크 생각나는 날의 작은 제안.",
+              "cta": "딸기 케이크로 골라요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "달콤하고 부드러운 딸기의 매력",
+              "body": "딸기 케이크 한입을 천천히 즐겨 보세요.",
+              "cta": "딸기 케이크 한입"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "오후케이크, 딸기를 기억하는 오후",
+              "body": "딸기 케이크 먹고 싶은 날 떠올릴 이름.",
+              "cta": "오후케이크에서 만나요"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    },
+    {
+      "case_id": "cake-features",
+      "input": {
+        "facts": {
+          "store_name": "오후케이크",
+          "product_name": "딸기 케이크",
+          "price_text": "6,500원",
+          "address": null,
+          "instagram_handle": null
+        },
+        "mood": "premium",
+        "product_features": "동물성 생크림 사용. 조각 판매. 예약 포장 가능.",
+        "use_address_for_copy": false
+      },
+      "input_bound_bytes": 4531,
+      "mock_provenance": "unchanged MockCopyProvider, not LLM",
+      "reference_provenance": "human_authored_target_not_llm_output",
+      "mock_before": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "mock_after": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "일상에 더하는 작은 여유",
+              "body": "오늘의 한순간을 나만의 시간으로 만나보세요.",
+              "cta": "한순간을 골라보세요"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "가격을 확인하고 선택하세요",
+              "body": "표시된 상품과 가격을 함께 살펴보세요.",
+              "cta": "상품 정보를 확인하세요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "사진 속 상품을 만나보세요",
+              "body": "직접 올린 사진으로 상품을 살펴보세요.",
+              "cta": "사진을 확인하세요"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "우리 가게와 만나는 시간",
+              "body": "가게의 이름과 함께 상품을 기억해 보세요.",
+              "cta": "가게를 만나보세요"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "variants": [
+          {
+            "strategy": "emotional",
+            "copy": {
+              "headline": "딸기 케이크로 쉬어가는 오후",
+              "body": "조각으로 즐기는 케이크로 오후의 쉼을 골라봐요.",
+              "cta": "오후엔 딸기 케이크"
+            }
+          },
+          {
+            "strategy": "price",
+            "copy": {
+              "headline": "6,500원, 오늘의 달콤한 선택",
+              "body": "조각으로 즐기는 딸기 케이크예요.",
+              "cta": "딸기 케이크로 골라요"
+            }
+          },
+          {
+            "strategy": "visual",
+            "copy": {
+              "headline": "달콤하고 부드러운 딸기의 매력",
+              "body": "동물성 생크림을 사용한 딸기 케이크를 만나세요.",
+              "cta": "딸기 케이크 한입"
+            }
+          },
+          {
+            "strategy": "brand",
+            "copy": {
+              "headline": "오후케이크, 딸기를 기억하는 오후",
+              "body": "딸기 케이크 예약 포장도 가능해요.",
+              "cta": "오후케이크에서 만나요"
+            }
+          }
+        ]
+      },
+      "reference_old_validator": "passed",
+      "mock_warnings": [
+        "COPY_SERVICE_LANGUAGE_REVIEW"
+      ],
+      "reference_warnings": []
+    }
+  ],
+  "mock_headline_counts": {
+    "일상에 더하는 작은 여유": 8,
+    "가격을 확인하고 선택하세요": 8,
+    "사진 속 상품을 만나보세요": 8,
+    "우리 가게와 만나는 시간": 8
+  },
+  "validator_probes": [
+    {
+      "authored_probe": "매일 마시고 싶은 [[product_name]]",
+      "before": "COPY_FACTS_VIOLATION",
+      "after": "passed"
+    },
+    {
+      "authored_probe": "매일 먹고 싶은 한 조각",
+      "before": "COPY_FACTS_VIOLATION",
+      "after": "passed"
+    },
+    {
+      "authored_probe": "매일 갓 볶는 원두",
+      "before": "COPY_FACTS_VIOLATION",
+      "after": "COPY_FACTS_VIOLATION"
+    },
+    {
+      "authored_probe": "매일 마시고 싶은 수제 커피",
+      "before": "COPY_FACTS_VIOLATION",
+      "after": "COPY_FACTS_VIOLATION"
+    }
+  ]
+}
