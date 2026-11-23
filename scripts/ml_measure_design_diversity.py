@@ -82,18 +82,30 @@ def background_colour(image: Image.Image) -> list[int]:
 
 def between_products(ads: list[dict], clip: dict | None, background: dict) -> dict:
     by_template = defaultdict(list)
+    kind = {}
     for ad in ads:
         by_template[ad['template_id']].append(ad['file'])
+        kind[ad['file']] = ad.get('kind')
     clip_all, colour_all, per_template = [], [], {}
+    by_pair = {'same_kind': ([], []), 'different_kind': ([], [])}
     for template in sorted(by_template):
         files = sorted(by_template[template])
-        c = [cosine_distance(clip[a], clip[b]) for a, b in combinations(files, 2)] if clip else []
-        e = [delta_e(background[a], background[b]) for a, b in combinations(files, 2)]
+        c, e = [], []
+        for a, b in combinations(files, 2):
+            group = by_pair['same_kind' if kind[a] is not None and kind[a] == kind[b] else 'different_kind']
+            e.append(delta_e(background[a], background[b]))
+            group[1].append(e[-1])
+            if clip:
+                c.append(cosine_distance(clip[a], clip[b]))
+                group[0].append(c[-1])
         clip_all += c
         colour_all += e
         per_template[template] = {'products': len(files), 'clip_distance': summary(c), 'background_delta_e': summary(e)}
     return {'clip_distance': summary(clip_all) if clip else 'not_measured (no --bundle)',
-            'background_delta_e': summary(colour_all), 'per_template': per_template}
+            'background_delta_e': summary(colour_all),
+            'by_kind_pair': {name: {'clip_distance': summary(c) if clip else None, 'background_delta_e': summary(e)}
+                             for name, (c, e) in by_pair.items()},
+            'per_template': per_template}
 
 
 def within_product(ads: list[dict], clip: dict, scores: dict | None, gap: float | None) -> dict:

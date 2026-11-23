@@ -59,9 +59,22 @@ def test_identical_ads_have_no_diversity():
     between = measure.between_products(rows, same, colour)
     assert between['clip_distance']['max'] == 0 and between['background_delta_e']['max'] == 0
     assert between['per_template']['price_a']['products'] == 3
+    assert between['by_kind_pair']['different_kind']['background_delta_e']['n'] == 4 * 3
     within = measure.within_product(rows, same, {r['file']: 0.0 for r in rows}, 0.2)
     assert within['clip_distance']['n'] == 3 * 6
     assert within['close_call_pairs'] == {'pairs': 18, 'close': 18, 'share': 1.0}
+
+
+def test_kind_pairs_are_split():
+    rows = ads()
+    for r in rows:
+        r['kind'] = 'drink' if r['product'] in ('cake', 'coffee') else 'noodle_soup'
+    colour = {r['file']: [250, 220, 230] if r['product'] == 'cake' else [60, 40, 30] for r in rows}
+    result = measure.between_products(rows, None, colour)['by_kind_pair']
+    assert result['same_kind']['background_delta_e']['n'] == 4
+    assert result['different_kind']['background_delta_e']['n'] == 8
+    assert result['same_kind']['background_delta_e']['min'] > 50
+    assert result['different_kind']['clip_distance'] is None
 
 
 def test_score_gap_counts_only_close_pairs():
