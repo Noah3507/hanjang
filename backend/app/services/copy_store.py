@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from hashlib import sha256
 import json
+import logging
 from threading import RLock
 import time
 import uuid
@@ -11,6 +12,8 @@ from app.services.copy_validation import validate_copy
 from app.services.copy_glyphs import POLICY_VERSION, supported_codepoints
 from app.services.copy_contract import CopyFailure, CopyProvider, ProviderUsage
 from app.services.uploads import UploadError
+
+log = logging.getLogger('hanjang.copy')
 
 def digest(value):
     return sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
@@ -108,6 +111,9 @@ class CopyStore:
                 except CopyFailure as failure:
                     error = failure
                     metric.error_code = failure.code
+                    if failure.reason:
+                        # Server log only: the rule and token, never copy text or user input.
+                        log.warning('copy attempt %s rejected: %s (%s)', attempt, failure.code, failure.reason)
                     if failure.usage is not None:
                         self.apply_usage(metric, failure.usage)
                 finally:
