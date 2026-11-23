@@ -17,5 +17,5 @@ footer .cta{font-size:32px}footer .period{font-size:28px}.price_c footer .cta,.p
 .brand_a .store{width:570px!important;height:300px!important;font-size:92px!important}
 .brand_a .product{left:70px!important;top:520px!important;width:570px!important;height:200px!important}
 .brand_a .headline{top:730px!important}.brand_a .body{top:850px!important;height:120px!important}
-.brand_c .headline,.brand_c .body{background:#143d30;padding:3px 8px}
+.brand_c .headline,.brand_c .body{background:var(--bg,#143d30);padding:3px 8px}
 .visual_b .photo{border-width:16px!important}
