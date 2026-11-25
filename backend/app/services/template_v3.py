@@ -10,7 +10,6 @@ import shutil
 import subprocess
 from uuid import uuid4
 
-from fontTools.ttLib import TTFont
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from PIL import Image, ImageOps
 
@@ -87,32 +86,21 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         t not in REGISTRY or not REGISTRY[t]['implemented'] for t in ids
     ):
         raise RenderFailure('RENDER_INVALID_TEMPLATE')
-    text = ''.join(data.text_values().values())
-    faces = []
-    for filename, expected, weight in [('NotoSansKR-Regular.otf', FONT_HASH, 400),
-                                        ('NotoSansKR-Bold.otf', BOLD_HASH, 700)]:
-        path = ROOT / 'templates/fonts' / filename
-        try:
-            font = path.read_bytes()
-            if sha256(font).hexdigest() != expected:
-                raise ValueError('font hash')
-            with TTFont(BytesIO(font)) as face:
-                if any(ord(c) not in face.getBestCmap() for c in text):
-                    raise RenderFailure('RENDER_UNSUPPORTED_GLYPH')
-            faces.append(f"@font-face{{font-family:HanjangNoto;src:url(data:font/otf;base64,{base64.b64encode(font).decode()});font-weight:{weight};font-display:block}}")
-        except RenderFailure:
-            raise
-        except Exception:
-            raise RenderFailure('RENDER_FONT_UNAVAILABLE') from None
+    from app.services.render_fonts import load_fonts, font_identity
+    template_css = ''.join((ROOT/'templates/v3'/name).read_text(encoding='utf-8')
+                           for name in ('price.css','collection.css','quality.css'))
+    # Embed only requested families (plus the existing fallback). Every asset is
+    # still integrity checked; inactive 24MB serif bytes need not inflate pages.
+    families = {'HanjangNoto'} | {f for f in ('Noto Serif KR','Pretendard') if f in template_css}
+    faces, _ = load_fonts(''.join(data.text_values().values()), families)
+    font_fingerprint = font_identity()
     from app.services.product_geometry import prepare_product
     prepared,photo_info=prepare_product(photo)
     transparent=photo_info['transparent'];photo_fit='contain'
     uri = 'data:image/png;base64,' + base64.b64encode(prepared).decode()
     env = Environment(loader=FileSystemLoader(ROOT/'templates/v3'),
                       autoescape=select_autoescape(['html']), undefined=StrictUndefined)
-    css = (ROOT/'templates/v3/price.css').read_text(encoding='utf-8')
-    css += (ROOT/'templates/v3/collection.css').read_text(encoding='utf-8') + ''.join(faces)
-    css += (ROOT/'templates/v3/quality.css').read_text(encoding='utf-8')
+    css = template_css + faces
     pages = [{'template_id': t, 'html': env.get_template(t+'.html').render(
         css=css + (data.style_context.page(t).css() if data.style_context else ''),
         data=data, photo=uri, photo_fit=photo_fit, transparent=transparent, template_id=t)} for t in ids]
@@ -135,7 +123,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         rows = result['results']
         if [r['template_id'] for r in rows] != ids:
             raise RenderFailure('RENDER_INVALID_RESULT')
-        snapshot = sha256(json.dumps(asdict(data), ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
+        snapshot = sha256(json.dumps({'data':asdict(data),'font_fingerprint':font_fingerprint}, ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
         for row in rows:
             row['png'] = opaque_png(base64.b64decode(row['png'], validate=True))
             attach_contrast_evidence(row)
@@ -144,6 +132,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
             row.update(candidate_id=candidate_id, asset_id=asset_id, revision=1,
                        strategy=REGISTRY[row['template_id']]['strategy'], template_version=VERSION, input_snapshot=snapshot,
                        png_sha256=sha256(row['png']).hexdigest())
+            row['font_fingerprint'] = font_fingerprint
             row['style_snapshot'] = data.style_context.snapshot([row['template_id']]) if data.style_context else {}
             row['diagnostics'] = measured_diagnostics(candidate_id, asset_id, row['strategy'], row['measurement'], row['png_sha256'])
         return rows

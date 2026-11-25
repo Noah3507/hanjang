@@ -14,6 +14,7 @@ try {
     try {
       await page.setContent(item.html, { waitUntil: 'load' })
       await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())) })
+      if (await page.evaluate(() => [...document.fonts].some(f => f.status === 'error'))) throw Error('RENDER_FONT_UNAVAILABLE')
       const placement=task.photo_info?await page.evaluate(info=>{
         const frame=document.querySelector('.photo'),img=frame.querySelector('img'),style=getComputedStyle(frame)
         const w=frame.clientWidth,h=frame.clientHeight,pw=img.naturalWidth,ph=img.naturalHeight
@@ -65,8 +66,10 @@ try {
           }
           const s = getComputedStyle(e), r = document.createRange(); r.selectNodeContents(e)
           const rects = [...r.getClientRects()].map(r => ({ x: r.x, y: r.y, width: r.width, height: r.height }))
-          steps.push({ field: e.dataset.field, stage, fits: fit })
+          steps.push({ field: e.dataset.field, stage, fits: fit, initial_font_size_px:size,
+            final_font_size_px:parseFloat(s.fontSize), size_ratio:parseFloat(s.fontSize)/size })
           return { ...box(e), field: e.dataset.field, text: e.textContent, font_size_px: parseFloat(s.fontSize),
+            initial_font_size_px:size, size_ratio:parseFloat(s.fontSize)/size,
             font_weight: Number(s.fontWeight), font_family: s.fontFamily, foreground: s.color, background: s.backgroundColor,
             letter_spacing: s.letterSpacing, line_height: s.lineHeight, line_count: new Set(rects.map(r => Math.round(r.y))).size,
             glyph_rects: rects, overflow: !fit, contrast_eligible: !e.closest('.stamp') && !e.closest('.badge') && !e.closest('header'),

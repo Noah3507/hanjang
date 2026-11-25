@@ -56,6 +56,19 @@ def test_four_same_strategy_identity_cache_and_v2_preserved(designs):
     assert not {x['candidate_id'] for x in s['candidates']}&{x['candidate_id'] for x in other['candidates']}
 
 
+def test_font_fingerprint_change_invalidates_design_rank_and_download(designs,monkeypatch):
+    app,c,h,m,b,body,v2=designs
+    p,s=generate(designs)
+    assert c.post(p+'/ranking',headers=h,json=snap(s)).status_code==200
+    monkeypatch.setattr('app.services.design_store.font_identity',lambda:'changed-font-assets')
+    latest=c.get(p,headers=h).json()
+    assert not latest['is_current'] and latest['ranking'] is None
+    candidate=s['candidates'][0]
+    assert c.get(p+'/candidates/'+candidate['candidate_id']+'/download',headers=h,
+                 params={'format':'png',**snap(s)}).status_code==409
+    assert c.get(b+'/rendering',headers=h).json()==v2
+
+
 def test_edit_price_revision_stale_rank_download_and_original_facts(designs):
     app,c,h,m,b,body,v2=designs;p,s=generate(designs);first=s['candidates'][0]
     ranked=c.post(p+'/ranking',headers=h,json=snap(s)).json()

@@ -19,6 +19,7 @@ from app.services.uploads import UploadError
 from app.ml_adapter.mock_ranker import ordered_items
 from app.services.ranking_guidance import close_call_gap
 from app.services.design_style_context import resolve_bundle
+from app.services.render_fonts import font_identity
 
 
 @dataclass
@@ -43,7 +44,7 @@ class DesignStore:
         source = self.renders.get(owner,job)
         styles = resolve_bundle(record,asset,draft,tuple(REGISTRY))
         key = digest({'v2':source.model_dump(mode='json',exclude={'measurements'}), 'version':VERSION,
-                      'asset_hash':asset.sha256,'styles':styles.snapshot()})
+                      'asset_hash':asset.sha256,'styles':styles.snapshot(),'fonts':font_identity()})
         return record,asset,draft,copy,source,key,styles
 
     def check_ready(self, source):
