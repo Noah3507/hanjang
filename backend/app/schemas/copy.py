@@ -66,6 +66,7 @@ class CopyResponse(StrictModel):
     mood: str
     product_features: str | None
     use_address_for_copy: bool
+    ad_goal: Literal['menu_promotion', 'store_visit', 'order'] = 'menu_promotion'
     provider: Literal['mock', 'openai']
     model: str
     prompt_version: str = 'copy-v1'

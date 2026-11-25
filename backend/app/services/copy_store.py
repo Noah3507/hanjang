@@ -23,7 +23,8 @@ class CopyStore:
         self.uploads, self.analysis, self.provider = uploads, analysis, provider
         self.lock = RLock()
         self.active = False
-        self.max_retries = max_retries
+        # New quality profile never spends a second request to repair its output.
+        self.max_retries = 0 if getattr(provider,'prompt_profile',None)=='v7' else max_retries
 
     @contextmanager
     def locked(self):
@@ -39,12 +40,12 @@ class CopyStore:
         draft = record.draft.model_copy(deep=True)
         context = self.analysis.context(owner, job)
         try:
-            payload = provider_payload(draft, context)
+            payload = provider_payload(draft, context, getattr(self.provider,'prompt_profile',None) or 'v6')
         except CopyFailure:
             raise UploadError(422, 'COPY_PRIVATE_INPUT', '전송 제외된 주소나 Instagram이 다른 입력에 포함돼 있습니다. 상품 특징을 확인해 주세요.') from None
         hash_input = digest(draft.model_dump(mode='json'))
         key = digest({'asset': asset.asset_id, 'input': hash_input, 'payload': payload,
-                      'provider': self.provider.name, 'model': self.provider.model, 'prompt': PROMPT_VERSION, 'glyphs': POLICY_VERSION})
+                      'provider': self.provider.name, 'model': self.provider.model, 'prompt': getattr(self.provider,'prompt_version',PROMPT_VERSION), 'glyphs': POLICY_VERSION})
         return record, photo, asset, draft, payload, hash_input, key
 
     def blank(self, job, record, asset, draft, payload, hash_input):
@@ -52,7 +53,7 @@ class CopyStore:
             source_asset_id=asset.asset_id, input_hash=hash_input, is_current=True,
             facts=draft.facts.model_copy(deep=True), mood=draft.mood, product_features=draft.product_features,
             use_address_for_copy=draft.use_address_for_copy, provider=self.provider.name, model=self.provider.model,
-            prompt_version=PROMPT_VERSION,
+            prompt_version=getattr(self.provider,'prompt_version',PROMPT_VERSION),ad_goal=draft.ad_goal,
             analysis_used=bool(payload['visual_hints']), expires_at=record.upload.expires_at)
 
     def get(self, owner, job):
@@ -78,7 +79,7 @@ class CopyStore:
                 return self.get(owner, job), None
             if self.active:
                 raise UploadError(503, 'COPY_BUSY', '다른 카피 작업이 진행 중입니다. 잠시 후 다시 시도해 주세요.')
-            if input_bound(payload) > 6000:
+            if input_bound(payload, getattr(self.provider,'instructions',None)) > 6000:
                 raise UploadError(422, 'COPY_INPUT_LIMIT', '입력과 분석 단서가 요청 한도를 초과했습니다. 상품 특징을 줄여 주세요.')
             try:
                 supported_codepoints()
@@ -135,7 +136,7 @@ class CopyStore:
                     response.status, response.variants = 'completed', variants
                     if response.provider=='openai':
                         from app.services.copy_quality import review_ad_copy
-                        response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants)]))
+                        response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants,draft.ad_goal)]))
         except Exception:
             with self.locked():
                 try:

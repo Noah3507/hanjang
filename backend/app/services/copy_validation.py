@@ -11,7 +11,7 @@ CLAIMS = re.compile(
     r'할인|이벤트|특가|무료|증정|쿠폰|한정|국산|국내산|수입산|원산지|유기농|무첨가|저당|'
     r'면역|다이어트|항암|치료|효능|신선|매일|수제|최고|인기|베스트|'
     r'치즈|우유|버터|밀가루|꿀|딸기|초콜릿|견과|크림|'
-    r'제주|한우|100%|단백질|저칼로리|인증|수상|특허|완치|보장|배송|판매량|누적판매|재고|완판|품절|최저가|가성비|저렴')
+    r'제주|한우|100%|단백질|저칼로리|인증|수상|특허|완치|보장|배송|배달|전화|온라인\s*주문|판매량|누적판매|재고|완판|품절|최저가|가성비|저렴')
 # General taste and texture words (맛있다, 풍미, 진한, 고소, 달콤, 바삭, 쫄깃, 촉촉, 부드러운, 담백, 매콤) are allowed
 # without user input: they describe an impression, not a checkable fact, and let copy be written from the photo alone.
 

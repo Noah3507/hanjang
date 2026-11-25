@@ -31,6 +31,7 @@ class InputDraft(StrictModel):
     mood: Literal["warm", "minimal", "vivid", "premium"]
     product_features: str | None = Field(default=None, max_length=500)
     use_address_for_copy: bool = False
+    ad_goal: Literal['menu_promotion', 'store_visit', 'order'] = 'menu_promotion'
 
     @field_validator('product_features')
     @classmethod
@@ -65,4 +66,5 @@ class DraftResponse(BaseModel):
     mood: Literal["warm", "minimal", "vivid", "premium"]
     product_features: str | None = None
     use_address_for_copy: bool = False
+    ad_goal: Literal['menu_promotion', 'store_visit', 'order'] = 'menu_promotion'
     expires_at: datetime
