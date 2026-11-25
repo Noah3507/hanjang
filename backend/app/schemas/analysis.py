@@ -48,6 +48,11 @@ class AnalysisError(StrictModel):
     code: str
     message: str
 
+class ProductKindHint(StrictModel):
+    label: Literal['food', 'drink', 'dessert', 'nonfood']
+    similarity: float = Field(ge=-1, le=1, allow_inf_nan=False)
+    margin: float = Field(ge=0, le=2, allow_inf_nan=False)
+
 class AnalysisResponse(StrictModel):
     job_id: str
     operation: Literal['photo_analysis'] = 'photo_analysis'
@@ -62,3 +67,4 @@ class AnalysisResponse(StrictModel):
     error: AnalysisError | None = None
     clip: ClipResult = Field(default_factory=ClipResult)
     palette: Palette = Field(default_factory=Palette)
+    product_kind_hint: ProductKindHint | None = None

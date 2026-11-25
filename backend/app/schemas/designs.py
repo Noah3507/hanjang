@@ -54,6 +54,7 @@ class DesignResponse(StrictModel):
     source_asset_id: str
     copy_key: str | None
     template_version: str
+    style_snapshot: dict[str, dict] = Field(default_factory=dict)
     promotion: Promotion = Field(default_factory=Promotion)
     is_current: bool = False
     editing: bool = False

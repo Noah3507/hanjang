@@ -3,6 +3,7 @@ from threading import RLock
 from app.schemas.analysis import AnalysisResponse, AnalysisError, ClipResult
 from app.services.analysis_palette import extract_palette
 from app.services.uploads import UploadError
+from app.services.analysis_kind import product_kind_hint
 
 class AnalysisStore:
     def __init__(self, uploads, executor):
@@ -27,6 +28,8 @@ class AnalysisStore:
                     photo_source=state.photo_source, is_current=True, expires_at=record.upload.expires_at,
                     status_url=f'/api/v1/jobs/{job}/photo-analysis')
             response = cached.model_copy(deep=True)
+            # Derive on read too, so older cached responses need no migration.
+            response.product_kind_hint = product_kind_hint(response.clip) if response.status == 'completed' else None
             response.is_current = response.source_asset_id == asset.asset_id
             return response
 
@@ -73,6 +76,7 @@ class AnalysisStore:
                 response = record.analyses[asset]
                 response.clip, response.palette, response.warnings = clip, palette, warnings
                 response.status = 'completed' if palette.status == 'available' or clip.status == 'available' else 'failed'
+                response.product_kind_hint = product_kind_hint(clip) if response.status == 'completed' else None
                 if response.status == 'failed':
                     response.error = AnalysisError(code='ANALYSIS_UNAVAILABLE', message='분석 가능한 결과가 없습니다. 사진과 입력은 유지됩니다.')
         except Exception:

@@ -18,6 +18,7 @@ from app.services.export_service import PdfExecution
 from app.services.uploads import UploadError
 from app.ml_adapter.mock_ranker import ordered_items
 from app.services.ranking_guidance import close_call_gap
+from app.services.design_style_context import resolve_bundle
 
 
 @dataclass
@@ -40,9 +41,10 @@ class DesignStore:
     def context(self, owner, job):
         record, photo, asset, draft, copy, _ = self.renders.snapshot(owner,job)
         source = self.renders.get(owner,job)
+        styles = resolve_bundle(record,asset,draft,tuple(REGISTRY))
         key = digest({'v2':source.model_dump(mode='json',exclude={'measurements'}), 'version':VERSION,
-                      'asset_hash':asset.sha256})
-        return record,asset,draft,copy,source,key
+                      'asset_hash':asset.sha256,'styles':styles.snapshot()})
+        return record,asset,draft,copy,source,key,styles
 
     def check_ready(self, source):
         if source.status!='completed' or not source.is_current:
@@ -50,7 +52,7 @@ class DesignStore:
 
     def get(self, owner, job, strategy):
         with self.renders.locked():
-            record,asset,_,copy,source,key=self.context(owner,job)
+            record,asset,_,copy,source,key,_=self.context(owner,job)
             entry=record.design_sets.get(strategy)
             if not entry:
                 return DesignResponse(job_id=job,strategy=strategy,status='pending',source_revision=source.revision,
@@ -76,7 +78,7 @@ class DesignStore:
 
     def start(self, owner, job, strategy, body):
         with self.renders.locked():
-            record,asset,draft,copy,source,key=self.context(owner,job)
+            record,asset,draft,copy,source,key,styles=self.context(owner,job)
             self.check_ready(source)
             if (source.revision!=body.expected_render_revision or asset.asset_id!=body.expected_source_asset_id
                 or not copy or copy.copy_key!=body.expected_copy_key):
@@ -91,7 +93,7 @@ class DesignStore:
                 raise UploadError(503,'RENDER_BUSY','다른 광고 처리 중입니다. 잠시 후 이 전략을 다시 요청해 주세요.')
             selected=next(c for c in source.candidates if c.strategy==strategy)
             data=TemplateInput(draft.facts.store_name,draft.facts.product_name,draft.facts.price_text,
-                selected.ad_copy.headline,selected.ad_copy.body,selected.ad_copy.cta,**commercial)
+                selected.ad_copy.headline,selected.ad_copy.body,selected.ad_copy.cta,**commercial,style_context=styles)
             try:data.validate()
             except RenderFailure as e:raise UploadError(422,e.code,'가격·할인율·통화·행사 기간을 확인해 주세요.') from None
             raw,_=self.uploads.read_asset(owner,asset.asset_id)
@@ -102,6 +104,7 @@ class DesignStore:
                 source_revision=source.revision,source_asset_id=asset.asset_id,copy_key=copy.copy_key,
                 template_version=VERSION,is_current=True,mock_copy=source.mock_copy,expires_at=record.upload.expires_at)
             response.promotion=body.promotion.model_copy(deep=True)
+            response.style_snapshot=styles.snapshot([f'{strategy}_{c}' for c in 'abcd'])
             entry=DesignEntry(key,response,{f'{strategy}_{c}':data for c in 'abcd'})
             record.design_sets[strategy]=entry
             def abandoned():
@@ -111,7 +114,8 @@ class DesignStore:
 
     def identity(self, response):
         return digest({'source':response.source_asset_id,'copy':response.copy_key,'revision':response.revision,
-            'version':response.template_version,'candidates':[c.model_dump(mode='json',by_alias=True) for c in response.candidates]})
+            'version':response.template_version,'styles':response.style_snapshot,
+            'candidates':[c.model_dump(mode='json',by_alias=True) for c in response.candidates]})
 
     def current(self,owner,job,strategy,body):
         response=self.get(owner,job,strategy)
@@ -158,7 +162,7 @@ class DesignStore:
                         raise UploadError(422,'V3_PRICE_REVIEW_REQUIRED','금액과 통화를 확인해 주세요. 원문을 자동 변환하지 않습니다.') from None
             try:data.validate()
             except RenderFailure as e:raise UploadError(422,e.code,'가격과 기존 할인 정보의 정합성을 확인해 주세요.') from None
-            _,asset,draft,_,_,_=self.context(owner,job)
+            _,asset,draft,_,_,_,_=self.context(owner,job)
             raw,_=self.uploads.read_asset(owner,asset.asset_id)
             if sha256(raw).hexdigest()!=asset.sha256:raise UploadError(409,'V3_ASSET_CHANGED','선택 사진이 변경됐습니다.')
             ticket=uuid4().hex;entry.edit_ticket=ticket
@@ -179,7 +183,7 @@ class DesignStore:
             if [r['template_id'] for r in results]!=ids:raise RenderFailure('RENDER_INVALID_RESULT')
             with self.renders.locked():
                 if not self.renders.slot.owns(lease):return
-                record,asset,_,_,source,key=self.context(owner,job)
+                record,asset,_,_,source,key,_=self.context(owner,job)
                 if key!=entry.source_key or not source.is_current:raise RenderFailure('V3_SOURCE_CHANGED')
                 if edit:
                     old=record.design_sets[strategy]

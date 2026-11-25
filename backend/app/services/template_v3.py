@@ -1,5 +1,5 @@
 """Opt-in local template renderer. Does not replace the four-strategy API."""
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field, fields
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
@@ -17,6 +17,7 @@ from PIL import Image, ImageOps
 from app.services.render_execution import ROOT, FONT_HASH, RenderFailure, opaque_png, rgb
 from app.services.diagnostics_evidence import attach_contrast_evidence
 from app.services.diagnostics_engine import analyze
+from app.services.design_style_context import StyleBundle
 
 VERSION = 'ad-templates-v3-alpha-quality-3'
 BOLD_HASH = '5a6ceb287ed2fc6cfc6213144ebea68cbd94b20fc9eb873d8486493bf02d9bda'
@@ -59,9 +60,13 @@ class TemplateInput:
     original_price: str = ''
     promotion_text: str = ''
     period_text: str = ''
+    style_context: StyleBundle | None = field(default=None, kw_only=True)
+
+    def text_values(self):
+        return {f.name:getattr(self,f.name) for f in fields(self) if f.name != 'style_context'}
 
     def validate(self):
-        for name, value in asdict(self).items():
+        for name, value in self.text_values().items():
             if not isinstance(value, str) or len(value) > 2000 or any(ord(c) < 32 for c in value):
                 raise RenderFailure('RENDER_INVALID_INPUT')
         if any(not getattr(self, k).strip() for k in ('store_name', 'product_name', 'headline')):
@@ -82,7 +87,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         t not in REGISTRY or not REGISTRY[t]['implemented'] for t in ids
     ):
         raise RenderFailure('RENDER_INVALID_TEMPLATE')
-    text = ''.join(asdict(data).values())
+    text = ''.join(data.text_values().values())
     faces = []
     for filename, expected, weight in [('NotoSansKR-Regular.otf', FONT_HASH, 400),
                                         ('NotoSansKR-Bold.otf', BOLD_HASH, 700)]:
@@ -109,7 +114,8 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
     css += (ROOT/'templates/v3/collection.css').read_text(encoding='utf-8') + ''.join(faces)
     css += (ROOT/'templates/v3/quality.css').read_text(encoding='utf-8')
     pages = [{'template_id': t, 'html': env.get_template(t+'.html').render(
-        css=css, data=data, photo=uri, photo_fit=photo_fit, transparent=transparent, template_id=t)} for t in ids]
+        css=css + (data.style_context.page(t).css() if data.style_context else ''),
+        data=data, photo=uri, photo_fit=photo_fit, transparent=transparent, template_id=t)} for t in ids]
     node = shutil.which('node')
     if not node:
         raise RenderFailure('RENDER_UNAVAILABLE')
@@ -138,6 +144,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
             row.update(candidate_id=candidate_id, asset_id=asset_id, revision=1,
                        strategy=REGISTRY[row['template_id']]['strategy'], template_version=VERSION, input_snapshot=snapshot,
                        png_sha256=sha256(row['png']).hexdigest())
+            row['style_snapshot'] = data.style_context.snapshot([row['template_id']]) if data.style_context else {}
             row['diagnostics'] = measured_diagnostics(candidate_id, asset_id, row['strategy'], row['measurement'], row['png_sha256'])
         return rows
     except subprocess.TimeoutExpired:
