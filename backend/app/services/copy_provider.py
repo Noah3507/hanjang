@@ -19,11 +19,17 @@ class MockCopyProvider:
 
 def build_copy_provider(settings) -> CopyProvider:
     if settings.copy_provider == 'mock':
-        return MockCopyProvider()
+        result=MockCopyProvider()
+        result.prompt_profile=getattr(settings,'copy_prompt_profile','v6')
+        if result.prompt_profile=='v7':
+            from app.services.copy_prompt_v7 import VERSION
+            result.prompt_version=VERSION
+        return result
     from app.services.copy_openai import OpenAICopyProvider
     from app.services.copy_budget import CopyBudget
     return OpenAICopyProvider(
         settings.copy_model,
         settings.openai_api_key.get_secret_value() if settings.openai_api_key else None,
         settings.copy_allow_paid, CopyBudget(settings.copy_budget_path, settings.copy_max_requests, settings.copy_budget_usd),
+        prompt_profile=getattr(settings,'copy_prompt_profile','v6'),
     )

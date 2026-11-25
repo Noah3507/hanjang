@@ -24,10 +24,19 @@ facts는 출력하지 않는다. variants의 strategy와 copy(headline,body,cta)
 headline 1~60자, body 0~160자, cta 0~30자. 긴 이름은 headline에 반복하지 말 것.
 plain text의 일반 한글·영문·숫자·문장부호만 쓴다. HTML/개행/제어 문자/이모지/ZWJ/variation selector/그림 기호 금지. 과장 없는 사용자 검토용 초안이다.'''
 
-def provider_payload(draft, context) -> CopyPayload:
+def provider_payload(draft, context, profile='v6') -> CopyPayload:
     payload = {k: getattr(draft.facts, k) for k in ('store_name', 'product_name', 'price_text')}
+    cues = (context or {}).get('visual_hints', [])
+    if profile == 'v7':
+        # Preserve all analysis in its store, share Phase 3's compact evidence policy.
+        cues = [max([c for c in cues if c.category==cat],key=lambda c:(c.similarity,c.candidate_id))
+                for cat in ('category','appearance','impression') if any(c.category==cat for c in cues)]
     payload.update(mood=draft.mood, product_features=draft.product_features,
-                   visual_hints=[cue.model_dump() for cue in (context or {}).get('visual_hints', [])])
+                   visual_hints=[cue.model_dump() for cue in cues])
+    # Preserve the v6 default wire payload and its existing 500-character budget.
+    # V7 always carries explicit intent; legacy omission means menu_promotion.
+    if profile=='v7' or draft.ad_goal!='menu_promotion':
+        payload['ad_goal']=draft.ad_goal
     if draft.use_address_for_copy and draft.facts.address:
         payload['address'] = draft.facts.address
     # A free-text feature can accidentally repeat a contact field; fail closed.
@@ -39,9 +48,9 @@ def provider_payload(draft, context) -> CopyPayload:
         raise CopyFailure('COPY_PRIVATE_INPUT')
     return payload
 
-def input_bound(payload):
+def input_bound(payload, instructions=None):
     # A conservative byte upper bound plus protocol allowance, not an observed token count.
     # Long input is rejected, never silently truncated/rewritten.
-    encoded = json.dumps({'instructions': SYSTEM_PROMPT, 'input': payload,
+    encoded = json.dumps({'instructions': SYSTEM_PROMPT if instructions is None else instructions, 'input': payload,
                           'schema': Variants.model_json_schema()}, ensure_ascii=False).encode('utf-8')
     return len(encoded) + 1024

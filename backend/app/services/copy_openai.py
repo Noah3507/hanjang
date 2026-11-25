@@ -12,9 +12,26 @@ def openai_usage(inputs: int, outputs: int) -> ProviderUsage:
 class OpenAICopyProvider:
     name = 'openai'
 
-    def __init__(self, model, api_key, allow_paid, budget, client=None):
+    def __init__(self, model, api_key, allow_paid, budget, client=None, *, prompt_profile=None):
         self.model, self.api_key, self.allow_paid = model, api_key, allow_paid
         self.budget, self.client = budget, client
+        if prompt_profile not in (None,'v6','v7'):raise ValueError('Unknown prompt profile')
+        self.prompt_profile = prompt_profile
+
+    @property
+    def instructions(self):
+        if self.prompt_profile=='v7':
+            from app.services.copy_prompt_v7 import INSTRUCTIONS
+            return INSTRUCTIONS
+        return SYSTEM_PROMPT
+
+    @property
+    def prompt_version(self):
+        if self.prompt_profile=='v7':
+            from app.services.copy_prompt_v7 import VERSION
+            return VERSION
+        from app.services.copy_prompt import PROMPT_VERSION
+        return PROMPT_VERSION
 
     def generate(self, payload: CopyPayload) -> ProviderResult:
         if not self.allow_paid:
@@ -23,7 +40,7 @@ class OpenAICopyProvider:
             raise CopyFailure('COPY_KEY_MISSING')
         if self.model != 'gpt-5.4-mini-2026-03-17':
             raise CopyFailure('COPY_MODEL_NOT_APPROVED')
-        if input_bound(payload) > 6000:
+        if input_bound(payload, self.instructions) > 6000:
             raise CopyFailure('COPY_INPUT_LIMIT')
         import openai  # Deferred: Mock never imports or initializes the SDK.
         if self.client is None:
@@ -36,7 +53,7 @@ class OpenAICopyProvider:
         try:
             self.budget.dispatched(call)
             response = self.client.responses.create(model=self.model,
-                instructions=SYSTEM_PROMPT,
+                instructions=self.instructions,
                 input=[{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}],
                 text={'format': {'type': 'json_schema', 'name': 'copy_variants', 'schema': Variants.model_json_schema(), 'strict': True}},
                 reasoning={'effort': 'none'}, max_output_tokens=2048, store=False)

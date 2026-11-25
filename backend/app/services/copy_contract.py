@@ -18,6 +18,7 @@ class CopyPayload(TypedDict):
     product_features: str | None
     visual_hints: list[VisualHint]
     address: NotRequired[str]
+    ad_goal: NotRequired[str]
 
 
 @dataclass(frozen=True)

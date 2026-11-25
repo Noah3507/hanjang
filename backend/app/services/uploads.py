@@ -151,7 +151,7 @@ class PrivateUploadStore:
             # Legacy clients do not know the optional S5a fields: omission preserves them.
             updates = draft.model_dump()
             if record.draft:
-                for name in ('product_features', 'use_address_for_copy'):
+                for name in ('product_features', 'use_address_for_copy', 'ad_goal'):
                     if name not in draft.model_fields_set:
                         updates[name] = getattr(record.draft, name)
             record.draft = InputDraft.model_validate(updates)
