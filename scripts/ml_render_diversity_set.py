@@ -23,6 +23,10 @@ templates render exactly as in the service today (the baseline):
       --output artifacts/diversity/style-v1-warm --style-mood warm
 No API calls, no uploads. Photos and PNGs stay under artifacts/ (ignored by git).
 
+With --photo-mode original, the background is not removed: the whole photo (EXIF-rotated, longer side
+at most the service's photo size) goes into the templates, which show it as a rounded card. The palette
+for the style then comes from the whole photo.
+
 Writes <output>/<product id>/<template id>.png and <output>/manifest.json, which
 scripts/ml_measure_design_diversity.py reads. The output folder must not exist yet.
 """
@@ -117,8 +121,24 @@ def extra_template_css(css: str):
         yield
 
 
+def whole_photo(max_side: int):
+    """Stand-in for background removal that keeps the whole photo, as an opaque PNG."""
+    from io import BytesIO
+    from PIL import Image, ImageOps
+    from app.services.photo_processor import ProcessedPhoto
+
+    def keep(raw: bytes):
+        with Image.open(BytesIO(raw)) as opened:
+            image = ImageOps.exif_transpose(opened).convert('RGB')
+        image.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+        buffer = BytesIO()
+        image.save(buffer, 'PNG')
+        return ProcessedPhoto(buffer.getvalue(), None, image.width, image.height, [])
+    return keep
+
+
 def render_set(products: list[dict], output: Path, store_name: str, remove_background, render,
-               mood: str | None = None) -> dict:
+               mood: str | None = None, photo_mode: str = 'cutout') -> dict:
     from app.services.template_v3 import TemplateInput, VERSION
     from app.services.render_execution import RenderFailure
     copies = mock_copy()
@@ -127,6 +147,7 @@ def render_set(products: list[dict], output: Path, store_name: str, remove_backg
     manifest = {'purpose': 'design-diversity measurement set', 'copy': 'mock-copy-v1 (fixed)',
                 'template_version': VERSION, 'store_name': store_name, 'renderer_source_hashes': hashes,
                 'style': {'mood': mood} if mood else 'none (templates as in the service)',
+                'photo_mode': photo_mode,
                 'products': [], 'ads': []}
     for product in products:
         raw = product['photo'].read_bytes()
@@ -182,6 +203,8 @@ def main() -> None:
     parser.add_argument('--products', type=Path, required=True, help='products.csv')
     parser.add_argument('--output', type=Path, required=True, help='new folder, e.g. artifacts/diversity/baseline')
     parser.add_argument('--store-name', default='한장 테스트 가게')
+    parser.add_argument('--photo-mode', choices=['cutout', 'original'], default='cutout',
+                        help='cutout: remove the background as the service does; original: keep the whole photo')
     parser.add_argument('--style-mood', choices=['warm', 'minimal', 'vivid', 'premium'],
                         help='apply design_style.py with this mood (omit for the baseline)')
     args = parser.parse_args()
@@ -195,9 +218,11 @@ def main() -> None:
     if not settings.photo_model_path.is_file():
         parser.error(f'background-removal model not found: {settings.photo_model_path}')
     products = read_products(args.products)
-    remove = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
+    remove = (whole_photo(settings.photo_max_side) if args.photo_mode == 'original'
+              else PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side))
     manifest = render_set(products, args.output, args.store_name, remove,
-                          lambda data, png, ids: render_templates(data, png, ids, timeout=180), args.style_mood)
+                          lambda data, png, ids: render_templates(data, png, ids, timeout=180), args.style_mood,
+                          args.photo_mode)
     print(json.dumps({'products': len(manifest['products']), 'ads': len(manifest['ads']),
                       'output': str(args.output)}, ensure_ascii=False))
 

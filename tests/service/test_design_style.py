@@ -237,6 +237,13 @@ def test_a_products_four_drafts_keep_different_strengths():
     assert delta_e(styles['brand_b'], styles['brand_d']) >= 15   # pale vs bold
 
 
+def test_price_b_and_c_no_longer_share_a_style():
+    for name, palette in [('레몬 에이드', (('#F4D03F', 0.5),)), ('짜장면', ()), ('딸기 케이크', (('#D8314F', 0.5),))]:
+        b = resolve_style(StyleInput('price_b', 'warm', name, palette)).variables
+        c = resolve_style(StyleInput('price_c', 'warm', name, palette)).variables
+        assert b['bg'] != c['bg'], name
+
+
 def test_style_is_a_plain_value():
     style = resolve_style(StyleInput('visual_c', 'premium', '아메리카노'))
     assert isinstance(style, Style) and style.kind in KINDS

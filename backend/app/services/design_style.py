@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 
 from app.services.diagnostics_engine import CONTRAST_MINIMUM, contrast
 
-STYLE_VERSION = 'design-style-v3'
+STYLE_VERSION = 'design-style-v4'
 KINDS = ('noodle_soup', 'fried_grill', 'rice_meal', 'fresh_light', 'dessert_bakery', 'drink', 'nonfood', 'general_food')
 MOODS = ('warm', 'minimal', 'vivid', 'premium')
 ROLES = ('bg', 'ink', 'ink-soft', 'accent', 'accent-ink', 'surface', 'surface-ink', 'frame', 'photo-bg', 'decor')
@@ -196,6 +196,9 @@ TEMPLATES = {  # template: (background, photo backdrop, band/panel/frame "surfac
     'visual_a': ('light', 'light', 'dark', (), 'neutral'), 'visual_b': ('light', 'light', 'light', (), 'neutral'),
     'visual_c': ('dark', 'dark', 'light', (), 'neutral'), 'visual_d': ('dark', 'light', 'light', (), 'neutral'),
 }
+# Templates that would otherwise get the same style as a sibling: price_b and price_c are both black today,
+# so price_c takes a deep tint of the product colour and a product's four price drafts stay different.
+LEVEL_OVERRIDE = {'price_c': 'coloured'}
 TEXT_PAIRS = (('ink', 'bg'), ('ink-soft', 'bg'), ('surface-ink', 'surface'), ('accent-ink', 'accent'))
 ACCENT_MIN_SHARE, ACCENT_MIN_SATURATION = 0.08, 0.25
 HUE_MIN_VALUE = 0.35      # darker colours (black sauce, shadows) do not set the background hue
@@ -247,6 +250,7 @@ def tone_for(hue_colour: RGB, kind: str, template: tuple, photo_weight: float) -
         return _hls(h, l0 + l1 * photo_l, s0 + s1 * photo_s)
 
     polarity, level = template[0], template[4]
+    level = LEVEL_OVERRIDE.get(_template_id(template), level)
     light_level = level if polarity == 'light' else 'pale'
     dark_level = level if polarity == 'dark' else 'coloured'
     accent = base.accent if base else _hls(h, 0.45, 0.65)
@@ -257,8 +261,12 @@ def tone_for(hue_colour: RGB, kind: str, template: tuple, photo_weight: float) -
 TABLE_LEVEL = {'bold': (1.4, -0.12), 'pale': (1.0, 0.0), 'neutral': (0.6, 0.04), 'coloured': (1.0, 0.0)}
 
 
+def _template_id(template: tuple) -> str | None:
+    return next((t for t, facts in TEMPLATES.items() if facts is template), None)
+
+
 def table_tone(tone: Tone, template: tuple) -> Tone:
-    polarity, level = template[0], template[4]
+    polarity, level = template[0], LEVEL_OVERRIDE.get(_template_id(template), template[4])
     light = adjust(tone.light, *TABLE_LEVEL[level]) if polarity == 'light' else tone.light
     dark = adjust(tone.dark, TABLE_LEVEL[level][0], -0.02 if level == 'neutral' else 0.0) if polarity == 'dark' else tone.dark
     return Tone(light=light, dark=dark, ink=tone.ink, accent=tone.accent)

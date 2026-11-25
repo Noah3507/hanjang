@@ -1,6 +1,6 @@
 {% extends 'base.html' %}{% block design %}
 <header><div class="text store" data-field="store_name">{{ data.store_name }}</div></header>
-<div class="photo {{ photo_fit }}"><img src="{{ photo }}" alt=""></div>
+<div class="photo {{ photo_fit }}{{ " cutout" if transparent else " whole-photo" }}"><img src="{{ photo }}" alt=""></div>
 {% if data.promotion_text %}<div class="text promotion" data-field="promotion_text">{{ data.promotion_text }}</div>{% endif %}
 <div class="text product" data-field="product_name">{{ data.product_name }}</div>
 <div class="text headline" data-field="headline">{{ data.headline }}</div>
