@@ -1,0 +1,33 @@
+{
+  "version": "v3-fonts-1",
+  "faces": [
+    {
+      "path": "templates/fonts/NotoSansKR-Regular.otf",
+      "family": "HanjangNoto",
+      "weight": "400",
+      "mime": "font/otf",
+      "sha256": "69975a0ac8472717870aefeab0a4d52739308d90856b9955313b2ad5e0148d68"
+    },
+    {
+      "path": "templates/fonts/NotoSansKR-Bold.otf",
+      "family": "HanjangNoto",
+      "weight": "700",
+      "mime": "font/otf",
+      "sha256": "5a6ceb287ed2fc6cfc6213144ebea68cbd94b20fc9eb873d8486493bf02d9bda"
+    },
+    {
+      "path": "backend/assets/fonts/NotoSerifKR-VF.ttf",
+      "family": "Noto Serif KR",
+      "weight": "200 900",
+      "mime": "font/ttf",
+      "sha256": "11f8d5de6f1b79195efba3828aaa2ec95c1178f5ae976fb23c8d53250a9938f3"
+    },
+    {
+      "path": "backend/assets/fonts/PretendardVariable.ttf",
+      "family": "Pretendard",
+      "weight": "45 930",
+      "mime": "font/ttf",
+      "sha256": "3090ccde0442bb347aa7685d9ba8b17436a60682df6e8f92a9a670de14056e22"
+    }
+  ]
+}
