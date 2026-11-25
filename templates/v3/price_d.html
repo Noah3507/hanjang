@@ -1,7 +1,7 @@
 {% extends 'base.html' %}{% block design %}
 <div class="text store" data-field="store_name">{{ data.store_name }}</div>
 <div class="text product" data-field="product_name">{{ data.product_name }}</div>
-<div class="photo {{ photo_fit }}"><img src="{{ photo }}" alt=""></div>
+<div class="photo {{ photo_fit }}{{ " cutout" if transparent else " whole-photo" }}"><img src="{{ photo }}" alt=""></div>
 <div class="text headline" data-field="headline">{{ data.headline }}</div>
 <div class="text body" data-field="body">{{ data.body }}</div>
 <div class="stamp{% if not data.original_price and not data.discount_text and not data.promotion_text %} simple-stamp{% endif %}">
