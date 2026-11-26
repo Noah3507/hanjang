@@ -1,4 +1,4 @@
-import { ApiError, type UploadHandle, type Draft, type Facts } from './uploads'
+import { ApiError, inputSnapshot, type UploadHandle, type Draft, type Facts } from './uploads'
 export interface CopyState {
   copy_key?: string | null
   job_id: string; operation: 'copy_generation'; status: 'pending' | 'processing' | 'completed' | 'failed'
@@ -12,10 +12,7 @@ export async function copyState(handle: UploadHandle, start?: { asset: string; d
   const base = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '')
   const response = await fetch(`${base}/jobs/${encodeURIComponent(handle.upload.job_id)}/copy-generation`, {
     method: start ? 'POST' : 'GET', headers: { 'X-Hanjang-Session': handle.token, ...(start ? { 'Content-Type': 'application/json' } : {}) },
-    ...(start ? { body: JSON.stringify({ expected_asset_id: start.asset, expected_input: {
-      facts: start.draft.facts, mood: start.draft.mood, product_features: start.draft.product_features ?? null,
-      use_address_for_copy: start.draft.use_address_for_copy ?? false,
-    } }) } : {}),
+    ...(start ? { body: JSON.stringify({ expected_asset_id: start.asset, expected_input: inputSnapshot(start.draft) }) } : {}),
   })
   const body = await response.json().catch(() => null)
   if (!response.ok) throw new ApiError(body?.error?.message || '카피 생성 요청에 실패했습니다.')

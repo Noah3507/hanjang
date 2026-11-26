@@ -1,4 +1,4 @@
-import { ApiError, type Draft, type UploadHandle } from './uploads'
+import { ApiError, inputSnapshot, type Draft, type UploadHandle } from './uploads'
 import type { RenderState } from './rendering'
 export type AdCopy = { headline: string; body: string; cta: string }
 export interface EditState {
@@ -13,7 +13,7 @@ export async function editing(handle:UploadHandle,patch?:{candidate:string;copy:
   method:patch?'PATCH':'GET',headers:{'X-Hanjang-Session':handle.token,...(patch?{'Content-Type':'application/json'}:{})},
   ...(patch?{body:JSON.stringify({expected_revision:patch.render.revision,expected_candidate_ids:patch.render.candidates.map(c=>c.candidate_id),
    expected_asset_id:patch.render.source_asset_id,expected_copy_key:patch.render.copy_key,
-   expected_input:{facts:patch.draft.facts,mood:patch.draft.mood,product_features:patch.draft.product_features??null,use_address_for_copy:patch.draft.use_address_for_copy??false},copy:patch.copy})}:{})})
+   expected_input:inputSnapshot(patch.draft),copy:patch.copy})}:{})})
  const body=await response.json().catch(()=>null)
  if(!response.ok)throw new ApiError(body?.error?.message||'편집 요청에 실패했습니다.')
  if(!body||body.operation!=='editing'||!['pending','processing','completed','failed'].includes(body.status)||typeof body.is_current!=='boolean'

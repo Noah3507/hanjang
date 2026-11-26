@@ -26,7 +26,7 @@ it('explicitly shows Mock and submits the exact saved extended snapshot', async 
   expect(await screen.findByRole('article', { name: '감성 전략 카피' })).toBeInTheDocument()
   expect(screen.getAllByRole('article')).toHaveLength(4)
   const body = JSON.parse(fetch.mock.calls[1][1].body)
-  expect(body.expected_input).toEqual({ facts: draft.facts, mood: draft.mood, product_features: draft.product_features, use_address_for_copy: false })
+  expect(body.expected_input).toEqual({ facts: draft.facts, mood: draft.mood, product_features: draft.product_features, use_address_for_copy: false, ad_goal: 'menu_promotion', photo_mode: 'cutout' })
   expect(screen.getByText(/고정 예시이며 실제 LLM/)).toBeInTheDocument()
 })
 it('displays stale results and exact saved facts', async () => {

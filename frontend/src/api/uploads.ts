@@ -25,6 +25,14 @@ export interface InputExtras {
   ad_goal?: AdGoal; photo_mode?: PhotoMode
 }
 export interface UploadHandle { token: string; upload: Upload }
+/** The saved input as the server compares it (expected_input). Missing fields take the server defaults. */
+export function inputSnapshot(draft: Draft) {
+  return {
+    facts: draft.facts, mood: draft.mood, product_features: draft.product_features ?? null,
+    use_address_for_copy: draft.use_address_for_copy ?? false,
+    ad_goal: draft.ad_goal ?? 'menu_promotion', photo_mode: draft.photo_mode ?? 'cutout',
+  }
+}
 export class ApiError extends Error {
   constructor(message: string, public fields: { field: string; message: string }[] = []) { super(message) }
 }
