@@ -45,10 +45,10 @@ it('model failure keeps designs available and never displays fake model scores',
  vi.mocked(api.getDesigns).mockResolvedValue(state('price','completed'))
  vi.mocked(api.rankDesigns).mockResolvedValue({...state('price','completed'),ranking_status:'failed',ranking_error:{code:'RANKING_MODEL_UNAVAILABLE',message:'모델을 사용할 수 없습니다.'}})
  render(<DesignVariants handle={handle} render={source} disabled={false}/> )
- fireEvent.click(await screen.findByRole('button',{name:'시안 ML 참고 순위 계산'}))
+ fireEvent.click(await screen.findByRole('button',{name:'추천 순위 다시 계산'}))
  expect(await screen.findByRole('alert')).toHaveTextContent('모델을 사용할 수 없습니다.')
  expect(screen.getAllByRole('button',{name:'시안 PNG 다운로드'})[0]).toBeEnabled()
- expect(screen.queryByText(/상대 선호 score/)).not.toBeInTheDocument()
+ expect(screen.queryByText(/추천 점수/)).not.toBeInTheDocument()
 })
 
 function ranked(strategy:Strategy='price',scores=[0.2,0,-1,-2]){
@@ -80,20 +80,20 @@ it.each(['emotional','price','visual','brand'] as Strategy[])('shows guidance an
  vi.mocked(api.getDesigns).mockResolvedValue(ranked(strategy))
  render(<DesignVariants handle={handle} render={source} disabled={false} selectedStrategy={strategy}/> )
  expect(await screen.findByRole('note')).toHaveTextContent(closeCallMessage)
- expect(screen.getByText(/상대 선호 score 0.20/)).toBeInTheDocument()
+ expect(screen.getByText(/추천 점수 0.20/)).toBeInTheDocument()
  expect(screen.getAllByRole('article')).toHaveLength(4)
 })
 
 it('hides rounded near scores and stale scores after source revision changes',async()=>{
  vi.mocked(api.getDesigns).mockResolvedValue(ranked('price',[0.2001,0,-1,-2]))
  const {rerender}=render(<DesignVariants handle={handle} render={source} disabled={false}/> )
- expect(await screen.findByText(/상대 선호 score 0.20/)).toBeInTheDocument()
+ expect(await screen.findByText(/추천 점수 0.20/)).toBeInTheDocument()
  expect(screen.queryByRole('note')).not.toBeInTheDocument()
  vi.mocked(api.getDesigns).mockResolvedValue({...ranked(),is_current:false})
  rerender(<DesignVariants handle={handle} render={{...source,revision:2}} disabled={false}/> )
  expect(await screen.findByText('이전 입력의 시안입니다. 최신 결과로 다시 생성해 주세요.')).toBeInTheDocument()
  expect(screen.queryByRole('note')).not.toBeInTheDocument()
- expect(screen.queryByText(/상대 선호 score/)).not.toBeInTheDocument()
+ expect(screen.queryByText(/추천 점수/)).not.toBeInTheDocument()
 })
 
 it('shows the designs as a carousel in A to D order with one image request per design',async()=>{
@@ -146,8 +146,9 @@ it('edit form names the design in plain words and keeps the four designs on scre
  expect(await screen.findByText('시안을 다시 그리고 있어요. 몇 초 걸려요.')).toBeInTheDocument()
  expect(screen.getAllByRole('article')).toHaveLength(4)
  await waitFor(()=>expect(screen.queryByRole('form',{name:'시안 고치기'})).not.toBeInTheDocument(),{timeout:3000})
- expect(screen.getAllByRole('article')[1]).toHaveTextContent('가격: 9원 · 편집 1회')
- expect(screen.getAllByRole('article')[0]).toHaveTextContent('가격: 10원 · 편집 0회')
+ expect(screen.getAllByRole('article')[1]).toHaveTextContent('가격 9원 · 1번 고침')
+ expect(screen.getAllByRole('article')[0]).toHaveTextContent('가격 10원')
+ expect(screen.getAllByRole('article')[0]).not.toHaveTextContent('고침')
  await waitFor(()=>expect(screen.getByRole('button',{name:'시안 B 편집'})).toHaveFocus())
 })
 

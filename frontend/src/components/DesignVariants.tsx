@@ -93,7 +93,7 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
   <p role="status" className="variants-status">시안 상태: {state?.status||'pending'} · revision {state?.revision||0}{busy?' · 처리 중':''}</p>
   {stale&&<p role="alert">이전 입력의 시안입니다. 최신 결과로 다시 생성해 주세요.</p>}
   {error&&!editing&&<p role="alert">{error}</p>}{state?.error&&<p role="alert">{state.error.message}</p>}
-  {state?.status==='failed'&&<p>{state.failed_templates?.length?`일부 시안 생성 실패: ${state.failed_templates.join(', ')}. 네 시안의 게시를 보류했습니다.`:'전체 시안을 생성하지 못했습니다.'} 입력 길이를 확인하고 다시 생성해 주세요. 기존 v2 광고는 유지됩니다.</p>}
+  {state?.status==='failed'&&<p>{state.failed_templates?.length?`시안 ${state.failed_templates.map(letter).join(', ')}을 만들지 못해서 네 장 모두 보여 드리지 않았어요.`:'시안을 만들지 못했어요.'} 입력한 글이 너무 길지 않은지 확인하고 다시 만들어 주세요.</p>}
   {state?.status==='completed'&&<>
    {state.ranking_status==='processing'&&<p role="status">모델 평가 중</p>}
    {state.ranking_error&&<p role="alert">{state.ranking_error.message}</p>}
@@ -108,10 +108,10 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
      <div className="slide-info">
       <div className="slide-title"><h4>{letter(c.template_id)} · {names[c.design_name]||c.design_name}</h4>
        {rank&&ranking?.source==='model'&&<span className="meter" aria-hidden="true">{[1,2,3,4,5].map(n=><i key={n} className={n<=level(rank.score)?'on':undefined}/>)}</span>}</div>
-      {rank&&<p className="slide-rank">{rank.rank}위 {ranking?.source==='model'?`· 상대 선호 score ${rank.score.toFixed(2)} · ${ranking.model_version}`:'· 시연용'}</p>}
-      <p className="slide-headline">{c.copy?.headline}</p><p className="slide-price">가격: {c.facts?.price_text} · 편집 {c.edit_revision}회</p>
+      {rank&&<p className="slide-rank">{rank.rank}위 {ranking?.source==='model'?`· 추천 점수 ${rank.score.toFixed(2)}`:'· 시연용'}</p>}
+      <p className="slide-headline">{c.copy?.headline}</p><p className="slide-price">가격 {c.facts?.price_text}{c.edit_revision>0?` · ${c.edit_revision}번 고침`:''}</p>
       {diagnostic&&<p className="chips" aria-hidden="true">{diagnostic.rules.map(r=><span key={r.rule_id} className={`chip ${r.status}`}>{ruleNames[r.rule_id]||r.rule_id} {statuses[r.status]||r.status}</span>)}</p>}
-      <details><summary>가독성 진단 · {statuses[diagnostic?.coverage||'unavailable']}</summary><ul>{diagnostic?.rules.map(r=><li key={r.rule_id}>{ruleNames[r.rule_id]||r.rule_id}: {statuses[r.status]||r.status} · {r.explanation}</li>)}</ul><p>의도된 사진·장식 겹침도 경고를 유지합니다. 미측정 대비는 정상 판정하지 않습니다.</p></details>
+      <details><summary>가독성 진단 · {statuses[diagnostic?.coverage||'unavailable']}</summary><ul>{diagnostic?.rules.map(r=><li key={r.rule_id}>{ruleNames[r.rule_id]||r.rule_id}: {statuses[r.status]||r.status} · {r.explanation}</li>)}</ul><p>사진이나 장식이 글자와 일부러 겹친 경우에도 주의로 표시해요. 잴 수 없었던 항목은 정상이 아니라 '측정 불가'로 남겨요.</p></details>
       <div className="slide-actions">
        <button data-edit-id={c.candidate_id} disabled={!usable||!c.copy} onClick={()=>{setEditing(c.candidate_id);setValues({...c.copy!});setPrice(c.facts?.price_text||'');setError('')}}>시안 {letter(c.template_id)} 편집</button>
        <button className="secondary" disabled={!usable} onClick={()=>void download(c.candidate_id,'png')}>시안 PNG 다운로드</button>
@@ -129,7 +129,7 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
     {shot?.url?<img src={shot.url} alt="" width="1080" height="1350"/>:<span className="thumb-empty"/>}
     <span>{rank?`${rank.rank}위 `:''}{letter(c.template_id)}</span>
    </button>})}</div>
-   <p className="fine-print">같은 전략의 디자인에 대한 모델 성능은 별도 검증되지 않았습니다. 점수는 전환율·구매율·객관적 품질이 아니며 진단과 합산하지 않습니다. A~D 순서를 유지합니다.</p>
+   {ranking&&<p className="fine-print">{ranking.source==='model'?`순위는 선호 모델(${ranking.model_version})이 고른 참고용 추천이에요. `:''}매출이나 클릭을 예측한 값이 아니고, 가독성 진단과도 따로 계산해요. 시안은 순위와 관계없이 A~D 순서로 보여 드려요.</p>}
    <div className="save-actions">
     <button type="button" className="secondary" disabled={!usable} onClick={()=>{const c=state.candidates[active];if(c)void download(c.candidate_id,'png')}}>이 광고만 저장하기</button>
     <button type="button" disabled={!usable} onClick={()=>void downloadAll()}>광고 모두 저장하기</button>
@@ -156,14 +156,14 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
    <h4>다른 전략으로 만들기</h4>
    <div className="strategy-choices" role="group" aria-label="디자인 전략 선택">{(['emotional','price','visual','brand'] as Strategy[]).map(s=><button type="button" key={s} aria-pressed={strategy===s} disabled={disabled||Boolean(editing)} onClick={()=>select(s)}>{strategyLabels[s]} 전략 선택</button>)}</div>
    <p>선택 전략: <strong>{strategyLabels[strategy]}</strong></p>
-   <details><summary>직접 확인한 행사 정보 입력 (선택)</summary><p>입력하지 않은 할인·행사·기간은 생성하지 않습니다. 완료된 시안의 행사 정보는 보존됩니다. 할인율은 입력한 소수 자릿수에서 반올림해 비교합니다.</p>{(['original_price','discount_text','promotion_text','period_text'] as const).map((f,i)=><label key={f}>{['할인 전 가격','할인율 (예: 30%)','행사명','행사 기간 (예: 2026.11.16–2026.11.20)'][i]}<input maxLength={f==='discount_text'?10:40} disabled={disabled||busy||state?.status==='completed'} value={promotion[f]} onChange={e=>setPromotion(v=>({...v,[f]:e.target.value}))}/></label>)}</details>
+   <details><summary>할인·행사 정보 넣기 (선택)</summary><p>여기 적은 할인·행사·기간만 광고에 넣어요. 적지 않은 내용은 지어내지 않아요. 이미 만든 시안에는 적용되지 않으니, 적은 뒤 '이 전략으로 시안 4개 더 보기'를 눌러 주세요.</p>{(['original_price','discount_text','promotion_text','period_text'] as const).map((f,i)=><label key={f}>{['할인 전 가격','할인율 (예: 30%)','행사명','행사 기간 (예: 2026.11.16–2026.11.20)'][i]}<input maxLength={f==='discount_text'?10:40} disabled={disabled||busy||state?.status==='completed'} value={promotion[f]} onChange={e=>setPromotion(v=>({...v,[f]:e.target.value}))}/></label>)}</details>
    <div className="manage-actions">
     <button disabled={disabled||busy||Boolean(editing)} onClick={()=>void run('create')}>이 전략으로 시안 4개 더 보기</button>
-    <button className="secondary" disabled={disabled||busy||Boolean(editing)} onClick={()=>void run('get')}>시안 상태 다시 조회</button>
-    {state?.status==='completed'&&<button className="secondary" disabled={!usable} onClick={()=>void run('rank')}>시안 ML 참고 순위 계산</button>}
+    <button className="secondary" disabled={disabled||busy||Boolean(editing)} onClick={()=>void run('get')}>결과 다시 불러오기</button>
+    {state?.status==='completed'&&<button className="secondary" disabled={!usable} onClick={()=>void run('rank')}>추천 순위 다시 계산</button>}
     <button type="button" className="secondary back-to-v2" onClick={()=>region.current?.closest('.ad-rendering')?.scrollIntoView({block:'start',behavior:'smooth'})}>기존 4전략 광고로 돌아가기</button>
    </div>
-   {state?.status==='completed'&&<p className="fine-print">v3 revision {state.revision} · {state.mock_copy?'Mock 카피':'기존 실제 카피 재사용'} · 추가 LLM 호출 없음</p>}
+   {state?.status==='completed'&&<p className="fine-print">{state.mock_copy?'연습용 문구로 만든 시안이에요. 실제 AI가 쓴 문구가 아니에요.':'AI가 쓴 문구를 그대로 썼어요.'} 시안을 고치거나 다시 그려도 AI를 다시 부르지 않아요.</p>}
   </div>
  </section>
 }

@@ -63,7 +63,7 @@ export default function App() {
       )}
       <ProductInput />
       <footer className="site-footer">
-        <p className="notice">상품 입력·사진 처리·카피·광고 PNG 생성·문구 편집·PNG/A4 PDF 다운로드와 실제 모델 선호 순위를 제공합니다. 가독성 진단은 모델 점수와 별개입니다.</p>
+        <p className="notice">사진과 가게 정보로 광고 시안을 만들고, 고치고, PNG·PDF로 저장할 수 있어요. 추천 순위와 가독성 진단은 따로 계산한 참고 정보예요.</p>
         {connection === 'connected' && <div className="connection-line">{status}{retry}</div>}
       </footer>
     </main>
