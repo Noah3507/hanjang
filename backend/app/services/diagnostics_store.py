@@ -35,7 +35,7 @@ class DiagnosticsStore:
             hashes.append(self.validate_png(owner,job,record,c.png.asset_id))
         # Nonfinite metadata is fingerprinted, never emitted as a numeric result.
         key=sha256(json.dumps({'source':source_key,'render':render.model_dump(mode='python',by_alias=True),
-            'hashes':hashes,'rules':engine.RULES_VERSION,'font':engine.SMALL_FONT_PX,'density':engine.DENSITY_LIMIT,'contrast':engine.CONTRAST_MINIMUM},
+            'hashes':hashes,'policy':engine.policy_identity()},
             ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest()
         return record,render,hashes,key
 

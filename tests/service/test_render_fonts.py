@@ -38,14 +38,14 @@ def test_missing_corrupt_face_fails_closed_and_identity_changes(monkeypatch,tmp_
     assert e.value.code=='RENDER_FONT_UNAVAILABLE'
 
 
-def test_default_roles_unchanged_and_explicit_comparison_profile():
+def test_operating_roles_and_explicit_comparison_profile():
     texts=[{'field':'headline','font_size_px':35},{'field':'body','font_size_px':28},
            {'field':'store_name','font_size_px':28},{'field':'unknown','font_size_px':10}]
     current=diagnose(texts)
-    assert all(i['status']=='caution' and i['threshold']==36 for i in current.measured_value['items'])
+    assert [i['threshold'] for i in current.measured_value['items']]==[36,28,28,None]
     compared=diagnose(texts,{'headline':36,'body':28,'brand':28})
-    assert [i['status'] for i in compared.measured_value['items']]==['caution','normal','normal','caution']
-    assert '운영 기준 아님' in compared.criterion
+    assert [i['status'] for i in compared.measured_value['items']]==['caution','normal','normal','unavailable']
+    assert '서비스 휴리스틱' in compared.criterion
     with pytest.raises(ValueError):diagnose(texts,{'body':float('nan')})
 
 

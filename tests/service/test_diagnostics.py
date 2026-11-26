@@ -96,7 +96,7 @@ def test_css_color_without_pixel_proof_or_wrong_binding_unavailable():
     m=evidence(c);assert rules(c,m,'different-png')['contrast'].status=='unavailable'
     m['text'][0]['contrast_eligible']=False;assert rules(c,m)['contrast'].status=='unavailable'
 def test_heuristic_constants_are_adjustable(monkeypatch):
-    monkeypatch.setattr(e,'SMALL_FONT_PX',40.)
+    monkeypatch.setattr(e,'ROLE_THRESHOLDS',{**e.ROLE_THRESHOLDS,'headline':40.})
     monkeypatch.setattr(e,'DENSITY_LIMIT',.01)
     r=rules();assert r['font_size'].status=='caution' and r['density'].status=='caution'
 def test_uniform_background_capture_and_nonuniform_or_unsupported():
@@ -232,10 +232,11 @@ def test_failed_diagnosis_retry_and_edit_staleness(service):
 def test_rule_configuration_change_invalidates_cached_diagnosis(service,monkeypatch):
     _,c,h,_,b,_,_=service;r,_=prepared(service)
     c.post(b+'/diagnostics',headers=h,json=request(r))
-    monkeypatch.setattr(e,'SMALL_FONT_PX',40.)
+    monkeypatch.setattr(e,'ROLE_THRESHOLDS',{**e.ROLE_THRESHOLDS,'headline':40.})
     assert not c.get(b+'/diagnostics',headers=h).json()['is_current']
     result=c.post(b+'/diagnostics',headers=h,json=request(r)).json()
-    assert result['is_current'] and '40 PNG px' in result['results'][0]['rules'][1]['criterion']
+    items=result['results'][0]['rules'][1]['measured_value']['items']
+    assert result['is_current'] and next(i for i in items if i['field']=='headline')['threshold']==40
 
 def test_missing_measurements_preserves_other_measured_rules(service):
     app,c,h,m,b,_,_=service;r,_=prepared(service)
