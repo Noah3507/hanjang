@@ -12,8 +12,9 @@ remain in `templates/fonts/`; no B-owned template files are changed here.
 Both use SIL OFL 1.1. Commercial use, application bundling, redistribution and
 embedding are permitted under the accompanying license/copyright
 notices (`NotoSerifKR-OFL.txt`, `Pretendard-OFL.txt`). Do not sell the fonts by
-themselves, remove notices, or rename modified fonts to reserved names. No font
-conversion/subsetting/modification was performed. Font binaries are committed so
+themselves, remove notices, or rename modified fonts to reserved names. Bundled
+source binaries remain unmodified; temporary per-text subsets are generated only
+in memory by the renderer. Source font binaries are committed so
 Windows and Linux CI use the same bytes without installation/CDN/network access.
 `manifest.json` records exact SHA-256 hashes, MIME types and CSS weight ranges.
 Internal font versions: Noto `2.003-H1`; Pretendard `1.309` (release v1.3.9).
@@ -42,10 +43,21 @@ Missing/corrupt files cause `RENDER_FONT_UNAVAILABLE`, never a silent replacemen
 of a missing primary asset. Individual unsupported primary glyphs may use bundled
 HanjangNoto; the established Noto input coverage/emoji policy is not broadened.
 Chromium waits for loading and rejects error states, non-custom OS fallback and
-empty font evidence. `actual_fonts` records CDP glyph usage. Variable Noto's CDP
-base family is `Noto Serif KR ExtraLight`; that name alone does not describe the
-selected weight. CSS computed weight and the font's actual wght axis are also
+empty font evidence. `actual_fonts` records CDP glyph usage. Subset primary names
+are `HanjangSubset` plus the first12 source SHA256 digits, including variable
+faces. CSS aliases remain `Noto Serif KR`, `Pretendard` and `HanjangNoto`.
+This avoids using a Reserved Font Name for a modified binary. The CDP family
+name alone does not describe the selected weight. CSS computed weight and the font's actual wght axis are also
 verified. Byte fingerprints fence v3 cache/edit/ranking/download reuse.
+
+The renderer subsets the full input character set plus ASCII/punctuation, keeps
+OpenType layout features, variable axes and hinting, and preserves copyright and
+license metadata. See [OFL FAQ2.6/2.8](https://openfontlicense.org/ofl-faq/).
+Cache keys include canonical characters, source digest and subset/FontTools
+version. At most128 entries /16MiB payload are retained, with at most1MiB per
+entry; oversized outputs render without being cached. Missing/corrupt original
+assets still fail before any cache lookup. See the measured results in
+[FONT_SUBSET_RESULTS.md](../../../docs/FONT_SUBSET_RESULTS.md).
 
 ## Verification
 
