@@ -10,4 +10,5 @@ if __name__ == "__main__":
     result = process_photo(sys.stdin.buffer.read(), LocalRembg(Path(sys.argv[1])), int(sys.argv[2]))
     print(json.dumps({"png": base64.b64encode(result.png).decode() if result.png else None,
                       "mask": base64.b64encode(result.mask_png).decode() if result.mask_png else None,
-                      "width": result.width, "height": result.height, "warnings": result.warnings}))
+                      "width": result.width, "height": result.height, "warnings": result.warnings,
+                      "processing_version": result.processing_version}))

@@ -10,6 +10,10 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps
 
+from app.services.photo_matte import clean_alpha, MATTE_VERSION
+
+PROCESSING_VERSION = 'u2netp-' + MATTE_VERSION
+
 
 class ModelUnavailable(Exception):
     pass
@@ -56,6 +60,7 @@ class ProcessedPhoto:
     width: int
     height: int
     warnings: list[str]
+    processing_version: str | None = None
 
 
 def png_bytes(image: Image.Image) -> bytes:
@@ -79,6 +84,11 @@ def process_photo(data: bytes, mask_provider, max_side: int = 1600) -> Processed
         return ProcessedPhoto(None, None, width, height, ["PHOTO_MASK_INVALID"])
     mask = mask.convert("L")
     alpha = np.minimum(np.asarray(mask), np.asarray(image.getchannel("A")))
+    # Drop faint residue the model leaves around the product; colour pixels are untouched.
+    try:
+        alpha = clean_alpha(alpha)
+    except Exception:
+        return ProcessedPhoto(None, None, width, height, ["PHOTO_PROCESSING_FAILED"])
     foreground = (alpha > 127).astype(np.uint8)
     count = int(cv2.countNonZero(foreground))
     if count == 0 or count == width * height:
@@ -96,4 +106,4 @@ def process_photo(data: bytes, mask_provider, max_side: int = 1600) -> Processed
         mask = Image.fromarray(alpha).resize(dimensions, Image.Resampling.LANCZOS)
     else:
         mask = Image.fromarray(alpha)
-    return ProcessedPhoto(png_bytes(image), png_bytes(mask), *image.size, warnings)
+    return ProcessedPhoto(png_bytes(image), png_bytes(mask), *image.size, warnings, PROCESSING_VERSION)

@@ -24,4 +24,5 @@ class PhotoResponse(BaseModel):
     processed: PhotoAsset | None = None
     photo_source: Literal["original", "processed"] = "original"
     warnings: list[str] = []
+    processing_version: str | None = None
     expires_at: datetime

@@ -11,6 +11,7 @@ from app.main import create_app
 from app.services.photo_processor import process_photo
 from app.services.photo_execution import PhotoExecution
 from app.services.uploads import now
+from test_rendering import service
 
 
 @pytest.fixture
@@ -47,6 +48,8 @@ def test_processing_original_draft_selection_and_duplicate(setup):
     assert response.status_code == 202 and response.json()["status"] == "processing"
     state = client.get(route(meta), headers=headers).json()
     assert state["status"] == "completed" and state["photo_source"] == "processed"
+    from app.services.photo_processor import PROCESSING_VERSION
+    assert state['processing_version']==PROCESSING_VERSION
     assert state["expires_at"] == meta["expires_at"]
     result = client.get('/api/v1/assets/' + state["processed"]["asset_id"], headers=headers)
     assert result.status_code == 200 and result.headers["cache-control"] == "no-store"
@@ -60,6 +63,42 @@ def test_processing_original_draft_selection_and_duplicate(setup):
     assert client.post(route(meta), headers=headers).status_code == 202
     assert set(app.state.upload_store.records[job].derived) == before
     assert client.post("/api/v1/jobs", headers=headers).status_code == 404
+
+
+def test_legacy_completed_photo_is_never_automatically_reprocessed(setup):
+    app,c,h,m,raw=setup
+    c.post(route(m),headers=h)
+    record=app.state.upload_store.records[m['job_id']]
+    record.photo.processing_version=None  # legacy metadata
+    state=c.get(route(m),headers=h).json();assets=set(record.derived)
+    before={k:v.read_bytes() for k,v in record.derived.items()}
+    def forbidden(_):raise AssertionError('must not reprocess completed photo')
+    app.state.photo_processor=forbidden
+    assert c.post(route(m),headers=h).status_code==202
+    assert c.get(route(m),headers=h).json()==state
+    assert set(record.derived)==assets and {k:v.read_bytes() for k,v in record.derived.items()}==before
+    assert c.get('/api/v1/assets/'+m['asset_id'],headers=h).content==raw
+
+
+def test_new_selected_processed_asset_stales_old_ads_without_deleting_them(service):
+    app,c,h,m,b,body,raw=service
+    c.post(b+'/rendering',headers=h,json=body);render=c.get(b+'/rendering',headers=h).json()
+    ids=[v['candidate_id'] for v in render['candidates']]
+    assert c.post(b+'/ranking',headers=h,json={'expected_render_revision':render['revision'],'expected_candidate_ids':ids}).status_code==202
+    assert c.get(b+'/ranking',headers=h).json()['is_current']
+    images={v['png']['url']:c.get(v['png']['url'],headers=h).content for v in render['candidates']}
+    def processor(data):
+        def mask(image):
+            a=Image.new('L',image.size,0);w,z=image.size;a.paste(255,(w//4,z//4,3*w//4,3*z//4));return a
+        return process_photo(data,mask)
+    app.state.photo_processor=processor
+    assert c.post(b+'/photo-processing',headers=h).status_code==202
+    state=c.get(b+'/photo-processing',headers=h).json()
+    assert state['status']=='completed' and state['photo_source']=='processed'
+    assert not c.get(b+'/rendering',headers=h).json()['is_current']
+    assert not c.get(b+'/ranking',headers=h).json()['is_current']
+    assert all(c.get(url,headers=h).content==png for url,png in images.items())
+    assert c.get('/api/v1/assets/'+m['asset_id'],headers=h).content==raw
 
 
 def test_busy_missing_private_and_invalid_source(setup):

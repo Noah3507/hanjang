@@ -230,6 +230,7 @@ class PrivateUploadStore:
                 record.photo.processed = processed
                 record.photo.status = "completed" if processed else "failed"
                 record.photo.warnings = result.warnings
+                record.photo.processing_version = getattr(result,'processing_version',None)
                 record.photo.photo_source = "processed" if processed and not result.warnings else "original"
         except Exception:
             for _, path in written:

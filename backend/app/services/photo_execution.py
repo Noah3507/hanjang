@@ -27,7 +27,7 @@ class PhotoExecution:
             body = json.loads(output)
             return ProcessedPhoto(base64.b64decode(body["png"]) if body["png"] else None,
                                   base64.b64decode(body["mask"]) if body["mask"] else None,
-                                  body["width"], body["height"], body["warnings"])
+                                  body["width"], body["height"], body["warnings"], body.get('processing_version'))
         except subprocess.TimeoutExpired:
             process.kill()
             process.communicate()
