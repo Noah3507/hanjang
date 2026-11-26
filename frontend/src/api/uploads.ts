@@ -1,4 +1,8 @@
 export type Mood = 'warm' | 'minimal' | 'vivid' | 'premium'
+/** Ad goal for the copy (A, PR #67). menu_promotion is the server default. */
+export type AdGoal = 'menu_promotion' | 'store_visit' | 'order'
+/** cutout: background removed (default); original: the whole photo as a card (A, PR #70). */
+export type PhotoMode = 'cutout' | 'original'
 export interface Facts {
   store_name: string
   product_name: string
@@ -14,6 +18,11 @@ export interface Upload {
 export interface Draft {
   job_id: string; status: 'pending'; facts: Facts; mood: Mood; expires_at: string
   product_features?: string | null; use_address_for_copy?: boolean
+  ad_goal?: AdGoal; photo_mode?: PhotoMode
+}
+export interface InputExtras {
+  product_features: string | null; use_address_for_copy: boolean
+  ad_goal?: AdGoal; photo_mode?: PhotoMode
 }
 export interface UploadHandle { token: string; upload: Upload }
 export class ApiError extends Error {
@@ -37,7 +46,7 @@ export async function uploadPhoto(photo: File): Promise<UploadHandle> {
   const upload: Upload = await (await checked(await fetch(`${base()}/uploads`, { method: 'POST', headers: headers(session.session_token), body }))).json()
   return { token: session.session_token, upload }
 }
-export async function saveInput(handle: UploadHandle, facts: Facts, mood: Mood, extras?: { product_features: string | null; use_address_for_copy: boolean }): Promise<Draft> {
+export async function saveInput(handle: UploadHandle, facts: Facts, mood: Mood, extras?: InputExtras): Promise<Draft> {
   return (await checked(await fetch(`${base()}/jobs/${encodeURIComponent(handle.upload.job_id)}/input`, {
     method: 'PUT', headers: { ...headers(handle.token), 'Content-Type': 'application/json' },
     body: JSON.stringify({ facts, mood, ...extras }),

@@ -5,9 +5,11 @@ import { generateAds, GenerationCancelled, stepOrder, type StepId, type StepStat
 import { strategyLabels } from './AdResults'
 import { defaultStrategy, strategies, strategyHints, strategyStorageKey } from './strategyChoice'
 import type { Strategy } from '../api/designs'
-import { ApiError, getInput, getOriginal, saveInput, uploadPhoto, type Draft, type Facts, type Mood, type UploadHandle } from '../api/uploads'
+import { ApiError, getInput, getOriginal, saveInput, uploadPhoto, type AdGoal, type Draft, type Facts, type Mood, type PhotoMode, type UploadHandle } from '../api/uploads'
 
 const empty: Facts = { store_name: '', product_name: '', price_text: '', address: null, instagram_handle: null }
+export const goalLabels: Record<AdGoal, string> = { menu_promotion: '메뉴 홍보', store_visit: '매장 방문 유도', order: '주문 유도' }
+const photoModeLabels: Record<PhotoMode, string> = { cutout: '배경 지우기', original: '사진 그대로' }
 const storageKey = 'hanjang.upload-handle.v1'
 function restored(): UploadHandle | null {
   try {
@@ -23,6 +25,8 @@ export default function ProductInput() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [features, setFeatures] = useState('')
   const [useAddress, setUseAddress] = useState(false)
+  const [adGoal, setAdGoal] = useState<AdGoal>('menu_promotion')
+  const [photoMode, setPhotoMode] = useState<PhotoMode>('cutout')
   const [file, setFile] = useState<File | null>(null)
   const [handle, setHandle] = useState<UploadHandle | null>(restored)
   const needsUpload = useRef(false)
@@ -70,7 +74,7 @@ export default function ProductInput() {
 
   async function save(): Promise<{ handle: UploadHandle; draft: Draft } | null> {
     const next = validate(); setErrors(next); setGenerated(false)
-    if (['address', 'instagram_handle', 'mood', 'product_features'].some((key) => key in next)) setMoreOpen(true)
+    if (['address', 'instagram_handle', 'mood', 'product_features', 'ad_goal', 'photo_mode'].some((key) => key in next)) setMoreOpen(true)
     if (Object.keys(next).length) { setStatus('error'); setMessage('입력 항목을 확인해 주세요.'); return null }
     setStatus('saving'); setMessage('원본 사진과 상품 정보를 저장하고 있습니다.')
     try {
@@ -80,7 +84,7 @@ export default function ProductInput() {
         try { sessionStorage.setItem(storageKey, JSON.stringify(current)) } catch { /* Saving is still available without tab storage. */ }
       }
       if (!current) throw new Error('사진을 다시 선택해 주세요.')
-      await saveInput(current, facts, mood as Mood, { product_features: features === '' ? null : features, use_address_for_copy: useAddress })
+      await saveInput(current, facts, mood as Mood, { product_features: features === '' ? null : features, use_address_for_copy: useAddress, ad_goal: adGoal, photo_mode: photoMode })
       try { sessionStorage.setItem(strategyStorageKey(current.upload.job_id), strategy) } catch { /* The design step falls back to its default. */ }
       const result = await getInput(current) // Verify through the read endpoint, not the submitted object.
       setDraft(result); setStatus('saved'); setMessage('상품 정보와 원본 사진이 저장됐습니다. 광고 생성은 시작하지 않았습니다.')
@@ -128,8 +132,11 @@ export default function ProductInput() {
     try {
       const result = await getInput(handle)
       const original = await getOriginal(handle)
-      setFacts(result.facts); setMood(result.mood); setFeatures(result.product_features ?? ''); setUseAddress(result.use_address_for_copy ?? false);
-      if (result.product_features || result.facts.address || result.facts.instagram_handle || result.use_address_for_copy) setMoreOpen(true); setDraft(result); setFile(null); needsUpload.current = false
+      setFacts(result.facts); setMood(result.mood); setFeatures(result.product_features ?? ''); setUseAddress(result.use_address_for_copy ?? false)
+      setAdGoal(result.ad_goal ?? 'menu_promotion'); setPhotoMode(result.photo_mode ?? 'cutout')
+      if (result.product_features || result.facts.address || result.facts.instagram_handle || result.use_address_for_copy
+        || (result.ad_goal ?? 'menu_promotion') !== 'menu_promotion' || result.photo_mode === 'original') setMoreOpen(true)
+      setDraft(result); setFile(null); needsUpload.current = false
       setPreview(URL.createObjectURL(original)); setStatus('saved'); setMessage('서버에서 저장된 상품 정보와 원본 사진을 다시 조회했습니다.')
     } catch (error) { fail(error) }
   }
@@ -181,6 +188,16 @@ export default function ProductInput() {
           <select id="mood" value={mood} onChange={(event) => { setMood(event.target.value as Mood | ''); changed() }} aria-invalid={!!errors.mood}>
             <option value="">선택해 주세요</option><option value="warm">따뜻한 감성</option><option value="minimal">깔끔한 미니멀</option><option value="vivid">활기찬 강렬함</option><option value="premium">고급스러움</option>
           </select>{errors.mood && <p className="field-error">{errors.mood}</p>}
+          <label htmlFor="ad_goal">광고 목적</label>
+          <select id="ad_goal" value={adGoal} onChange={(event) => { setAdGoal(event.target.value as AdGoal); changed() }} aria-describedby="ad_goal-hint" aria-invalid={!!errors.ad_goal}>
+            {(Object.keys(goalLabels) as AdGoal[]).map((goal) => <option key={goal} value={goal}>{goalLabels[goal]}{goal === 'menu_promotion' ? ' (기본)' : ''}</option>)}
+          </select>
+          <small id="ad_goal-hint">광고 문구가 무엇을 하도록 이끌지 정해요. 바꾸면 문구를 새로 만들어요.</small>
+          {errors.ad_goal && <p className="field-error">{errors.ad_goal}</p>}
+          <label className="check"><input type="checkbox" checked={photoMode === 'original'} aria-describedby="photo_mode-hint"
+            onChange={(event) => { setPhotoMode(event.target.checked ? 'original' : 'cutout'); changed() }} /> 사진 배경 그대로 쓰기</label>
+          <small id="photo_mode-hint">기본은 배경을 지운 상품만 써요. 켜면 사진 전체를 자르지 않고 카드처럼 넣어요. 배경이 깔끔한 사진에 잘 어울리고, 작은 원형 시안에서는 사진이 작게 보일 수 있어요.</small>
+          {errors.photo_mode && <p className="field-error">{errors.photo_mode}</p>}
           <label htmlFor="product_features">상품 특징·강조 포인트 (선택)</label>
           <textarea id="product_features" value={features} rows={3} placeholder="직접 확인한 맛·식감·재료·상품 장점을 적어 주세요."
             aria-invalid={!!errors.product_features} onChange={event => { setFeatures(event.target.value); changed() }} />
@@ -206,6 +223,7 @@ export default function ProductInput() {
       <h3>서버에 저장된 입력</h3>
       <dl>{(Object.keys(labels) as (keyof Facts)[]).map((key) => <div key={key}><dt>{labels[key]}</dt><dd>{draft.facts[key] ?? '미입력'}</dd></div>)}</dl>
       <p>작업 상태: {draft.status} · 분위기: {draft.mood}</p>
+      <p>광고 목적: {goalLabels[draft.ad_goal ?? 'menu_promotion']} · 사진: {photoModeLabels[draft.photo_mode ?? 'cutout']}</p>
       <p style={{ whiteSpace: 'pre-wrap' }}>상품 특징: {draft.product_features ?? '미입력'}</p>
       <p>주소 카피 활용: {draft.use_address_for_copy ? '사용' : '사용하지 않음'}</p>
       <p>만료: {new Date(draft.expires_at).toLocaleString('ko-KR')} · 사진/입력은 24시간 임시 저장됩니다.</p>
