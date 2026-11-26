@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     analysis_timeout_seconds: float = Field(default=120, gt=0, le=300)
     analysis_idle_seconds: float = Field(default=300, gt=0, le=3600)
     copy_provider: Literal['mock', 'openai'] = 'mock'
-    copy_prompt_profile: Literal['v6', 'v7'] = 'v6'
+    copy_prompt_profile: Literal['v6', 'v7', 'v8'] = 'v6'
     copy_model: str = 'gpt-5.4-mini-2026-03-17'
     copy_allow_paid: bool = False
     copy_max_requests: int = Field(default=6, ge=0, le=10)
