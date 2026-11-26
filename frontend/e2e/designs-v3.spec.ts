@@ -32,11 +32,11 @@ test('v2 to strategy variants, model and diagnostics, edit, downloads and restor
  await expect(region.getByText('시안 상태: completed · revision 1',{exact:true})).toBeVisible({timeout:60000})
  await expect(region.getByRole('article')).toHaveCount(4)
  const rankResponse=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/designs/price/ranking'))
- await region.getByRole('button',{name:'시안 ML 참고 순위 계산'}).click()
+ await region.getByRole('button',{name:'추천 순위 다시 계산'}).click()
  const ranked=await (await rankResponse).json()
  await writeFile(info.outputPath('ranking-evidence.json'),JSON.stringify({source:ranked.ranking?.source,model_version:ranked.ranking?.model_version,items:ranked.ranking?.items,error:ranked.ranking_error},null,2))
  if(process.env.PLAYWRIGHT_REQUIRE_RANKING_MODEL==='1'){
-  await expect(region.getByText(/bt-logistic-v1/)).toHaveCount(4,{timeout:60000})
+  await expect(region.getByText(/선호 모델\(bt-logistic-v1\)/)).toBeVisible({timeout:60000})
   const gap=ranked.ranking_close_call_score_gap
   expect(typeof gap).toBe('number')
   const items=[...ranked.ranking.items].sort((a,b)=>a.rank-b.rank)

@@ -27,7 +27,7 @@ test('one click makes four designs of the chosen strategy and ranks them', async
   await expect(region.getByText('선택 전략: 비주얼')).toBeVisible({ timeout: 30_000 })
   await expect(region.getByText(/시안 상태: completed · revision 1/)).toBeVisible({ timeout: 30_000 })
   await expect(region.getByRole('article')).toHaveCount(4)
-  if (process.env.PLAYWRIGHT_REQUIRE_RANKING_MODEL === '1') await expect(region.getByText(/bt-logistic-v1/)).toHaveCount(4, { timeout: 60_000 })
+  if (process.env.PLAYWRIGHT_REQUIRE_RANKING_MODEL === '1') await expect(region.getByText(/선호 모델\(bt-logistic-v1\)/)).toBeVisible({ timeout: 60_000 })
   else await expect(region.getByText('시연용 임시 순위이며 실제 광고 품질 평가 결과가 아닙니다.')).toBeVisible()
   expect(paid).toBe(0)
 })

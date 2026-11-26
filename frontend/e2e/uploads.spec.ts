@@ -43,7 +43,7 @@ for (const [fmt, mime] of [['PNG', 'image/png'], ['JPEG', 'image/jpeg']]) {
     await expect(page.getByLabel('가격', { exact: true })).toHaveValue(' 10,500 원 ')
     await expect(page.getByText(/작업 상태: pending/)).toBeVisible()
     await page.screenshot({ path: info.outputPath('upload-saved.png'), fullPage: true })
-    await expect(page.getByText(/가독성 진단은 모델 점수와 별개/)).toBeVisible()
+    await expect(page.getByText(/추천 순위와 가독성 진단은 따로 계산한/)).toBeVisible()
   })
 }
 
