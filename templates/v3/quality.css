@@ -28,3 +28,15 @@ footer .cta{font-size:32px}footer .period{font-size:28px}.price_c footer .cta,.p
    at its own aspect ratio, so nothing is cropped; the slot's box, ring and frame give way to rounded corners. */
 .photo.whole-photo{background:transparent!important;border-color:transparent!important}
 .photo.whole-photo img{border-radius:24px;box-shadow:0 18px 36px rgba(0,0,0,.20),0 4px 10px rgba(0,0,0,.10)}
+/* Original draft fonts (assets and checks: A, PR #68). Emotional: serif; price and brand: Pretendard;
+   visual keeps Noto Sans. HanjangNoto stays as the per-glyph fallback. */
+.ad[class*=emotional_]{font-family:'Noto Serif KR',HanjangNoto,sans-serif}
+.ad[class*=price_],.ad[class*=brand_]{font-family:Pretendard,HanjangNoto,sans-serif}
+/* Readable sizes (A's candidate thresholds: headline/price 36px, product 32px, body/CTA/store 28px).
+   The renderer can still shrink a field that does not fit; these raise the starting size. The visual
+   body slot holds two lines: longer bodies still shrink (about 25px) until copy length limits exist. */
+.ad.price_a .headline{font-size:38px!important}.ad.price_b .headline,.ad.price_c .headline,.ad.price_d .headline{font-size:36px!important}
+.ad.price_b header .store{font-size:28px!important}
+.ad.brand_b .headline,.ad.brand_c .headline,.ad.brand_d .headline{font-size:36px!important}
+.ad.visual_c .headline,.ad.visual_d .headline{font-size:38px!important}
+.ad.visual_a .body,.ad.visual_c .body,.ad.visual_d .body{font-size:28px!important}
