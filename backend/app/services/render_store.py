@@ -58,7 +58,9 @@ class RenderStore:
         copy = self.copies.current_for_render(owner, job)
         try:
             photo_hash = sha256(self.photo_bytes(owner, record, asset, draft)).hexdigest()
-        except UploadError:
+        except UploadError as error:
+            if error.status not in (404,409,422):
+                raise
             # A missing/replaced source must stale the last success, not hide it.
             # start/edit still fail explicitly when they try to read this source.
             photo_hash = 'unavailable'

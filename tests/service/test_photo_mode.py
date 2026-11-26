@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 from app.services.render_photo import render_photo
+from app.services.uploads import UploadError
 from test_rendering import service, draft, fake_render
 from test_designs import designs, generate, snap
 
@@ -81,6 +82,13 @@ def test_mode_change_inflight_never_current(service):
     c.post(b+'/rendering',headers=h,json=body)
     assert not c.get(b+'/rendering',headers=h).json()['is_current']
     assert c.get(b+'/copy-generation',headers=h).json()['is_current']
+
+
+def test_expiry_during_photo_snapshot_is_not_swallowed(service,monkeypatch):
+    app,c,h,m,b,body,raw=service
+    def expired(*args):raise UploadError(410,'JOB_EXPIRED','만료된 작업입니다.')
+    monkeypatch.setattr(app.state.render_store,'photo_bytes',expired)
+    assert c.get(b+'/rendering',headers=h).status_code==410
 
 
 def test_v3_edit_mode_change_inflight_preserves_last_assets(designs):

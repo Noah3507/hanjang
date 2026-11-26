@@ -163,8 +163,9 @@ establish aesthetic quality or improve the unchanged cutout model.
 ## Executed results
 
 - Backend full:704 passed,43 skipped (explicit browser/model opt-ins).
-- Focused photo-mode tests:7 passed. Earlier recovery run with editor resilience:
-  35 passed; request-shape mistakes in new tests and missing-source snapshot
+- Latest photo-mode + editor-resilience tests:37 passed, including expiry410
+  during source reads. Earlier recovery run:35 passed; request-shape mistakes
+  in new tests and missing-source snapshot
   handling were corrected before the final full run.
 - Actual isolated Chromium/API: both products switched cutout→original→cutout
   without new copy/analysis/processing dispatch; initial cached setup is distinct
