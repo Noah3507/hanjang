@@ -75,9 +75,7 @@ class EditorStore:
             if response.status == 'completed':
                 record.edits[request_key]=EditEntry(key,response,request_key);record.last_edit=request_key
                 return self.get(owner,job),None
-            source,_=self.uploads.read_asset(owner,asset.asset_id)
-            if sha256(source).hexdigest()!=asset.sha256:
-                raise UploadError(409,'EDIT_ASSET_INVALID','선택 사진이 변경됐습니다. 사진을 다시 확인해 주세요.')
+            source=self.renders.photo_bytes(owner,record,asset,draft)
             for c in current.candidates:
                 png,mime=self.uploads.read_asset(owner,c.png.asset_id)
                 if mime!='image/png':raise UploadError(409,'EDIT_ASSET_INVALID','광고 PNG를 다시 생성해 주세요.')
@@ -114,7 +112,7 @@ class EditorStore:
             result=results[0]; png=opaque_png(result['png'])
             with self.renders.locked():
                 if not self.renders.slot.owns(token):return
-                record,_,_,_,_,key=self.renders.snapshot(owner,job)
+                record,_,selected_asset,current_draft,_,key=self.renders.snapshot(owner,job)
                 entry=record.edits[request_key];current=self.renders.get(owner,job)
                 if key!=entry.source_key or not current.is_current or current.revision!=base.revision:
                     raise RenderFailure('EDIT_SOURCE_CHANGED')
@@ -124,7 +122,7 @@ class EditorStore:
                     if mime!='image/png':raise RenderFailure('EDIT_ASSET_INVALID')
                     opaque_png(old)
                     if sha256(old).hexdigest()!=record.asset_hashes.get(c.png.asset_id):raise RenderFailure('EDIT_ASSET_INVALID')
-                selected_bytes,_=self.uploads.read_asset(owner,base.source_asset_id)
+                selected_bytes=self.renders.photo_bytes(owner,record,selected_asset,current_draft)
                 if sha256(selected_bytes).hexdigest()!=sha256(source).hexdigest():raise RenderFailure('EDIT_ASSET_INVALID')
                 asset=uuid.uuid4().hex;path=self.uploads.safe_path(asset+'.png')
                 fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)

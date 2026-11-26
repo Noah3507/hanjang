@@ -97,9 +97,7 @@ class DesignStore:
                 selected.ad_copy.headline,selected.ad_copy.body,selected.ad_copy.cta,**commercial,style_context=styles)
             try:data.validate()
             except RenderFailure as e:raise UploadError(422,e.code,'가격·할인율·통화·행사 기간을 확인해 주세요.') from None
-            raw,_=self.uploads.read_asset(owner,asset.asset_id)
-            if sha256(raw).hexdigest()!=asset.sha256:
-                raise UploadError(409,'V3_ASSET_CHANGED','선택 사진이 변경됐습니다.')
+            raw=self.renders.photo_bytes(owner,record,asset,draft)
             revision=(old.response.revision if old else 0)+1
             response=DesignResponse(job_id=job,strategy=strategy,status='processing',revision=revision,
                 source_revision=source.revision,source_asset_id=asset.asset_id,copy_key=copy.copy_key,
@@ -163,9 +161,8 @@ class DesignStore:
                         raise UploadError(422,'V3_PRICE_REVIEW_REQUIRED','금액과 통화를 확인해 주세요. 원문을 자동 변환하지 않습니다.') from None
             try:data.validate()
             except RenderFailure as e:raise UploadError(422,e.code,'가격과 기존 할인 정보의 정합성을 확인해 주세요.') from None
-            _,asset,draft,_,_,_,_=self.context(owner,job)
-            raw,_=self.uploads.read_asset(owner,asset.asset_id)
-            if sha256(raw).hexdigest()!=asset.sha256:raise UploadError(409,'V3_ASSET_CHANGED','선택 사진이 변경됐습니다.')
+            record,asset,draft,_,_,_,_=self.context(owner,job)
+            raw=self.renders.photo_bytes(owner,record,asset,draft)
             ticket=uuid4().hex;entry.edit_ticket=ticket
             def abandoned():entry.edit_ticket=None
             lease=self.renders.slot.reserve(abandoned)
@@ -184,7 +181,7 @@ class DesignStore:
             if [r['template_id'] for r in results]!=ids:raise RenderFailure('RENDER_INVALID_RESULT')
             with self.renders.locked():
                 if not self.renders.slot.owns(lease):return
-                record,asset,_,_,source,key,_=self.context(owner,job)
+                record,asset,current_draft,_,source,key,_=self.context(owner,job)
                 if key!=entry.source_key or not source.is_current:raise RenderFailure('V3_SOURCE_CHANGED')
                 if edit:
                     old=record.design_sets[strategy]
@@ -192,7 +189,7 @@ class DesignStore:
                     for c in old.response.candidates:self.asset(owner,job,record,c)
                 else:
                     if record.design_sets.get(strategy) is not entry:raise RenderFailure('V3_SOURCE_CHANGED')
-                current_raw,_=self.uploads.read_asset(owner,asset.asset_id)
+                current_raw=self.renders.photo_bytes(owner,record,asset,current_draft)
                 if sha256(current_raw).hexdigest()!=sha256(raw).hexdigest():raise RenderFailure('V3_ASSET_CHANGED')
                 response=entry.response.model_copy(deep=True)
                 response.revision += 1 if edit else 0

@@ -32,6 +32,7 @@ class InputDraft(StrictModel):
     product_features: str | None = Field(default=None, max_length=500)
     use_address_for_copy: bool = False
     ad_goal: Literal['menu_promotion', 'store_visit', 'order'] = 'menu_promotion'
+    photo_mode: Literal['cutout', 'original'] = 'cutout'
 
     @field_validator('product_features')
     @classmethod
@@ -67,4 +68,5 @@ class DraftResponse(BaseModel):
     product_features: str | None = None
     use_address_for_copy: bool = False
     ad_goal: Literal['menu_promotion', 'store_visit', 'order'] = 'menu_promotion'
+    photo_mode: Literal['cutout', 'original'] = 'cutout'
     expires_at: datetime
