@@ -9,12 +9,17 @@ from app.services.copy_store import digest
 from app.services.render_execution import VERSION, RenderFailure, rgb
 from app.services.uploads import UploadError
 from app.services.render_slot import RenderSlot
+from app.services.render_photo import render_photo, VERSION as PHOTO_VERSION
 
 class RenderStore:
-    def __init__(self, uploads, copies, executor):
+    def __init__(self, uploads, copies, executor, photo_max_side=1600):
         self.uploads, self.copies, self.executor = uploads, copies, executor
         self.lock = RLock()
         self.slot = RenderSlot()
+        self.photo_max_side = photo_max_side
+
+    def photo_bytes(self, owner, record, asset, draft):
+        return render_photo(self.uploads,owner,record,asset,draft,self.photo_max_side)
 
     @property
     def active(self):
@@ -51,8 +56,15 @@ class RenderStore:
     def snapshot(self, owner, job):
         record, photo, asset, draft, _, _, _ = self.copies.snapshot(owner, job)
         copy = self.copies.current_for_render(owner, job)
+        try:
+            photo_hash = sha256(self.photo_bytes(owner, record, asset, draft)).hexdigest()
+        except UploadError:
+            # A missing/replaced source must stale the last success, not hide it.
+            # start/edit still fail explicitly when they try to read this source.
+            photo_hash = 'unavailable'
         key = digest({'draft': draft.model_dump(mode='json'), 'asset': asset.asset_id,
-            'copy': copy.model_dump(mode='json') if copy else None, 'template': VERSION})
+            'copy': copy.model_dump(mode='json') if copy else None, 'template': VERSION,
+            'photo':photo_hash,'photo_policy':PHOTO_VERSION,'photo_max_side':self.photo_max_side})
         return record, photo, asset, draft, copy, key
 
     def blank(self, job, record, asset, copy):
@@ -88,13 +100,13 @@ class RenderStore:
             result.revision = max((r.revision for r in [*record.renders.values(), *record.edited_renders.values()]), default=0)+1
             result.status = 'processing'
             result.warnings = ['MOCK_COPY_NOT_LLM'] if result.mock_copy else ['COPY_REVIEW_REQUIRED']
-            data, _ = self.uploads.read_asset(owner, asset.asset_id)
+            data = self.photo_bytes(owner,record,asset,draft)
             record.renders[key], record.last_render = result, key
             def abandoned():
                 result.status='failed'
                 result.error=RenderError(code='RENDER_FAILED',message='렌더링 작업이 시작되지 않았습니다. 다시 요청해 주세요.')
             token=self.slot.reserve(abandoned)
-            return result.model_copy(deep=True), (key, draft, copy, data, asset.sha256,token)
+            return result.model_copy(deep=True), (key, draft, copy, data, sha256(data).hexdigest(),token)
 
     def finish(self, owner, job, task):
         key, draft, copy, data, selected_hash,token = task

@@ -43,7 +43,7 @@ class CopyStore:
             payload = provider_payload(draft, context, getattr(self.provider,'prompt_profile',None) or 'v6')
         except CopyFailure:
             raise UploadError(422, 'COPY_PRIVATE_INPUT', '전송 제외된 주소나 Instagram이 다른 입력에 포함돼 있습니다. 상품 특징을 확인해 주세요.') from None
-        hash_input = digest(draft.model_dump(mode='json'))
+        hash_input = digest(draft.model_dump(mode='json', exclude={'photo_mode'}))
         key = digest({'asset': asset.asset_id, 'input': hash_input, 'payload': payload,
                       'provider': self.provider.name, 'model': self.provider.model, 'prompt': getattr(self.provider,'prompt_version',PROMPT_VERSION), 'glyphs': POLICY_VERSION})
         return record, photo, asset, draft, payload, hash_input, key
@@ -69,7 +69,7 @@ class CopyStore:
     def start(self, owner, job, body):
         with self.locked():
             record, photo, asset, draft, payload, hash_input, key = self.snapshot(owner, job)
-            if body.expected_asset_id != asset.asset_id or body.expected_input != draft:
+            if body.expected_asset_id != asset.asset_id or body.expected_input.model_dump(exclude={'photo_mode'}) != draft.model_dump(exclude={'photo_mode'}):
                 raise UploadError(409, 'COPY_SOURCE_CHANGED', '저장된 상품 정보나 선택 사진이 변경됐습니다. 다시 조회해 주세요.')
             if photo.status == 'processing':
                 raise UploadError(409, 'PHOTO_PROCESSING_BUSY', '사진 처리 완료 후 카피를 생성해 주세요.')
