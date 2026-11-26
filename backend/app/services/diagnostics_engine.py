@@ -3,9 +3,9 @@ import math
 from app.schemas.diagnostics import RuleResult,CandidateDiagnostics
 from app.services.diagnostics_evidence import EVIDENCE_VERSION
 
-RULES_VERSION='readability-rules-v3-roles'
+RULES_VERSION='readability-rules-v4-role-policy-1'
 CONTRAST_MINIMUM=4.5  # Conservative service reference at unknown display scale.
-SMALL_FONT_PX=36.0  # Tunable initial service heuristic, not a universal standard.
+SMALL_FONT_PX=36.0  # Legacy comparison baseline only; production uses ROLE_THRESHOLDS.
 DENSITY_LIMIT=.40  # Union of text BLOCK rectangles, not glyph ink or a score.
 WIDTH,HEIGHT=1080,1350
 
@@ -56,32 +56,41 @@ def rule(rule_id,statuses,value,unit,criterion,explanation,action):
                       criterion=criterion,explanation=explanation,action=action)
 
 FIELD_ROLES={'headline':'headline','price_text':'price','body':'body','cta':'cta',
-             'store_name':'brand','product_name':'product', 'address':'support', 'instagram':'support'}
+             'store_name':'brand','product_name':'product', 'address':'support', 'instagram':'support',
+             'discount_text':'support','original_price':'support','promotion_text':'support','period_text':'support'}
+ROLE_THRESHOLDS={'headline':36.,'price':36.,'product':32.,'body':28.,'cta':28.,'brand':28.,'support':24.}
+BODY_TEMPLATE_EXCEPTIONS={'visual_a':24.,'visual_c':24.,'visual_d':24.}
 
 
-def fonts(texts, role_thresholds=None):
-    """Optional explicit evaluation profile; production keeps the existing 36px.
+def policy_identity():
+    """Diagnostic-only dependencies; never enter render/copy/ranking snapshots."""
+    return {'version':RULES_VERSION,'roles':dict(ROLE_THRESHOLDS),'fields':dict(FIELD_ROLES),
+            'body_exceptions':dict(BODY_TEMPLATE_EXCEPTIONS),
+            'density':DENSITY_LIMIT,'contrast':CONTRAST_MINIMUM}
 
-    Callers can compare team proposals without silently promoting new thresholds.
-    Unknown fields keep the legacy baseline. No model input uses these results.
-    """
-    role_thresholds = role_thresholds or {}
+
+def fonts(texts, role_thresholds=None, template_id=None):
+    """Final PNG px, team-agreed service heuristics, not a readability standard."""
+    role_thresholds = dict(ROLE_THRESHOLDS if role_thresholds is None else role_thresholds)
     if any(k not in set(FIELD_ROLES.values()) or not number(v) or v<=0 for k,v in role_thresholds.items()):
         raise ValueError('Invalid diagnostic role profile')
     items=[]
     for t in texts:
         value=t.get('font_size_px');valid=number(value) and value>0
-        role=FIELD_ROLES.get(t.get('field'),'support')
-        threshold=role_thresholds.get(role,SMALL_FONT_PX)
+        role=FIELD_ROLES.get(t.get('field'),'unknown')
+        threshold=role_thresholds.get(role) if role!='unknown' else None
+        if t.get('field')=='body' and template_id in BODY_TEMPLATE_EXCEPTIONS:
+            threshold=BODY_TEMPLATE_EXCEPTIONS[template_id]
         items.append({'field':t.get('field','unknown'),'value':value if valid else None,
                       'role':role,'threshold':threshold,
-                      'initial_font_size_px':t.get('initial_font_size_px') if number(t.get('initial_font_size_px')) else None,
-                      'size_ratio':t.get('size_ratio') if number(t.get('size_ratio')) else None,
-                      'status':'unavailable' if not valid else 'caution' if value<threshold else 'normal'})
+                      'initial_font_size_px':t.get('initial_font_size_px') if number(t.get('initial_font_size_px')) and t['initial_font_size_px']>0 else None,
+                      'size_ratio':t.get('size_ratio') if number(t.get('size_ratio')) and t['size_ratio']>0 else None,
+                      'status':'unavailable' if not valid or threshold is None else 'caution' if value<threshold else 'normal'})
     values=[i['value'] for i in items if i['value'] is not None]
-    return rule('font_size',[i['status'] for i in items],{'minimum':min(values) if values else None,'items':items},'PNG px (현재 CSS px와 1:1)',
-        ('역할별 명시적 비교 프로필 · 운영 기준 아님' if role_thresholds else f'{SMALL_FONT_PX:g} PNG px 미만 주의 · 조정 가능한 서비스 휴리스틱'),
-        '캔버스 글꼴 크기이며 실제 모바일 표시나 인쇄 가독성을 보장하지 않습니다. 제목·가격·본문·CTA·상호·보조 정보의 역할을 함께 확인하세요. 36px은 보편적 표준이 아닙니다.',
+    return rule('font_size',[i['status'] for i in items],{'minimum':min(values) if values else None,'items':items,
+        'policy_version':RULES_VERSION,'template_id':template_id},'PNG px (현재 CSS px와 1:1)',
+        '역할별 기준 미만 주의 · 일치 시 정상 · 조정 가능한 서비스 휴리스틱',
+        '최종 캔버스 글꼴 크기이며 모바일·인쇄 가독성 표준이 아닙니다. visual_a/c/d 본문 24px 예외는 임시이며 길이 조정 후 재검토합니다.',
         '작은 글자가 있으면 문구를 줄여 재렌더링하고 실제 표시 크기로 확인해 주세요. 자유 글꼴 편집은 지원하지 않습니다.')
 
 def contrast_rule(texts,measurement,png_hash):
@@ -143,13 +152,13 @@ def density(texts):
         '텍스트 블록 면적이며 실제 글자 잉크·정보 이해도·가독성 점수가 아닙니다. 누락 시 확인된 영역만 표시합니다.',
         '제목·본문·CTA의 역할을 살려 문구를 줄여 보세요. 길이만으로 가독성을 단정하지 않습니다.')
 
-def analyze(candidate,measurement,png_hash):
+def analyze(candidate,measurement,png_hash,*,template_id=None):
     renderer=candidate.get('renderer',{})
     renderer=renderer if isinstance(renderer,dict) else {}
     texts=renderer.get('text_boxes')
     texts=texts if isinstance(texts,list) else []
     texts=[t if isinstance(t,dict) else {'field':'unknown'} for t in texts]
-    methods=[('contrast',lambda:contrast_rule(texts,measurement,png_hash)),('font_size',lambda:fonts(texts)),
+    methods=[('contrast',lambda:contrast_rule(texts,measurement,png_hash)),('font_size',lambda:fonts(texts,template_id=template_id)),
              ('layout',lambda:layout(texts,renderer.get('product_bbox'))),('density',lambda:density(texts))]
     results=[]
     for name,method in methods:

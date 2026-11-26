@@ -20,6 +20,7 @@ from app.ml_adapter.mock_ranker import ordered_items
 from app.services.ranking_guidance import close_call_gap
 from app.services.design_style_context import resolve_bundle
 from app.services.render_fonts import font_identity
+from app.services import diagnostics_engine
 
 
 @dataclass
@@ -30,6 +31,7 @@ class DesignEntry:
     measurements: dict = field(default_factory=dict)
     edit_ticket: str | None = None
     ranking_token: str | None = None
+    diagnostic_policy: str | None = None
 
 
 class DesignStore:
@@ -67,8 +69,10 @@ class DesignStore:
                 result.ranking=None
             elif result.ranking is not None and entry.ranking_token != self.ranker_token():
                 result.ranking=None;result.ranking_status='pending'
-            elif result.status=='completed':
+            if result.is_current and result.status=='completed':
                 for c in result.candidates:self.asset(owner,job,record,c)
+                self.refresh_diagnostics(record,entry)
+                result.diagnostics=[d.model_copy(deep=True) for d in entry.response.diagnostics]
             if (result.is_current and not result.editing and result.ranking_status=='completed'
                     and result.ranking_error is None and result.ranking is not None
                     and result.ranking.revision==result.revision):
@@ -76,6 +80,17 @@ class DesignStore:
                 if entry.ranking_token!=self.ranker_token():
                     result.ranking=None;result.ranking_close_call_score_gap=None;result.ranking_status='pending'
             return result
+
+    def refresh_diagnostics(self,record,entry):
+        # Re-evaluate stored Chromium evidence only. Do not alter candidate,
+        # render snapshot, rank, copy, PNG or revision for a policy change.
+        policy=digest(diagnostics_engine.policy_identity())
+        if entry.diagnostic_policy==policy:return
+        response=entry.response
+        response.diagnostics=[CandidateDiagnostics.model_validate(measured_diagnostics(
+            c.candidate_id,c.png.asset_id,c.strategy,entry.measurements[c.candidate_id],
+            record.asset_hashes[c.png.asset_id],template_id=c.template_id)) for c in response.candidates]
+        entry.diagnostic_policy=policy
 
     def start(self, owner, job, strategy, body):
         with self.renders.locked():
@@ -221,10 +236,11 @@ class DesignStore:
                 response.ranking=None;response.ranking_status='pending';response.ranking_error=None
                 hashes={a:sha256(p.read_bytes()).hexdigest() for a,p in written}
                 response.diagnostics=[CandidateDiagnostics.model_validate(measured_diagnostics(c.candidate_id,c.png.asset_id,strategy,entry.measurements[c.candidate_id],
-                    hashes.get(c.png.asset_id) or record.asset_hashes[c.png.asset_id])) for c in candidates]
+                    hashes.get(c.png.asset_id) or record.asset_hashes[c.png.asset_id],template_id=c.template_id)) for c in candidates]
                 response.snapshot=self.identity(response)
                 response.warnings=['SAME_STRATEGY_MODEL_NOT_VALIDATED','CHECK_DIAGNOSTICS_SEPARATELY']
                 completed=DesignEntry(entry.source_key,response,entry.inputs,entry.measurements)
+                completed.diagnostic_policy=digest(diagnostics_engine.policy_identity())
                 self.renders.publish(record,job,written,hashes,design_sets={**record.design_sets,strategy:completed})
         except BaseException as e:
             for _,p in written:

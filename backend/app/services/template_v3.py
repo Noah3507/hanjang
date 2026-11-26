@@ -29,8 +29,16 @@ REGISTRY = {f'{strategy}_{letter}': {'strategy': strategy, 'variant': letter,
             for strategy, names in NAMES.items() for letter, name in zip('abcd', names)}
 
 
-def measured_diagnostics(candidate_id, asset_id, strategy, measurement, png_hash):
+def measured_diagnostics(candidate_id, asset_id, strategy, measurement, png_hash, *, template_id=None):
     """Adapt Chromium evidence to the existing renderer/diagnostics boundary."""
+    measured_id=measurement.get('template_id')
+    if template_id is not None:
+        if template_id not in REGISTRY or REGISTRY[template_id]['strategy']!=strategy:
+            raise ValueError('Invalid diagnostic template identity')
+        if measured_id is not None and measured_id!=template_id:
+            raise ValueError('Diagnostic template mismatch')
+    elif measured_id in REGISTRY and REGISTRY[measured_id]['strategy']==strategy:
+        template_id=measured_id
     boxes = []
     for text in measurement['text']:
         box = dict(text)
@@ -39,7 +47,7 @@ def measured_diagnostics(candidate_id, asset_id, strategy, measurement, png_hash
         boxes.append(box)
     candidate = {'candidate_id': candidate_id, 'strategy': strategy, 'png': {'asset_id': asset_id},
                  'renderer': {'text_boxes': boxes, 'product_bbox': measurement['product']}}
-    result=analyze(candidate, measurement, png_hash)
+    result=analyze(candidate, measurement, png_hash,template_id=template_id)
     from app.services.product_diagnostics import image_rules
     result.rules.extend(image_rules(measurement))
     coverage=[r.coverage for r in result.rules]
@@ -125,6 +133,8 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
             raise RenderFailure('RENDER_INVALID_RESULT')
         snapshot = sha256(json.dumps({'data':asdict(data),'font_fingerprint':font_fingerprint}, ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
         for row in rows:
+            if row['measurement'].get('template_id')!=row['template_id']:
+                raise RenderFailure('RENDER_INVALID_RESULT')
             row['png'] = opaque_png(base64.b64decode(row['png'], validate=True))
             attach_contrast_evidence(row)
             row.pop('background_png', None)
@@ -134,7 +144,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
                        png_sha256=sha256(row['png']).hexdigest())
             row['font_fingerprint'] = font_fingerprint
             row['style_snapshot'] = data.style_context.snapshot([row['template_id']]) if data.style_context else {}
-            row['diagnostics'] = measured_diagnostics(candidate_id, asset_id, row['strategy'], row['measurement'], row['png_sha256'])
+            row['diagnostics'] = measured_diagnostics(candidate_id, asset_id, row['strategy'], row['measurement'], row['png_sha256'],template_id=row['template_id'])
         return rows
     except subprocess.TimeoutExpired:
         raise RenderFailure('RENDER_TIMEOUT') from None
