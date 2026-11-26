@@ -1,4 +1,4 @@
-import { ApiError, type Draft, type UploadHandle } from './uploads'
+import { ApiError, inputSnapshot, type Draft, type UploadHandle } from './uploads'
 import type { CopyState } from './copy'
 import type { Facts } from './uploads'
 export interface RenderCandidate {
@@ -16,7 +16,7 @@ export async function rendering(handle: UploadHandle, start?: { asset: string; d
   const response = await fetch(`${base()}/jobs/${encodeURIComponent(handle.upload.job_id)}/rendering`, {
     method: start ? 'POST' : 'GET', headers: { 'X-Hanjang-Session': handle.token, ...(start ? { 'Content-Type': 'application/json' } : {}) },
     ...(start ? { body: JSON.stringify({ expected_asset_id: start.asset, expected_copy_key: start.copy.copy_key,
-      expected_input: { facts: start.draft.facts, mood: start.draft.mood, product_features: start.draft.product_features ?? null, use_address_for_copy: start.draft.use_address_for_copy ?? false } }) } : {}),
+      expected_input: inputSnapshot(start.draft) }) } : {}),
   })
   const body = await response.json().catch(() => null)
   if (!response.ok) throw new ApiError(body?.error?.message || '광고 렌더링 요청에 실패했습니다.')
