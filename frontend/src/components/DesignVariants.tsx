@@ -33,19 +33,26 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
    let next=action==='create'?await createDesigns(handle,strategy,render,promotion):action==='rank'&&state?await rankDesigns(handle,strategy,state):action==='edit'&&state&&candidate?await editDesign(handle,strategy,state,candidate,values,price):await getDesigns(handle,strategy)
    for(let n=0;;n++){
     if(id!==ticket.current)return
-    setState(next)
+    // While one design is being redrawn, keep showing the four finished ones instead of an empty carousel.
+    if(!(action==='edit'&&next.status==='processing'))setState(next)
     if(next.promotion)setPromotion(next.promotion)
     if(next.status!=='processing'&&!next.editing)break
     if(n>=180)throw Error('처리가 계속 진행 중입니다. 상태 다시 조회를 눌러 주세요.')
     await new Promise(r=>setTimeout(r,1000));if(id!==ticket.current)return;next=await getDesigns(handle,strategy)
    }
    if(action==='edit'&&next.error)throw Error(next.error.message)
-   if(action==='edit')setEditing('')
+   if(action==='edit'){const done=editing;setEditing('');focusEdit(done)}
   }catch(e){if(id===ticket.current)setError(e instanceof Error?e.message:'시안 요청 오류')}
   finally{if(id===ticket.current)setBusy(false)}
  }
  function select(s:Strategy){setEditing('');sessionStorage.setItem(storage,s);setStrategy(s);onSelectedStrategy?.(s)}
- function cancelEdit(){const previous=editing;setEditing('');setTimeout(()=>{Array.from(region.current?.querySelectorAll<HTMLButtonElement>('button[data-edit-id]')||[]).find(b=>b.dataset.editId===previous)?.focus()},0)}
+ // Closing the form shortens the page, so bring the edited design back into view before focusing its button.
+ function focusEdit(id:string){setTimeout(()=>{
+  const index=state?.candidates.findIndex(c=>c.candidate_id===id)??-1
+  if(index>=0)go(index)
+  const wrap=track.current?.closest('.carousel-wrap');if(wrap&&typeof wrap.scrollIntoView==='function')wrap.scrollIntoView({block:'start'})
+  Array.from(region.current?.querySelectorAll<HTMLButtonElement>('button[data-edit-id]')||[]).find(b=>b.dataset.editId===id)?.focus({preventScroll:true})},0)}
+ function cancelEdit(){const previous=editing;setEditing('');setError('');focusEdit(previous)}
  async function download(id:string,format:'png'|'pdf'){
   if(!state)return;const c=state.candidates.find(c=>c.candidate_id===id);if(!c)return
   const token=++ticket.current;setBusy(true);setError('')
@@ -85,7 +92,7 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
   <p className="variants-intro">위의 기존 4전략 광고는 유지됩니다. 각 전략의 네 디자인은 같은 문구로 비교합니다.</p>
   <p role="status" className="variants-status">시안 상태: {state?.status||'pending'} · revision {state?.revision||0}{busy?' · 처리 중':''}</p>
   {stale&&<p role="alert">이전 입력의 시안입니다. 최신 결과로 다시 생성해 주세요.</p>}
-  {error&&<p role="alert">{error}</p>}{state?.error&&<p role="alert">{state.error.message}</p>}
+  {error&&!editing&&<p role="alert">{error}</p>}{state?.error&&<p role="alert">{state.error.message}</p>}
   {state?.status==='failed'&&<p>{state.failed_templates?.length?`일부 시안 생성 실패: ${state.failed_templates.join(', ')}. 네 시안의 게시를 보류했습니다.`:'전체 시안을 생성하지 못했습니다.'} 입력 길이를 확인하고 다시 생성해 주세요. 기존 v2 광고는 유지됩니다.</p>}
   {state?.status==='completed'&&<>
    {state.ranking_status==='processing'&&<p role="status">모델 평가 중</p>}
@@ -128,12 +135,23 @@ export default function DesignVariants({handle,render,disabled,selectedStrategy,
     <button type="button" disabled={!usable} onClick={()=>void downloadAll()}>광고 모두 저장하기</button>
    </div>
   </>}
-  {editing&&<form aria-label="v3 시안 편집" onSubmit={e=>{e.preventDefault();void run('edit')}}>
-   <h4>선택 시안 {state?.candidates.find(c=>c.candidate_id===editing)?.template_id} 편집</h4><p>가격은 이 시안만 변경합니다. 원래 상품 정보와 v2 광고는 보존됩니다. 할인·본문과 가격이 일치하는지 확인해 주세요.</p>
-   {(['headline','body','cta'] as const).map((f,i)=><div key={f}><label htmlFor={`${formId}-${f}`}>v3 {['제목','본문','CTA'][i]}</label><textarea id={`${formId}-${f}`} autoFocus={i===0} required={f==='headline'} maxLength={[60,160,30][i]} disabled={busy||stale||disabled} value={values[f]} onChange={e=>setValues(v=>({...v,[f]:e.target.value}))}/></div>)}
-   <label htmlFor={`${formId}-price`}>v3 가격</label><input id={`${formId}-price`} required maxLength={40} disabled={busy||stale||disabled} value={price} onChange={e=>setPrice(e.target.value)}/>
-   <button disabled={busy||stale||disabled}>시안 적용하고 재렌더링</button>{' '}<button type="button" disabled={busy} onClick={cancelEdit}>시안 편집 취소</button>
-  </form>}
+  {editing&&(()=>{const c=state?.candidates.find(c=>c.candidate_id===editing);const shot=c&&urls[c.png.asset_id];const limits=[60,160,30];return <form aria-label="시안 고치기" className="design-edit" onSubmit={e=>{e.preventDefault();void run('edit')}}>
+   <div className="design-edit-head">
+    {shot?.url&&<img src={shot.url} alt="" width="1080" height="1350"/>}
+    <div><h4>{c?`${letter(c.template_id)}안 · ${names[c.design_name]||c.design_name}`:'시안'} 고치기</h4>
+     <p>고친 내용은 이 시안에만 들어가요. 처음 입력한 상품 정보와 다른 시안은 그대로예요.</p></div>
+   </div>
+   {(['headline','body','cta'] as const).map((f,i)=><div key={f} className="edit-field"><div className="edit-label"><label htmlFor={`${formId}-${f}`}>{['제목','본문','마무리 문구'][i]}</label><span className="edit-count" aria-hidden="true">{[...values[f]].length}/{limits[i]}</span></div>
+    <textarea id={`${formId}-${f}`} autoFocus={i===0} required={f==='headline'} maxLength={limits[i]} aria-describedby={f==='cta'?`${formId}-cta-hint`:undefined} disabled={busy||stale||disabled} value={values[f]} onChange={e=>setValues(v=>({...v,[f]:e.target.value}))}/>
+    {f==='cta'&&<p id={`${formId}-cta-hint`} className="edit-hint">손님이 할 행동을 짧게 적어요. 예: 지금 주문하세요</p>}</div>)}
+   <div className="edit-field"><label htmlFor={`${formId}-price`}>가격</label>
+    <input id={`${formId}-price`} required maxLength={40} aria-describedby={`${formId}-price-hint`} disabled={busy||stale||disabled} value={price} onChange={e=>setPrice(e.target.value)}/>
+    <p id={`${formId}-price-hint`} className="edit-hint">가격을 바꾸면 본문이나 할인 문구에 남은 예전 가격도 같이 고쳐 주세요.</p></div>
+   {error&&<p role="alert">{error}</p>}
+   {busy&&<p role="status">시안을 다시 그리고 있어요. 몇 초 걸려요.</p>}
+   <div className="edit-actions"><button disabled={busy||stale||disabled}>{busy?'적용하는 중…':'이 시안에 적용'}</button>
+    <button type="button" className="secondary" disabled={busy} onClick={cancelEdit}>취소</button></div>
+  </form>})()}
   <div className="variants-manage">
    <h4>다른 전략으로 만들기</h4>
    <div className="strategy-choices" role="group" aria-label="디자인 전략 선택">{(['emotional','price','visual','brand'] as Strategy[]).map(s=><button type="button" key={s} aria-pressed={strategy===s} disabled={disabled||Boolean(editing)} onClick={()=>select(s)}>{strategyLabels[s]} 전략 선택</button>)}</div>

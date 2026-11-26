@@ -221,3 +221,14 @@ textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .variants-manage summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:14px;font-weight:600}
 .variants-manage .fine-print{color:var(--ink-soft)}
 @media (prefers-reduced-motion: reduce){.carousel>article{transition:none}}
+/* Edit form: show which design is being changed, plain labels, counters next to each label. */
+.design-edit-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.design-edit-head img{flex:none;width:72px;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.design-edit-head h4{margin:0 0 6px}.design-edit-head p{margin:0;color:var(--ink-soft);line-height:1.5}
+.design-edit .edit-field{margin-top:12px}
+.design-edit .edit-field label{font-weight:600}
+.design-edit .edit-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.design-edit .edit-field>label{display:block;margin-bottom:6px}
+.design-edit .edit-count{font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.design-edit .edit-hint{margin:6px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.5}
+.design-edit .edit-actions{display:flex;gap:8px;margin-top:16px}.design-edit .edit-actions button{flex:1}
