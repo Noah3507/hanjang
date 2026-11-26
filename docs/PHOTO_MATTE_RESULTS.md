@@ -1,8 +1,11 @@
 # Photo matte integration results
 
-Base main `eb0fc34`, merged PR #71. `git apply --check` and application of B's
+Initial main `eb0fc34`, merged PR #71. During final CI, B's template-font PR #72
+merged as `f1fb297`; it was normally merged into the feature branch, with no
+manual B-file edits. Final integration uses that latest main. `git apply --check` and application of B's
 `photo-matte-for-A.patch` succeeded. No font, photo_mode, template, frontend,
-copy-generation or B ML/script files changed. Source photos/models/environment,
+copy-generation or B ML/script files were authored by this PR; upstream template
+changes were integrated unchanged. Source photos/models/environment,
 transfer files, previous outputs and paid ledger remain untouched.
 
 ## Patch and safety fixes
@@ -132,22 +135,23 @@ No process-memory improvement is claimed. Raw three-run data: local performance.
 
 ## Tests and local review
 
-- Full backend:725 passed,44 explicit opt-in skips.
-- Latest focused matte/photo API:23 passed, including the later added selected
+- Full backend after latest-main integration:727 passed,45 explicit opt-in skips.
+- Focused matte/photo API:23 passed, including the later added selected
   asset→stale-rank/old-PNG preservation case (Ranking fixture explicitly mock).
+- Latest-main focused matte/photo API/photo_mode/template-type run:32 passed,1 skip.
 - Matte14 tests include B's five tests, exact ellipse equivalence, all-RGB/input
   alpha preservation, tiny pieces, empty masks, determinism and failure contract.
-- Actual compatibility/model/PNG/PDF assertions passed; Chromium decoded20
+- Actual latest-main compatibility/model/PNG/PDF assertions passed; Chromium decoded20
   comparison images and43 compatibility images with console/pageerror0.
   Existing Starlette/AnyIO deprecation warning remains.
 - Frontend unchanged; existing frontend/type/build/browser/release CI exercises
   integration. No opaque product-area safety is inferred from CI success.
 
-Open `artifacts/photo-matte-20261126/final-comparison/gallery.html`; compare
+Open `artifacts/photo-matte-20261126/latest-main/gallery.html`; compare
 before/after on both backgrounds and inspect the explicitly synthetic glass
 fixture. `comparison.json` contains original numbers and actual measurements.
 B's two-photo diagnostic is in its `b-diagnostic-two-photos/` subfolder.
-`artifacts/photo-matte-20261126/compat/gallery.html` has the43-image mode/edit
+`artifacts/photo-matte-20261126/compat-main72/gallery.html` has the43-image mode/edit
 regression, and worker-check.json records actual subprocess/version evidence.
 
 Paid LLM/image calls0. Ledger15/$0.02431050 SHA256 unchanged. No font/photo_mode/
