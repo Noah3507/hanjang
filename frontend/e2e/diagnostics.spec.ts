@@ -3,6 +3,35 @@ import {execFileSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 const root=fileURLToPath(new URL('../..',import.meta.url))
 const python=process.env.PLAYWRIGHT_PYTHON||(process.platform==='win32'?`${root}/.venv/Scripts/python.exe`:'python')
+type FontItem={field:string;role:string;threshold:number;value:number;status:string;initial_font_size_px:number|null;size_ratio:number|null}
+type Diagnostic={candidate_id:string;strategy:string;rules:{rule_id:string;status:string;measured_value:{policy_version:string;template_id:string|null;items:FontItem[]}}[]}
+const roles:Record<string,[string,number]>={headline:['headline',36],price_text:['price',36],product_name:['product',32],
+ body:['body',28],cta:['cta',28],store_name:['brand',28],address:['support',24],instagram:['support',24]}
+function assertRoleFonts(results:Diagnostic[],templates?:Map<string,string>,emptyBodyStrategy?:string){
+ expect(results).toHaveLength(4)
+ return results.map(candidate=>{
+  const font=candidate.rules.find(r=>r.rule_id==='font_size')!
+  expect(font).toBeDefined()
+  const value=font.measured_value,tid=templates?.get(candidate.candidate_id)??null
+  expect(value.policy_version).toBe('readability-rules-v4-role-policy-1')
+  expect(value.template_id).toBe(tid)
+  const fields=['store_name','product_name','price_text','headline','cta',...(candidate.strategy===emptyBodyStrategy?[]:['body'])]
+  expect(value.items.map(i=>i.field).sort()).toEqual(fields.sort())
+  for(const item of value.items){
+   const expected=roles[item.field];expect(expected,`known field ${item.field}`).toBeDefined()
+   const threshold=item.field==='body'&&['visual_a','visual_c','visual_d'].includes(tid??'')?24:expected[1]
+   expect(item.role).toBe(expected[0]);expect(item.threshold).toBe(threshold)
+   expect(Number.isFinite(item.value)).toBe(true);expect(item.value).toBeGreaterThan(0)
+   expect(item.status).toBe(item.value<threshold?'caution':'normal')
+   if(tid){
+    expect(item.initial_font_size_px).toBeGreaterThan(0)
+    expect(item.size_ratio).toBeCloseTo(item.value/item.initial_font_size_px!,8)
+   }else{expect(item.initial_font_size_px).toBeNull();expect(item.size_ratio).toBeNull()}
+  }
+  expect(font.status).toBe(value.items.some(i=>i.status==='caution')?'caution':'normal')
+  return {strategy:candidate.strategy,status:font.status}
+ })
+}
 async function ready(page:import('@playwright/test').Page){
  await page.goto('/')
  const buffer=execFileSync(python,['-c',"from PIL import Image;import io,sys;b=io.BytesIO();Image.new('RGB',(480,360),'#b37842').save(b,'PNG');sys.stdout.buffer.write(b.getvalue())"])
@@ -18,13 +47,15 @@ async function ready(page:import('@playwright/test').Page){
  await page.getByRole('button',{name:'광고 4장 렌더링'}).click()
  await expect(page.getByText('렌더링 상태: completed')).toBeVisible({timeout:45000})
 }
-test('actual measured four diagnostics, caution, edit, stale, re-diagnose and PNG/PDF downloads',async({page},info)=>{
+test('actual measured role thresholds, edit, stale, re-diagnose and PNG/PDF downloads',async({page},info)=>{
  test.setTimeout(150000);const errors:string[]=[]
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())})
  await ready(page)
  const panel=page.getByRole('region',{name:'규칙 기반 가독성 진단'}),editor=page.getByRole('region',{name:'광고 편집 및 다운로드'})
  await expect(panel.getByText(/아직 진단 결과가 없습니다/)).toBeVisible()
+ const firstResponse=page.waitForResponse(r=>r.url().endsWith('/diagnostics')&&r.request().method()==='POST')
  await panel.getByRole('button',{name:'가독성 진단 실행'}).click()
+ assertRoleFonts((await(await firstResponse).json()).results)
  await expect(panel.getByRole('article')).toHaveCount(4)
  await expect(panel.getByText(/진단 revision: 1/)).toBeVisible()
  await expect(panel.getByText(/확인된 최소 대비/)).toHaveCount(4)
@@ -35,14 +66,21 @@ test('actual measured four diagnostics, caution, edit, stale, re-diagnose and PN
  await expect(editor.getByRole('heading')).toContainText('revision 2',{timeout:45000})
  await expect(panel.getByRole('alert')).toContainText('이전 revision')
  await expect(panel.getByRole('article')).toHaveCount(0)
+ const editedResponse=page.waitForResponse(r=>r.url().endsWith('/diagnostics')&&r.request().method()==='POST')
  await panel.getByRole('button',{name:'가독성 진단 실행'}).click()
+ const edited=await(await editedResponse).json(),statuses=assertRoleFonts(edited.results)
+ await info.attach('role-font-evidence',{body:JSON.stringify(edited),contentType:'application/json'})
  await expect(panel.getByText(/진단 revision: 2/)).toBeVisible()
- await expect(panel.getByRole('article',{name:'감성 가독성 진단'}).getByText('글자 크기 · 주의')).toBeVisible()
+ const names:Record<string,string>={emotional:'감성',price:'가격',visual:'비주얼',brand:'브랜드'}
+ for(const item of statuses)await expect(panel.getByRole('article',{name:`${names[item.strategy]} 가독성 진단`})
+  .getByText(`글자 크기 · ${item.status==='caution'?'주의':'정상'}`)).toBeVisible()
  await editor.getByRole('button',{name:'문구 편집',exact:true}).click()
  await editor.getByLabel('제목',{exact:true}).fill('한 잔의 여유');await editor.getByLabel('본문',{exact:true}).fill('')
  await editor.getByRole('button',{name:'적용하고 재렌더링'}).click()
  await expect(editor.getByRole('heading')).toContainText('revision 3',{timeout:45000})
+ const finalResponse=page.waitForResponse(r=>r.url().endsWith('/diagnostics')&&r.request().method()==='POST')
  await panel.getByRole('button',{name:'가독성 진단 실행'}).click()
+ assertRoleFonts((await(await finalResponse).json()).results,undefined,'emotional')
  await expect(panel.getByText(/진단 revision: 3/)).toBeVisible()
  await expect(panel.getByRole('article',{name:'감성 가독성 진단'}).getByText('글자 크기 · 정상')).toBeVisible()
  for(const name of ['PNG 다운로드','A4 PDF 다운로드']){const download=page.waitForEvent('download');await editor.getByRole('button',{name,exact:true}).click();await(await download).saveAs(info.outputPath(name.startsWith('PNG')?'diagnosed.png':'diagnosed.pdf'))}
@@ -53,6 +91,27 @@ test('actual measured four diagnostics, caution, edit, stale, re-diagnose and PN
  await page.screenshot({path:info.outputPath('diagnostics-desktop.png'),fullPage:true})
  await page.setViewportSize({width:375,height:900});await expect(page.locator('body')).toHaveJSProperty('scrollWidth',375)
  await page.screenshot({path:info.outputPath('diagnostics-mobile.png'),fullPage:true});expect(errors).toEqual([])
+})
+
+test('actual v3 visual body exceptions use exact candidate template identities',async({page},info)=>{
+ test.setTimeout(150000);await ready(page)
+ await page.getByRole('button',{name:'비주얼 디자인 전략으로 선택'}).click()
+ const region=page.getByRole('region',{name:'전략별 디자인 4종'})
+ const completed=page.waitForResponse(async response=>{
+  if(!response.url().endsWith('/designs/visual')||response.request().method()!=='GET')return false
+  return (await response.json()).status==='completed'
+ })
+ await region.getByRole('button',{name:'이 전략으로 시안 4개 더 보기'}).click()
+ const result=await(await completed).json()
+ await expect(region.getByRole('article')).toHaveCount(4)
+ expect(result.candidates.map((c:{template_id:string})=>c.template_id).sort()).toEqual(['visual_a','visual_b','visual_c','visual_d'])
+ const templates=new Map<string,string>(result.candidates.map((c:{candidate_id:string;template_id:string})=>[c.candidate_id,c.template_id]))
+ assertRoleFonts(result.diagnostics,templates)
+ for(const diagnostic of result.diagnostics as Diagnostic[]){
+  const body=diagnostic.rules.find(r=>r.rule_id==='font_size')!.measured_value.items.find(i=>i.field==='body')!
+  expect(body).toBeDefined();expect(body.threshold).toBe(templates.get(diagnostic.candidate_id)==='visual_b'?28:24)
+ }
+ await info.attach('v3-role-font-evidence',{body:JSON.stringify(result.diagnostics),contentType:'application/json'})
 })
 test('simulated delayed old reply and server failure cannot replace current revision or PNGs',async({page})=>{
  test.setTimeout(100000);await ready(page)
