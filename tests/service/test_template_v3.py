@@ -100,7 +100,8 @@ def test_fade_promotion_has_measured_contrast_backplate():
 
 @pytest.mark.skipif(os.getenv('RUN_RENDER_TESTS')!='1',reason='Explicit installed Chromium opt-in')
 def test_long_product_fits_even_when_template_font_is_important():
-    original=replace(data(),product_name='나만의 시간에 사용하는 데일리 로션')
+    # Long enough to need shrinking with Pretendard (narrower than Noto Sans).
+    original=replace(data(),product_name='나만의 시간에 사용하는 데일리 보습 로션')
     row=render_templates(original,photo(),['brand_a'])[0]
     measured=next(t for t in row['measurement']['text'] if t['field']=='product_name')
     assert measured['text']==original.product_name and not measured['overflow']
