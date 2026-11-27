@@ -24,7 +24,7 @@ class CopyStore:
         self.lock = RLock()
         self.active = False
         # New quality profile never spends a second request to repair its output.
-        self.max_retries = 0 if getattr(provider,'prompt_profile',None)=='v7' else max_retries
+        self.max_retries = 0 if getattr(provider,'prompt_profile',None) in ('v7','v8') else max_retries
 
     @contextmanager
     def locked(self):
@@ -134,9 +134,10 @@ class CopyStore:
                     response.error = CopyError(code=error.code, message=message, retryable=error.retryable)
                 else:
                     response.status, response.variants = 'completed', variants
-                    if response.provider=='openai':
+                    if response.provider=='openai' or getattr(self.provider,'prompt_profile',None)=='v8':
                         from app.services.copy_quality import review_ad_copy
-                        response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants,draft.ad_goal)]))
+                        response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants,draft.ad_goal,
+                            profile=getattr(self.provider,'prompt_profile',None),draft=draft)]))
         except Exception:
             with self.locked():
                 try:

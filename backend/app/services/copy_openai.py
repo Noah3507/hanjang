@@ -15,11 +15,14 @@ class OpenAICopyProvider:
     def __init__(self, model, api_key, allow_paid, budget, client=None, *, prompt_profile=None):
         self.model, self.api_key, self.allow_paid = model, api_key, allow_paid
         self.budget, self.client = budget, client
-        if prompt_profile not in (None,'v6','v7'):raise ValueError('Unknown prompt profile')
+        if prompt_profile not in (None,'v6','v7','v8'):raise ValueError('Unknown prompt profile')
         self.prompt_profile = prompt_profile
 
     @property
     def instructions(self):
+        if self.prompt_profile=='v8':
+            from app.services.copy_prompt_v8 import INSTRUCTIONS
+            return INSTRUCTIONS
         if self.prompt_profile=='v7':
             from app.services.copy_prompt_v7 import INSTRUCTIONS
             return INSTRUCTIONS
@@ -27,6 +30,9 @@ class OpenAICopyProvider:
 
     @property
     def prompt_version(self):
+        if self.prompt_profile=='v8':
+            from app.services.copy_prompt_v8 import VERSION
+            return VERSION
         if self.prompt_profile=='v7':
             from app.services.copy_prompt_v7 import VERSION
             return VERSION
