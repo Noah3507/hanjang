@@ -1,4 +1,4 @@
 <!doctype html><html lang="ko"><meta charset="UTF-8"><style>{{ css|safe }}</style>
-<main class="ad {{ template_id }}">
+<main class="ad {{ template_id }}{% if not data.body.strip() %} no-body{% endif %}{% if not data.cta.strip() %} no-cta{% endif %}">
 {% block design %}{% endblock %}
 </main></html>

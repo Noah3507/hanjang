@@ -40,3 +40,63 @@ footer .cta{font-size:32px}footer .period{font-size:28px}.price_c footer .cta,.p
 .ad.brand_b .headline,.ad.brand_c .headline,.ad.brand_d .headline{font-size:36px!important}
 .ad.visual_c .headline,.ad.visual_d .headline{font-size:38px!important}
 .ad.visual_a .body,.ad.visual_c .body,.ad.visual_d .body{font-size:28px!important}
+/* Fill (2026-11-27). Real copy often leaves the body or CTA empty (the copy prompt does that on purpose
+   when it has nothing true to add). The page gets .no-body / .no-cta and those slots give their space to
+   the photo and the remaining text instead of staying as blank bands. Font sizes are never lowered here.
+   The template id stays the second class of .ad (the render worker reads it). */
+/* Photos that touched the top edge now start under the store line. */
+.ad.emotional_b .photo{top:105px!important;height:765px!important}
+.ad.emotional_b .decoration{top:740px;height:130px}
+.ad.price_b .photo{top:48px;height:642px}
+/* Small product slots made larger. */
+.ad.brand_a .store{left:70px!important;top:195px!important;width:940px!important;height:250px!important;font-size:92px!important}
+.ad.brand_a .product{left:70px!important;top:455px!important;width:940px!important;height:165px!important;font-size:60px!important}
+.ad.brand_a .headline{left:70px!important;top:640px!important;width:390px!important;height:240px!important}
+.ad.brand_a .body{left:70px!important;top:900px!important;width:390px!important;height:250px!important}
+.ad.brand_a .photo{left:490px!important;top:625px!important;width:540px!important;height:540px!important}
+.ad.brand_b .photo{left:180px!important;top:140px!important;width:720px!important;height:720px!important}
+.ad.brand_b .store{top:880px!important}
+.ad.brand_b .product{top:965px!important}
+.ad.brand_b .headline{top:1050px!important}
+.ad.brand_b .body{top:1125px!important}
+.ad.brand_d .photo{left:420px!important;top:440px!important;width:620px!important;height:760px!important}
+.ad.emotional_c .product,.ad.emotional_c .headline,.ad.emotional_c .body{width:390px!important}
+.ad.emotional_d .photo{left:190px!important;top:385px!important;width:700px!important;height:700px!important}
+.ad.emotional_d .body{top:1105px!important}
+.ad.price_c .photo{left:140px;top:680px;width:800px;height:560px}
+/* Empty body: the photo grows into the freed band and the text below it moves down. */
+.ad.emotional_a.no-body .photo{top:170px!important;height:780px!important}
+.ad.emotional_a.no-body .product{top:965px!important}
+.ad.emotional_a.no-body .headline{top:1075px!important}
+.ad.emotional_b.no-body .photo{height:875px!important}
+.ad.emotional_b.no-body .decoration{top:850px;height:130px}
+.ad.emotional_b.no-body .product{top:1005px!important}
+.ad.emotional_b.no-body .headline{top:1110px!important}
+.ad.emotional_c.no-body .product{top:300px!important}
+.ad.emotional_c.no-body .headline{top:500px!important;height:460px!important;font-size:50px!important}
+.ad.emotional_d.no-body .photo{left:160px!important;width:760px!important;height:760px!important}
+.ad.brand_a.no-body .headline{top:720px!important}
+.ad.brand_b.no-body .photo{left:160px!important;top:130px!important;width:760px!important;height:760px!important}
+.ad.brand_b.no-body .store{top:905px!important}
+.ad.brand_b.no-body .product{top:990px!important}
+.ad.brand_b.no-body .headline{top:1075px!important}
+.ad.brand_d.no-body .product{top:520px!important}
+.ad.brand_d.no-body .headline{top:750px!important;height:300px!important;font-size:44px!important}
+.ad.price_c.no-body .photo{top:600px;height:640px}
+.ad.visual_a.no-body .photo{height:920px!important}
+.ad.visual_a.no-body .product{top:1065px!important}
+.ad.visual_a.no-body .headline{top:1150px!important}
+.ad.visual_b.no-body .photo{height:810px!important}
+.ad.visual_b.no-body .product{top:1010px!important}
+.ad.visual_b.no-body .headline{top:1110px!important}
+.ad.visual_c.no-body .photo{height:900px!important}
+.ad.visual_c.no-body .decoration{top:860px;height:170px}
+.ad.visual_c.no-body .product{top:1050px!important}
+.ad.visual_c.no-body .headline{top:1150px!important}
+.ad.visual_d.no-body .photo{height:840px!important}
+.ad.visual_d.no-body .product{top:1040px!important}
+.ad.visual_d.no-body .headline{top:1135px!important}
+/* Empty CTA: in centred layouts the price moves to the centre instead of sitting off to one side. */
+.ad:is(.emotional_a,.emotional_d,.brand_b,.visual_d).no-cta .price{left:90px!important;width:900px!important;text-align:center}
+/* A whole photo is its own rounded card, so round frames must not clip its corners. */
+.ad .photo.whole-photo{border-radius:0!important;overflow:visible!important}
