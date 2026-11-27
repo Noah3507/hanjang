@@ -35,7 +35,7 @@ def test_empty_fields_are_flagged_and_the_template_id_stays_second(template_id):
 
 
 def test_fill_rules_never_lower_a_font_size():
-    block = QUALITY[QUALITY.index('/* Fill (2026-11-27)'):]
+    block = QUALITY[QUALITY.index('/* Fill (2026-11-27)'):QUALITY.index('/* Quality 2 (2026-11-28)')]
     sizes = [int(v) for v in re.findall(r'font-size:(\d+)px', block)]
     assert sizes and min(sizes) >= 44  # only lone headlines grow; nothing shrinks
 

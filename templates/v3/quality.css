@@ -100,3 +100,19 @@ footer .cta{font-size:32px}footer .period{font-size:28px}.price_c footer .cta,.p
 .ad:is(.emotional_a,.emotional_d,.brand_b,.visual_d).no-cta .price{left:90px!important;width:900px!important;text-align:center}
 /* A whole photo is its own rounded card, so round frames must not clip its corners. */
 .ad .photo.whole-photo{border-radius:0!important;overflow:visible!important}
+/* Quality 2 (2026-11-28). emotional_c: the photo column was narrower than most dishes, so it bleeds to
+   the right edge now. price_d: the price stamp was the smallest price on any price template; it is a
+   larger sticker now and the photo ends above it. brand_c: the repeated store-name pattern is quieter
+   so the framed photo and the name read first. */
+.ad.emotional_c .photo{left:440px!important;top:200px!important;width:640px!important;height:840px!important}
+.ad.emotional_c .product,.ad.emotional_c .headline,.ad.emotional_c .body{width:350px!important}
+.ad.price_d .photo{height:620px}
+.ad.price_d .headline{top:900px;width:540px}
+.ad.price_d .body{top:1000px;width:540px}
+.ad.price_d .stamp{left:680px;top:885px;width:340px;height:340px}
+.ad.price_d .stamp .original{left:50px;top:40px;width:240px;height:42px;font-size:28px}
+.ad.price_d .stamp .price{left:20px;top:92px;width:300px;height:100px;font-size:72px}
+.ad.price_d .stamp .discount{left:50px;top:200px;width:240px;height:46px;font-size:32px}
+.ad.price_d .stamp .promotion{left:50px;top:255px;width:240px;height:46px;font-size:26px}
+.ad.price_d .stamp.simple-stamp .price{top:115px;height:110px;font-size:80px}
+.ad.brand_c .brand-pattern{opacity:.45}
