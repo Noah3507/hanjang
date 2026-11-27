@@ -1,0 +1,477 @@
+{
+ "schema": "hanjang-template-limits-1",
+ "template_version": "ad-templates-v3-alpha-quality-3",
+ "source_sha256": "d205033e40e7cff84e34aa83a5543f6c331117e0452046b18634e7352e7bb018",
+ "counting": "visible characters including spaces, after store_name/product_name/price_text are filled in",
+ "soft": "fits at the template font size (nothing shrinks)",
+ "hard": "fits after shrinking, final size >= readability threshold of the role (diagnostics_engine.ROLE_THRESHOLDS)",
+ "fixed_slots": {
+  "fields": [
+   "store_name",
+   "product_name",
+   "price_text"
+  ],
+  "rule": "All 16 templates show these three in their own slots. Copy (headline, body, cta) does not need to repeat them; repeating the price or \"store의 product\" doubles what the slot already shows."
+ },
+ "empty_allowed": {
+  "headline": false,
+  "body": true,
+  "cta": true,
+  "note": "An empty body or CTA gives its room to the photo (templates/v3/quality.css, Fill)."
+ },
+ "strategies": {
+  "brand": {
+   "headline": {
+    "soft": 36,
+    "hard": 36
+   },
+   "body": {
+    "soft": 40,
+    "hard": 88
+   },
+   "cta": {
+    "soft": 19,
+    "hard": 22
+   },
+   "tightest_template": {
+    "headline": "brand_b",
+    "body": "brand_d",
+    "cta": "brand_a"
+   }
+  },
+  "emotional": {
+   "headline": {
+    "soft": 28,
+    "hard": 30
+   },
+   "body": {
+    "soft": 72,
+    "hard": 80
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 19
+   },
+   "tightest_template": {
+    "headline": "emotional_a",
+    "body": "emotional_a",
+    "cta": "emotional_a"
+   }
+  },
+  "price": {
+   "headline": {
+    "soft": 26,
+    "hard": 26
+   },
+   "body": {
+    "soft": 28,
+    "hard": 64
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 17
+   },
+   "tightest_template": {
+    "headline": "price_b",
+    "body": "price_b",
+    "cta": "price_c"
+   }
+  },
+  "visual": {
+   "headline": {
+    "soft": 30,
+    "hard": 32
+   },
+   "body": {
+    "soft": 44,
+    "hard": 88
+   },
+   "cta": {
+    "soft": 18,
+    "hard": 20
+   },
+   "tightest_template": {
+    "headline": "visual_a",
+    "body": "visual_a",
+    "cta": "visual_a"
+   }
+  }
+ },
+ "templates": {
+  "brand_a": {
+   "headline": {
+    "soft": 62,
+    "hard": 68
+   },
+   "body": {
+    "soft": 100,
+    "hard": 136
+   },
+   "cta": {
+    "soft": 19,
+    "hard": 22
+   },
+   "store_name": {
+    "soft": 26,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "brand_b": {
+   "headline": {
+    "soft": 36,
+    "hard": 36
+   },
+   "body": {
+    "soft": 80,
+    "hard": 88
+   },
+   "cta": {
+    "soft": 19,
+    "hard": 22
+   },
+   "store_name": {
+    "soft": 24,
+    "hard": 32
+   },
+   "product_name": {
+    "soft": 35,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "brand_c": {
+   "headline": {
+    "soft": 74,
+    "hard": 74
+   },
+   "body": {
+    "soft": 80,
+    "hard": 96
+   },
+   "cta": {
+    "soft": 19,
+    "hard": 22
+   },
+   "store_name": {
+    "soft": 24,
+    "hard": 32
+   },
+   "product_name": {
+    "soft": 35,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "brand_d": {
+   "headline": {
+    "soft": 50,
+    "hard": 50
+   },
+   "body": {
+    "soft": 40,
+    "hard": 132
+   },
+   "cta": {
+    "soft": 19,
+    "hard": 22
+   },
+   "store_name": {
+    "soft": 23,
+    "hard": 32
+   },
+   "product_name": {
+    "soft": 37,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "emotional_a": {
+   "headline": {
+    "soft": 28,
+    "hard": 30
+   },
+   "body": {
+    "soft": 72,
+    "hard": 80
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 19
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 26,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "emotional_b": {
+   "headline": {
+    "soft": 28,
+    "hard": 30
+   },
+   "body": {
+    "soft": 72,
+    "hard": 80
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 19
+   },
+   "store_name": {
+    "soft": 39,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 26,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "emotional_c": {
+   "headline": {
+    "soft": 48,
+    "hard": 50
+   },
+   "body": {
+    "soft": 80,
+    "hard": 148
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 19
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 26,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "emotional_d": {
+   "headline": {
+    "soft": 28,
+    "hard": 30
+   },
+   "body": {
+    "soft": 72,
+    "hard": 80
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 19
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 26,
+    "hard": 35
+   }
+  },
+  "price_a": {
+   "headline": {
+    "soft": 32,
+    "hard": 32
+   },
+   "body": {
+    "soft": 116,
+    "hard": 144
+   },
+   "cta": {
+    "soft": 25,
+    "hard": 29
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 16,
+    "hard": 35
+   }
+  },
+  "price_b": {
+   "headline": {
+    "soft": 26,
+    "hard": 26
+   },
+   "body": {
+    "soft": 28,
+    "hard": 64
+   },
+   "cta": {
+    "soft": 26,
+    "hard": 30,
+    "at_ceiling": true
+   },
+   "store_name": {
+    "soft": 25,
+    "hard": 25
+   },
+   "product_name": {
+    "soft": 17,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "price_c": {
+   "headline": {
+    "soft": 36,
+    "hard": 36
+   },
+   "body": {
+    "soft": 72,
+    "hard": 88
+   },
+   "cta": {
+    "soft": 17,
+    "hard": 17
+   },
+   "store_name": {
+    "soft": 14,
+    "hard": 14
+   },
+   "product_name": {
+    "soft": 25,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "price_d": {
+   "headline": {
+    "soft": 40,
+    "hard": 40
+   },
+   "body": {
+    "soft": 100,
+    "hard": 100
+   },
+   "cta": {
+    "soft": 25,
+    "hard": 29
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 19,
+    "hard": 26
+   }
+  },
+  "visual_a": {
+   "headline": {
+    "soft": 30,
+    "hard": 32
+   },
+   "body": {
+    "soft": 44,
+    "hard": 96
+   },
+   "cta": {
+    "soft": 18,
+    "hard": 20
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 27,
+    "hard": 36
+   }
+  },
+  "visual_b": {
+   "headline": {
+    "soft": 30,
+    "hard": 32
+   },
+   "body": {
+    "soft": 72,
+    "hard": 88
+   },
+   "cta": {
+    "soft": 18,
+    "hard": 20
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 27,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "visual_c": {
+   "headline": {
+    "soft": 32,
+    "hard": 32
+   },
+   "body": {
+    "soft": 44,
+    "hard": 96
+   },
+   "cta": {
+    "soft": 18,
+    "hard": 20
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 25,
+    "hard": 40,
+    "at_ceiling": true
+   }
+  },
+  "visual_d": {
+   "headline": {
+    "soft": 32,
+    "hard": 32
+   },
+   "body": {
+    "soft": 44,
+    "hard": 96
+   },
+   "cta": {
+    "soft": 18,
+    "hard": 20
+   },
+   "store_name": {
+    "soft": 40,
+    "hard": 40,
+    "at_ceiling": true
+   },
+   "product_name": {
+    "soft": 27,
+    "hard": 36
+   }
+  }
+ }
+}
