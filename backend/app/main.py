@@ -89,7 +89,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.export_service = ExportService(application.state.render_store)
     application.state.diagnostics_store = DiagnosticsStore(application.state.render_store)
     application.state.design_store = DesignStore(application.state.render_store,ranker)
-    application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side)
+    application.state.photo_processor = PhotoExecution(settings.photo_model_path, settings.photo_timeout_seconds, settings.photo_max_side,
+        model_name=settings.photo_model_name, matte_mode=settings.photo_matte_mode)
     application.add_exception_handler(UploadError, upload_error)
     application.add_exception_handler(RequestValidationError, validation_error)
     application.add_middleware(UploadLimitMiddleware, storage=storage)

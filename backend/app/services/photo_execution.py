@@ -9,14 +9,15 @@ from app.services.photo_processor import ProcessedPhoto
 
 
 class PhotoExecution:
-    def __init__(self, model: Path, timeout: float, max_side: int):
+    def __init__(self, model: Path, timeout: float, max_side: int, *, model_name='u2netp', matte_mode='cleanup'):
         self.model, self.timeout, self.max_side = model, timeout, max_side
+        self.model_name, self.matte_mode = model_name, matte_mode
 
     def __call__(self, data: bytes) -> ProcessedPhoto:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
         process = subprocess.Popen(
-            [sys.executable, "-m", "app.services.photo_worker", str(self.model), str(self.max_side)],
+            [sys.executable, "-m", "app.services.photo_worker", str(self.model), str(self.max_side), self.model_name, self.matte_mode],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )

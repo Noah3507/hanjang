@@ -25,8 +25,13 @@ MODEL_SHA256 = "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8
 class LocalRembg:
     """Load only an explicitly provisioned model; no implicit network download."""
 
-    def __init__(self, model_path: Path):
+    def __init__(self, model_path: Path, model_name: str = 'u2netp'):
+        from app.services.photo_models import MODELS
+        if model_name not in MODELS:
+            raise ValueError('Unknown local photo model')
         self.model_path = model_path
+        self.model_name = model_name
+        self.spec = MODELS[model_name]
         self.session = None
         self.lock = Lock()
 
@@ -35,20 +40,24 @@ class LocalRembg:
             raise ModelUnavailable()
         with self.lock:
             if self.session is None:
-                if sha256(self.model_path.read_bytes()).hexdigest() != MODEL_SHA256:
+                from hashlib import file_digest
+                with self.model_path.open('rb') as stream:
+                    checksum = file_digest(stream, 'sha256').hexdigest()
+                if self.model_path.stat().st_size != self.spec.size or checksum != self.spec.sha256:
                     raise ValueError("model checksum mismatch")
-                from rembg.sessions.u2netp import U2netpSession
+                from importlib import import_module
+                session_class = getattr(import_module('rembg.sessions.'+self.spec.module), self.spec.session)
                 from onnxruntime import SessionOptions
                 path = self.model_path.resolve()
 
-                class OfflineSession(U2netpSession):
+                class OfflineSession(session_class):
                     @classmethod
                     def download_models(cls, *args, **kwargs):
                         return str(path)
 
                 options = SessionOptions()
                 options.intra_op_num_threads = 1
-                self.session = OfflineSession("u2netp", options, providers=["CPUExecutionProvider"])
+                self.session = OfflineSession(self.model_name, options, providers=["CPUExecutionProvider"])
             # Mask only: rembg must never provide replacement RGB pixels.
             return self.session.predict(image)[0]
 
@@ -69,7 +78,7 @@ def png_bytes(image: Image.Image) -> bytes:
     return stream.getvalue()
 
 
-def process_photo(data: bytes, mask_provider, max_side: int = 1600) -> ProcessedPhoto:
+def process_photo(data: bytes, mask_provider, max_side: int = 1600, *, matte_mode: str = 'cleanup') -> ProcessedPhoto:
     """Keep full frame, no upscaling/cropping/color correction. Size is configurable."""
     with Image.open(BytesIO(data)) as opened:
         image = ImageOps.exif_transpose(opened).convert("RGBA")
@@ -86,7 +95,10 @@ def process_photo(data: bytes, mask_provider, max_side: int = 1600) -> Processed
     alpha = np.minimum(np.asarray(mask), np.asarray(image.getchannel("A")))
     # Drop faint residue the model leaves around the product; colour pixels are untouched.
     try:
-        alpha = clean_alpha(alpha)
+        if matte_mode == 'cleanup':
+            alpha = clean_alpha(alpha)
+        elif matte_mode != 'model-alpha':
+            raise ValueError('Unknown matte policy')
     except Exception:
         return ProcessedPhoto(None, None, width, height, ["PHOTO_PROCESSING_FAILED"])
     foreground = (alpha > 127).astype(np.uint8)
@@ -106,4 +118,9 @@ def process_photo(data: bytes, mask_provider, max_side: int = 1600) -> Processed
         mask = Image.fromarray(alpha).resize(dimensions, Image.Resampling.LANCZOS)
     else:
         mask = Image.fromarray(alpha)
-    return ProcessedPhoto(png_bytes(image), png_bytes(mask), *image.size, warnings, PROCESSING_VERSION)
+    model_name = getattr(mask_provider, 'model_name', 'u2netp')
+    policy = MATTE_VERSION if matte_mode == 'cleanup' else 'model-alpha-v1'
+    from app.services.photo_models import MODELS
+    identity = model_name if model_name == 'u2netp' else model_name+'-'+MODELS[model_name].sha256[:12]
+    version = identity+'-'+policy
+    return ProcessedPhoto(png_bytes(image), png_bytes(mask), *image.size, warnings, version)

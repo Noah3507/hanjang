@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     )
     upload_root: Path = PROJECT_ROOT / "uploads" / "originals"
     photo_model_path: Path = PROJECT_ROOT / "artifacts" / "models" / "rembg" / "u2netp.onnx"
+    photo_model_name: Literal['u2netp', 'u2net', 'birefnet-general-lite'] = 'u2netp'
+    photo_matte_mode: Literal['cleanup', 'model-alpha'] = 'cleanup'
     photo_timeout_seconds: float = Field(default=90, gt=0, le=120)
     photo_max_side: int = Field(default=1600, ge=256, le=4096)
     analysis_python: Path = PROJECT_ROOT / '.venv-analysis' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
