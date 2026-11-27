@@ -11,13 +11,13 @@ from app.services.copy_contract import CopyFailure
 MAX_COST = (6000 * .75 + 2048 * 4.5) / 1_000_000
 
 class CopyBudget:
-    def __init__(self, path: Path, max_requests=6, budget_usd=.1, *, approved_phase3=False, approved_quality_experiment=False, approved_phase4=False):
+    def __init__(self, path: Path, max_requests=6, budget_usd=.1, *, approved_phase3=False, approved_quality_experiment=False, approved_phase4=False, approved_intensive=False):
         self.path = path
         # Explicit opt-in for the separately approved two-call Phase 3 experiment.
         # Existing service callers/configuration retain the ten-call ceiling.
         # Four-call Phase4 runner only. Ordinary service settings/factory never set this flag.
-        limit = 19 if approved_phase4 is True else 15 if approved_quality_experiment is True else 12 if approved_phase3 is True else 10
-        if not 0 <= max_requests <= limit or not 0 <= budget_usd <= .1:
+        limit = 169 if approved_intensive is True else 19 if approved_phase4 is True else 15 if approved_quality_experiment is True else 12 if approved_phase3 is True else 10
+        if not 0 <= max_requests <= limit or not 0 <= budget_usd <= (5. if approved_intensive is True else .1):
             raise ValueError('Budget exceeds approved limits')
         self.max_requests, self.budget_usd = max_requests, budget_usd
 
@@ -62,12 +62,18 @@ class CopyBudget:
                     raise CopyFailure('COPY_BUDGET_UNAVAILABLE') from None
 
     def reserve(self):
+        return self._reserve(MAX_COST)
+
+    def _reserve(self, ceiling):
+        import math
+        if type(ceiling) not in (int, float) or not math.isfinite(ceiling) or ceiling <= 0:
+            raise CopyFailure('COPY_BUDGET_INVALID')
         with self.locked() as data:
             calls = data['calls']
-            if len(calls) >= self.max_requests or sum(c['cost_ceiling_usd'] for c in calls) + MAX_COST > self.budget_usd:
+            if len(calls) >= self.max_requests or sum(c['cost_ceiling_usd'] for c in calls) + ceiling > self.budget_usd:
                 raise CopyFailure('COPY_BUDGET_EXCEEDED')
             call = uuid.uuid4().hex
-            calls.append({'id': call, 'cost_ceiling_usd': MAX_COST, 'usage_known': False, 'state': 'reserved'})
+            calls.append({'id': call, 'cost_ceiling_usd': ceiling, 'usage_known': False, 'state': 'reserved'})
             return call
 
     def dispatched(self, call):
