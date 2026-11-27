@@ -15,11 +15,14 @@ class OpenAICopyProvider:
     def __init__(self, model, api_key, allow_paid, budget, client=None, *, prompt_profile=None):
         self.model, self.api_key, self.allow_paid = model, api_key, allow_paid
         self.budget, self.client = budget, client
-        if prompt_profile not in (None,'v6','v7','v8'):raise ValueError('Unknown prompt profile')
+        if prompt_profile not in (None,'v6','v7','v8','v8.1'):raise ValueError('Unknown prompt profile')
         self.prompt_profile = prompt_profile
 
     @property
     def instructions(self):
+        if self.prompt_profile=='v8.1':
+            from app.services.copy_prompt_v8_1 import BASE_INSTRUCTIONS
+            return BASE_INSTRUCTIONS
         if self.prompt_profile=='v8':
             from app.services.copy_prompt_v8 import INSTRUCTIONS
             return INSTRUCTIONS
@@ -28,8 +31,17 @@ class OpenAICopyProvider:
             return INSTRUCTIONS
         return SYSTEM_PROMPT
 
+    def instructions_for(self,payload):
+        if self.prompt_profile=='v8.1':
+            from app.services.copy_prompt_v8_1 import instructions_for
+            return instructions_for(payload)
+        return self.instructions
+
     @property
     def prompt_version(self):
+        if self.prompt_profile=='v8.1':
+            from app.services.copy_prompt_v8_1 import VERSION
+            return VERSION
         if self.prompt_profile=='v8':
             from app.services.copy_prompt_v8 import VERSION
             return VERSION
@@ -46,7 +58,8 @@ class OpenAICopyProvider:
             raise CopyFailure('COPY_KEY_MISSING')
         if self.model != 'gpt-5.4-mini-2026-03-17':
             raise CopyFailure('COPY_MODEL_NOT_APPROVED')
-        if input_bound(payload, self.instructions) > 6000:
+        instructions=self.instructions_for(payload)
+        if input_bound(payload, instructions) > 6000:
             raise CopyFailure('COPY_INPUT_LIMIT')
         import openai  # Deferred: Mock never imports or initializes the SDK.
         if self.client is None:
@@ -59,7 +72,7 @@ class OpenAICopyProvider:
         try:
             self.budget.dispatched(call)
             response = self.client.responses.create(model=self.model,
-                instructions=self.instructions,
+                instructions=instructions,
                 input=[{'role': 'user', 'content': json.dumps(payload, ensure_ascii=False)}],
                 text={'format': {'type': 'json_schema', 'name': 'copy_variants', 'schema': Variants.model_json_schema(), 'strict': True}},
                 reasoning={'effort': 'none'}, max_output_tokens=2048, store=False)

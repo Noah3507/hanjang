@@ -16,8 +16,9 @@ def review_ad_copy(variants, ad_goal='menu_promotion', *, profile=None, draft=No
     bodies=set()
     for variant in variants:
         cta=variant.ad_copy.cta
-        if profile=='v8':
+        if profile in ('v8','v8.1'):
             warnings.extend(review_v8(variant,ad_goal,draft))
+            if profile=='v8.1':warnings.extend(review_v8_1(variant,draft))
         else:
             if cta and ad_goal=='menu_promotion' and re.search(r'주문|방문|들러|오세요',cta):warnings.append('COPY_GOAL_REVIEW')
             if cta and ad_goal=='store_visit' and re.search(r'사진|정보|가격|상품\s*확인',cta):warnings.append('COPY_GOAL_REVIEW')
@@ -61,5 +62,19 @@ def review_v8(variant,goal,draft):
         if len(remaining)>SOFT_LENGTHS[field]:warnings.append('COPY_LENGTH_REVIEW')
         if ANALYSIS_STYLE.search(remaining):warnings.append('COPY_ANALYSIS_STYLE_REVIEW')
         if any(m.group() not in evidence for m in CLAIM_REVIEW.finditer(remaining)):
+            warnings.append('COPY_CLAIM_REVIEW')
+    return warnings
+
+
+def review_v8_1(variant,draft):
+    """Only the actual v8 missed signals; advisory, not a language/fact verdict."""
+    values=variant.ad_copy.model_dump();warnings=[]
+    facts=draft.facts.model_dump() if draft is not None else {}
+    supplied=[facts.get(k) for k in ('store_name','product_name','price_text') if facts.get(k)]
+    evidence='\n'.join([*supplied,(draft.product_features or '') if draft is not None else ''])
+    for text in values.values():
+        for fact in sorted(supplied,key=len,reverse=True):text=text.replace(fact,'')
+        if re.search(r'먼저\s*보이|먼저\s*눈에|이름\s*그대로',text):warnings.append('COPY_ANALYSIS_STYLE_REVIEW')
+        if variant.strategy=='brand' and any(m.group() not in evidence for m in re.finditer(r'익숙하게|친숙|찾게\s*되|찾기\s*쉬|인지도|명성',text)):
             warnings.append('COPY_CLAIM_REVIEW')
     return warnings
