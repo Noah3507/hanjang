@@ -24,7 +24,7 @@ class CopyStore:
         self.lock = RLock()
         self.active = False
         # New quality profile never spends a second request to repair its output.
-        self.max_retries = 0 if getattr(provider,'prompt_profile',None) in ('v7','v8') else max_retries
+        self.max_retries = 0 if getattr(provider,'prompt_profile',None) in ('v7','v8','v8.1') else max_retries
 
     @contextmanager
     def locked(self):
@@ -79,7 +79,9 @@ class CopyStore:
                 return self.get(owner, job), None
             if self.active:
                 raise UploadError(503, 'COPY_BUSY', '다른 카피 작업이 진행 중입니다. 잠시 후 다시 시도해 주세요.')
-            if input_bound(payload, getattr(self.provider,'instructions',None)) > 6000:
+            resolver=getattr(self.provider,'instructions_for',None)
+            instructions=resolver(payload) if resolver else getattr(self.provider,'instructions',None)
+            if input_bound(payload, instructions) > 6000:
                 raise UploadError(422, 'COPY_INPUT_LIMIT', '입력과 분석 단서가 요청 한도를 초과했습니다. 상품 특징을 줄여 주세요.')
             try:
                 supported_codepoints()
@@ -134,7 +136,7 @@ class CopyStore:
                     response.error = CopyError(code=error.code, message=message, retryable=error.retryable)
                 else:
                     response.status, response.variants = 'completed', variants
-                    if response.provider=='openai' or getattr(self.provider,'prompt_profile',None)=='v8':
+                    if response.provider=='openai' or getattr(self.provider,'prompt_profile',None) in ('v8','v8.1'):
                         from app.services.copy_quality import review_ad_copy
                         response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants,draft.ad_goal,
                             profile=getattr(self.provider,'prompt_profile',None),draft=draft)]))

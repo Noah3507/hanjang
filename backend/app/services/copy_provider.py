@@ -21,7 +21,12 @@ def build_copy_provider(settings) -> CopyProvider:
     if settings.copy_provider == 'mock':
         result=MockCopyProvider()
         result.prompt_profile=getattr(settings,'copy_prompt_profile','v6')
-        if result.prompt_profile=='v8':
+        if result.prompt_profile=='v8.1':
+            from app.services.copy_prompt_v8_1 import VERSION, BASE_INSTRUCTIONS, instructions_for
+            result.prompt_version=VERSION
+            result.instructions=BASE_INSTRUCTIONS
+            result.instructions_for=instructions_for
+        elif result.prompt_profile=='v8':
             from app.services.copy_prompt_v8 import VERSION, INSTRUCTIONS
             result.prompt_version=VERSION
             result.instructions=INSTRUCTIONS
