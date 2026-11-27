@@ -11,11 +11,12 @@ from app.services.copy_contract import CopyFailure
 MAX_COST = (6000 * .75 + 2048 * 4.5) / 1_000_000
 
 class CopyBudget:
-    def __init__(self, path: Path, max_requests=6, budget_usd=.1, *, approved_phase3=False, approved_quality_experiment=False):
+    def __init__(self, path: Path, max_requests=6, budget_usd=.1, *, approved_phase3=False, approved_quality_experiment=False, approved_phase4=False):
         self.path = path
         # Explicit opt-in for the separately approved two-call Phase 3 experiment.
         # Existing service callers/configuration retain the ten-call ceiling.
-        limit = 15 if approved_quality_experiment is True else 12 if approved_phase3 is True else 10
+        # Four-call Phase4 runner only. Ordinary service settings/factory never set this flag.
+        limit = 19 if approved_phase4 is True else 15 if approved_quality_experiment is True else 12 if approved_phase3 is True else 10
         if not 0 <= max_requests <= limit or not 0 <= budget_usd <= .1:
             raise ValueError('Budget exceeds approved limits')
         self.max_requests, self.budget_usd = max_requests, budget_usd
