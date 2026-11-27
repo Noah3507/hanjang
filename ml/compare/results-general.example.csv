@@ -1,0 +1,3 @@
+case_id,system,ad_image,edited_image,make_seconds,edit_seconds,cost_usd,attempts,notes
+c01,chatgpt,general/c01.png,general/c01-edited.png,52,47,,1,ChatGPT Plus 앱
+c02,chatgpt,general/c02.png,general/c02-edited.png,61,44,,1,ChatGPT Plus 앱
