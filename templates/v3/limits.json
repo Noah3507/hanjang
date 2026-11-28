@@ -1,7 +1,7 @@
 {
  "schema": "hanjang-template-limits-1",
  "template_version": "ad-templates-v3-alpha-quality-3",
- "source_sha256": "d205033e40e7cff84e34aa83a5543f6c331117e0452046b18634e7352e7bb018",
+ "source_sha256": "0a66812f0139a675ffbf846e617ec63c64eab43ee2ab1cb92172c5df1eea7ba7",
  "counting": "visible characters including spaces, after store_name/product_name/price_text are filled in",
  "soft": "fits at the template font size (nothing shrinks)",
  "hard": "fits after shrinking, final size >= readability threshold of the role (diagnostics_engine.ROLE_THRESHOLDS)",
@@ -241,12 +241,12 @@
   },
   "emotional_c": {
    "headline": {
-    "soft": 48,
-    "hard": 50
+    "soft": 34,
+    "hard": 36
    },
    "body": {
-    "soft": 80,
-    "hard": 148
+    "soft": 88,
+    "hard": 104
    },
    "cta": {
     "soft": 17,
@@ -258,7 +258,7 @@
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 26,
+    "soft": 25,
     "hard": 40,
     "at_ceiling": true
    }
@@ -358,12 +358,12 @@
   },
   "price_d": {
    "headline": {
-    "soft": 40,
-    "hard": 40
+    "soft": 42,
+    "hard": 42
    },
    "body": {
-    "soft": 100,
-    "hard": 100
+    "soft": 112,
+    "hard": 112
    },
    "cta": {
     "soft": 25,

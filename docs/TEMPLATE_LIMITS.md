@@ -16,7 +16,7 @@ B 담당. 문구 생성·검사(A)가 "이 전략의 제목은 몇 자까지 괜
 
 ## 전략별 한도 (네 템플릿 중 가장 빡빡한 값)
 
-2026-11-27 측정, `ad-templates-v3-alpha-quality-3` + 빈 칸 처리(Fill) 반영.
+2026-11-28 재측정, `ad-templates-v3-alpha-quality-3` + 빈 칸 처리(Fill) + Quality 2(emotional_c·price_d·brand_c) 반영. Quality 2로 전략별 값은 바뀌지 않았고 emotional_c·price_d의 템플릿별 값만 늘었어요.
 
 | 전략 | 제목 soft/hard | 본문 soft/hard | CTA soft/hard | 가장 빡빡한 템플릿 |
 |---|---|---|---|---|
