@@ -116,3 +116,57 @@ footer .cta{font-size:32px}footer .period{font-size:28px}.price_c footer .cta,.p
 .ad.price_d .stamp .promotion{left:50px;top:255px;width:240px;height:46px;font-size:26px}
 .ad.price_d .stamp.simple-stamp .price{top:115px;height:110px;font-size:80px}
 .ad.brand_c .brand-pattern{opacity:.45}
+/* Visual v4 (2026-11-28). The ads read as forms: 36-40 px headlines, flat backgrounds, prices and CTAs
+   as small text in a corner. v4 lights the product, turns the CTA into a
+   button in the accent colour, makes the price a real figure and gives the headline display size.
+   Depth comes only from the light behind the product: a page-wide gradient would put uneven pixels
+   under the text and the contrast check (diagnostics_evidence) could no longer measure it.
+   Layouts with the text under the photo share one bottom stack (--stack-top = top of the product label); an
+   empty body moves the stack down and the photo grows into it. */
+.ad:not(.brand_a):not(.brand_b):not(.brand_c):not(.visual_b) .photo.cutout{background:radial-gradient(closest-side,color-mix(in srgb,var(--accent,#fff) 26%,transparent),transparent)!important}
+.ad:is([class*=emotional_],[class*=brand_],[class*=visual_]) .price{left:90px!important;top:1222px!important;width:480px!important;height:78px!important;font-size:56px!important;font-weight:800!important;line-height:1.3!important}
+.ad:is([class*=emotional_],[class*=brand_],[class*=visual_]) .cta{left:600px!important;top:1226px!important;width:390px!important;height:70px!important;box-sizing:border-box;padding:0 26px;border-radius:35px;background:var(--accent,#111);color:var(--accent-ink,#fff)!important;font-size:28px!important;font-weight:700;line-height:1.2!important;display:flex;align-items:center;justify-content:center;text-align:center!important}
+.ad:is(.emotional_a,.emotional_b,.visual_a,.visual_b,.visual_c,.visual_d){--stack-top:904px}
+.ad:is(.emotional_a,.emotional_b,.visual_a,.visual_b,.visual_c,.visual_d).no-body{--stack-top:988px}
+.ad.ad:is(.emotional_a,.emotional_b,.visual_a,.visual_b,.visual_c,.visual_d) .product{top:var(--stack-top)!important;height:54px!important;font-size:38px!important;line-height:1.4!important}
+.ad.ad:is(.emotional_a,.emotional_b,.visual_a,.visual_b,.visual_c,.visual_d) .headline{top:calc(var(--stack-top) + 60px)!important;height:158px!important;font-size:58px!important;line-height:1.3!important;letter-spacing:-.02em}
+.ad.ad:is(.emotional_a,.emotional_b,.visual_a,.visual_b,.visual_c,.visual_d) .body{top:calc(var(--stack-top) + 222px)!important;height:80px!important;font-size:28px!important;line-height:1.35!important}
+.ad.ad.emotional_a .photo{top:150px!important;height:calc(var(--stack-top) - 170px)!important}
+.ad.ad.emotional_b .photo{top:105px!important;height:calc(var(--stack-top) - 125px)!important}
+.ad.ad.emotional_b .decoration{top:calc(var(--stack-top) - 150px);height:130px}
+.ad.ad.visual_a .photo{top:130px!important;height:calc(var(--stack-top) - 150px)!important}
+.ad.ad.visual_b .photo{top:170px!important;height:calc(var(--stack-top) - 200px)!important}
+.ad.ad.visual_c .photo{top:125px!important;height:calc(var(--stack-top) - 145px)!important}
+.ad.ad.visual_c .decoration{top:calc(var(--stack-top) - 210px);height:190px}
+.ad.ad.visual_d .photo{top:150px!important;height:calc(var(--stack-top) - 170px)!important}
+.ad.ad.emotional_d .product{top:190px!important;height:54px!important;font-size:38px!important;line-height:1.4!important}
+.ad.ad.emotional_d .headline{top:250px!important;height:150px!important;font-size:54px!important;line-height:1.3!important}
+.ad.no-cta .cta{background:transparent!important;padding:0!important}
+.ad:is([class*=emotional_],[class*=visual_]) .store{font-size:34px!important}
+.ad.ad.emotional_d .photo{left:200px!important;top:410px!important;width:680px!important;height:680px!important}
+.ad.ad.emotional_d.no-body .photo{left:160px!important;top:410px!important;width:760px!important;height:760px!important}
+.ad.visual_b .decoration{height:1152px}
+/* Visual v4 price (2026-11-28). The price pages already had a big figure; their weak points were tiny
+   headlines, a footer CTA that read as fine print, and price_b's store tab hanging in mid-air under a
+   cut-out photo. Headlines get two lines at 44-46 px, the footer CTA becomes the same accent button as
+   the other strategies, and price_b's store sits as plain text under the photo. */
+.ad:is([class*=price_]) footer .cta{top:26px!important;height:68px!important;width:fit-content!important;max-width:560px;box-sizing:border-box;padding:0 32px;border-radius:34px;background:var(--accent,#ffd839);color:var(--accent-ink,#111)!important;font-size:28px!important;font-weight:700;line-height:1.2!important;display:flex;align-items:center;justify-content:center;text-align:center!important}
+.ad.no-cta footer .cta{background:transparent!important;padding:0!important}
+.ad.price_c footer .cta{max-width:400px}
+.ad.price_c .period{width:250px!important}
+.ad.price_a .headline{top:470px!important;height:130px!important;font-size:46px!important;line-height:1.35!important}
+.ad.price_a .body{top:612px!important;height:230px!important}
+.ad.price_b header .store{background:transparent!important;padding:0!important;color:var(--ink,#fff)!important;top:640px!important}
+.ad.price_b .product{top:700px!important}
+.ad.price_b .headline{top:826px!important;height:114px!important;font-size:42px!important;line-height:1.35!important}
+.ad.price_b .body{top:944px!important;height:72px!important}
+.ad.price_b .original{top:1018px!important}
+.ad.price_b .price{top:1064px!important}
+.ad.price_c .price{top:180px!important;height:165px!important;font-size:140px!important}
+.ad.price_c .product{top:352px!important;height:100px!important}
+.ad.price_c .headline{top:462px!important;height:124px!important;font-size:44px!important;line-height:1.35!important}
+.ad.price_c .body{top:596px!important;height:88px!important}
+.ad.ad.price_c .photo{top:700px;height:540px}
+.ad.ad.price_c.no-body .photo{top:610px;height:630px}
+.ad.price_d .headline{top:898px!important;height:124px!important;font-size:44px!important;line-height:1.35!important}
+.ad.price_d .body{top:1030px!important;height:130px!important}

@@ -16,13 +16,16 @@ from test_designs import designs,generate,snap
 
 def test_measured_contract_is_in_campaign_only():
     limits=load_template_limits()
-    assert limits['strategies']['price']['headline']=={'soft':26,'hard':26}
-    assert limits['strategies']['emotional']['headline']=={'soft':28,'hard':30}
+    price=dict(limits['strategies']['price']['headline'])
+    assert 0<price['soft']<=price['hard']
+    # Template changes re-measure limits.json (B); the numbers themselves are checked in test_template_limits.py.
+    emotional=limits['strategies']['emotional']['headline']
+    assert 0<emotional['soft']<=emotional['hard']
     assert 'template_copy_limits' not in provider_payload(draft(),None,'v6')
     payload=provider_payload(draft(),None,'campaign')
     assert payload['template_copy_limits']==limits and '치환 후 공백까지' in instructions_for(payload)
     payload['template_copy_limits']['strategies']['price']['headline']['soft']=1
-    assert load_template_limits()['strategies']['price']['headline']['soft']==26
+    assert load_template_limits()['strategies']['price']['headline']==price
 
 
 def test_stale_missing_and_invalid_contract_never_invent_limits(tmp_path):
@@ -39,13 +42,15 @@ def test_stale_missing_and_invalid_contract_never_invent_limits(tmp_path):
 def test_lengths_use_bound_facts_and_spaces_and_remain_advisory():
     limits=load_template_limits()
     raw=json.loads(MockCopyProvider().generate({}).text)
-    raw['variants'][0]['copy']['headline']='가'*28
+    measured=limits['strategies'][raw['variants'][0]['strategy']]['headline']
+    assert measured['soft']<measured['hard'], 'needs a strategy whose headline can shrink'
+    raw['variants'][0]['copy']['headline']='가'*measured['soft']
     values=Variants.model_validate(raw).variants
     assert review_bound_lengths(values,limits)==[]
-    raw['variants'][0]['copy']['headline']='가'*29
+    raw['variants'][0]['copy']['headline']='가'*(measured['soft']+1)
     values=Variants.model_validate(raw).variants
     assert 'COPY_TEMPLATE_SOFT_LIMIT_REVIEW' in review_bound_lengths(values,limits)
-    raw['variants'][0]['copy']['headline']='가'*31
+    raw['variants'][0]['copy']['headline']='가'*(measured['hard']+1)
     values=Variants.model_validate(raw).variants
     before=values[0].ad_copy.headline
     assert 'COPY_TEMPLATE_HARD_LIMIT_REVIEW' in review_bound_lengths(values,limits)

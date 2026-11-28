@@ -1,7 +1,7 @@
 {
  "schema": "hanjang-template-limits-1",
  "template_version": "ad-templates-v3-alpha-quality-3",
- "source_sha256": "0a66812f0139a675ffbf846e617ec63c64eab43ee2ab1cb92172c5df1eea7ba7",
+ "source_sha256": "d41b4c421aeee7c9f2bcc35eddc3126960315ebd48678c8f06b47c03deae8411",
  "counting": "visible characters including spaces, after store_name/product_name/price_text are filled in",
  "soft": "fits at the template font size (nothing shrinks)",
  "hard": "fits after shrinking, final size >= readability threshold of the role (diagnostics_engine.ROLE_THRESHOLDS)",
@@ -30,8 +30,8 @@
     "hard": 88
    },
    "cta": {
-    "soft": 19,
-    "hard": 22
+    "soft": 30,
+    "hard": 30
    },
    "tightest_template": {
     "headline": "brand_b",
@@ -41,54 +41,54 @@
   },
   "emotional": {
    "headline": {
-    "soft": 28,
-    "hard": 30
+    "soft": 34,
+    "hard": 36
    },
    "body": {
     "soft": 72,
     "hard": 80
    },
    "cta": {
-    "soft": 17,
-    "hard": 19
+    "soft": 15,
+    "hard": 15
    },
    "tightest_template": {
-    "headline": "emotional_a",
-    "body": "emotional_a",
+    "headline": "emotional_c",
+    "body": "emotional_d",
     "cta": "emotional_a"
    }
   },
   "price": {
    "headline": {
-    "soft": 26,
-    "hard": 26
+    "soft": 24,
+    "hard": 32
    },
    "body": {
     "soft": 28,
     "hard": 64
    },
    "cta": {
-    "soft": 17,
-    "hard": 17
+    "soft": 30,
+    "hard": 30
    },
    "tightest_template": {
-    "headline": "price_b",
+    "headline": "price_a",
     "body": "price_b",
-    "cta": "price_c"
+    "cta": "price_a"
    }
   },
   "visual": {
    "headline": {
-    "soft": 30,
-    "hard": 32
+    "soft": 40,
+    "hard": 56
    },
    "body": {
-    "soft": 44,
+    "soft": 88,
     "hard": 88
    },
    "cta": {
-    "soft": 18,
-    "hard": 20
+    "soft": 15,
+    "hard": 15
    },
    "tightest_template": {
     "headline": "visual_a",
@@ -108,8 +108,9 @@
     "hard": 136
    },
    "cta": {
-    "soft": 19,
-    "hard": 22
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 26,
@@ -132,8 +133,9 @@
     "hard": 88
    },
    "cta": {
-    "soft": 19,
-    "hard": 22
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 24,
@@ -155,8 +157,9 @@
     "hard": 96
    },
    "cta": {
-    "soft": 19,
-    "hard": 22
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 24,
@@ -178,8 +181,9 @@
     "hard": 132
    },
    "cta": {
-    "soft": 19,
-    "hard": 22
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 23,
@@ -193,50 +197,47 @@
   },
   "emotional_a": {
    "headline": {
-    "soft": 28,
-    "hard": 30
+    "soft": 40,
+    "hard": 50
    },
    "body": {
-    "soft": 72,
+    "soft": 80,
     "hard": 80
    },
    "cta": {
-    "soft": 17,
-    "hard": 19
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 36,
     "hard": 40,
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 26,
-    "hard": 40,
-    "at_ceiling": true
+    "soft": 31,
+    "hard": 35
    }
   },
   "emotional_b": {
    "headline": {
-    "soft": 28,
-    "hard": 30
+    "soft": 40,
+    "hard": 50
    },
    "body": {
-    "soft": 72,
+    "soft": 80,
     "hard": 80
    },
    "cta": {
-    "soft": 17,
-    "hard": 19
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 39,
-    "hard": 40,
-    "at_ceiling": true
+    "soft": 35,
+    "hard": 39
    },
    "product_name": {
-    "soft": 26,
-    "hard": 40,
-    "at_ceiling": true
+    "soft": 31,
+    "hard": 35
    }
   },
   "emotional_c": {
@@ -249,11 +250,11 @@
     "hard": 104
    },
    "cta": {
-    "soft": 17,
-    "hard": 19
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 36,
     "hard": 40,
     "at_ceiling": true
    },
@@ -265,30 +266,30 @@
   },
   "emotional_d": {
    "headline": {
-    "soft": 28,
-    "hard": 30
+    "soft": 42,
+    "hard": 56
    },
    "body": {
     "soft": 72,
     "hard": 80
    },
    "cta": {
-    "soft": 17,
-    "hard": 19
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 36,
     "hard": 40,
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 26,
+    "soft": 31,
     "hard": 35
    }
   },
   "price_a": {
    "headline": {
-    "soft": 32,
+    "soft": 24,
     "hard": 32
    },
    "body": {
@@ -296,8 +297,9 @@
     "hard": 144
    },
    "cta": {
-    "soft": 25,
-    "hard": 29
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 40,
@@ -311,21 +313,21 @@
   },
   "price_b": {
    "headline": {
-    "soft": 26,
-    "hard": 26
+    "soft": 42,
+    "hard": 50
    },
    "body": {
     "soft": 28,
     "hard": 64
    },
    "cta": {
-    "soft": 26,
+    "soft": 30,
     "hard": 30,
     "at_ceiling": true
    },
    "store_name": {
-    "soft": 25,
-    "hard": 25
+    "soft": 26,
+    "hard": 26
    },
    "product_name": {
     "soft": 17,
@@ -335,16 +337,17 @@
   },
   "price_c": {
    "headline": {
-    "soft": 36,
-    "hard": 36
+    "soft": 58,
+    "hard": 72
    },
    "body": {
     "soft": 72,
     "hard": 88
    },
    "cta": {
-    "soft": 17,
-    "hard": 17
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 14,
@@ -358,7 +361,7 @@
   },
   "price_d": {
    "headline": {
-    "soft": 42,
+    "soft": 34,
     "hard": 42
    },
    "body": {
@@ -366,8 +369,9 @@
     "hard": 112
    },
    "cta": {
-    "soft": 25,
-    "hard": 29
+    "soft": 30,
+    "hard": 30,
+    "at_ceiling": true
    },
    "store_name": {
     "soft": 40,
@@ -381,95 +385,93 @@
   },
   "visual_a": {
    "headline": {
-    "soft": 30,
-    "hard": 32
+    "soft": 40,
+    "hard": 56
    },
    "body": {
-    "soft": 44,
+    "soft": 88,
     "hard": 96
    },
    "cta": {
-    "soft": 18,
-    "hard": 20
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 38,
     "hard": 40,
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 27,
+    "soft": 32,
     "hard": 36
    }
   },
   "visual_b": {
    "headline": {
-    "soft": 30,
-    "hard": 32
+    "soft": 40,
+    "hard": 56
    },
    "body": {
-    "soft": 72,
+    "soft": 88,
     "hard": 88
    },
    "cta": {
-    "soft": 18,
-    "hard": 20
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 38,
     "hard": 40,
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 27,
-    "hard": 40,
-    "at_ceiling": true
+    "soft": 32,
+    "hard": 36
    }
   },
   "visual_c": {
    "headline": {
-    "soft": 32,
-    "hard": 32
+    "soft": 40,
+    "hard": 56
    },
    "body": {
-    "soft": 44,
+    "soft": 88,
     "hard": 96
    },
    "cta": {
-    "soft": 18,
-    "hard": 20
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 38,
     "hard": 40,
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 25,
-    "hard": 40,
-    "at_ceiling": true
+    "soft": 32,
+    "hard": 36
    }
   },
   "visual_d": {
    "headline": {
-    "soft": 32,
-    "hard": 32
+    "soft": 40,
+    "hard": 56
    },
    "body": {
-    "soft": 44,
+    "soft": 88,
     "hard": 96
    },
    "cta": {
-    "soft": 18,
-    "hard": 20
+    "soft": 15,
+    "hard": 15
    },
    "store_name": {
-    "soft": 40,
+    "soft": 38,
     "hard": 40,
     "at_ceiling": true
    },
    "product_name": {
-    "soft": 27,
+    "soft": 32,
     "hard": 36
    }
   }
