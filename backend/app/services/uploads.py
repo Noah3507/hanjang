@@ -80,6 +80,7 @@ class Record:
     exports: dict = field(default_factory=dict)
     diagnostic_result: object | None = None
     design_sets: dict = field(default_factory=dict)
+    background_context: object | None = None  # Internal reviewed plates; same owner/job TTL.
 
 
 class PrivateUploadStore:

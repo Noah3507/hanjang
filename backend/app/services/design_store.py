@@ -40,14 +40,74 @@ class DesignStore:
         self.executor = render_templates
         self.pdf = PdfExecution()
         self.pdf_lock = Lock()
+        self.background_library = None  # Explicit server injection; never auto-discover/generate.
 
     def context(self, owner, job):
         record, photo, asset, draft, copy, _ = self.renders.snapshot(owner,job)
         source = self.renders.get(owner,job)
         styles = resolve_bundle(record,asset,draft,tuple(REGISTRY))
-        key = digest({'v2':source.model_dump(mode='json',exclude={'measurements'}), 'version':VERSION,'template_source':template_fingerprint(),
-                      'asset_hash':asset.sha256,'styles':styles.snapshot(),'fonts':font_identity()})
+        identity={'v2':source.model_dump(mode='json',exclude={'measurements'}), 'version':VERSION,'template_source':template_fingerprint(),
+                  'asset_hash':asset.sha256,'styles':styles.snapshot(),'fonts':font_identity()}
+        context=record.background_context
+        if context is not None:
+            if context.owner!=owner or context.job!=job or context.expires_at!=record.upload.expires_at.isoformat():
+                raise UploadError(409,'BACKGROUND_CONTEXT_CHANGED','배경의 접근 범위가 변경됐습니다.')
+            if draft.photo_mode=='cutout':identity['backgrounds']=context.snapshot()
+        key = digest(identity)
         return record,asset,draft,copy,source,key,styles
+
+    def apply_background(self, owner, job, strategy, body, selections):
+        """INTERNAL opt-in only. No HTTP route, generated asset or paid provider.
+
+        Resolve reviewed bytes before mutation. A failed attempt restores the
+        last successful set/context; changed input still makes that set stale.
+        """
+        from app.schemas.designs import DesignRequest
+        task=None;desired=None
+        with self.renders.locked():
+            record,previous,response=self.current(owner,job,strategy,body)
+            old_context=record.background_context
+            if self.background_library is None:
+                raise UploadError(503,'BACKGROUND_DISABLED','검토된 로컬 배경이 설정되지 않았습니다.')
+            if selections and record.draft.photo_mode!='cutout':
+                raise UploadError(422,'BACKGROUND_PHOTO_MODE_UNSUPPORTED','사진 그대로 모드에서는 배경을 추가하지 않습니다.')
+            try:
+                if any(t not in REGISTRY or REGISTRY[t]['strategy']!=strategy for t in selections):
+                    raise ValueError('Background strategy mismatch')
+                mapping=old_context.selections() if old_context else {}
+                mapping={k:v for k,v in mapping.items() if REGISTRY[k]['strategy']!=strategy}
+                mapping.update(selections)
+                desired=self.background_library.context(owner,job,record.upload.expires_at,mapping)
+            except (ValueError,OSError,KeyError,TypeError):
+                raise UploadError(422,'BACKGROUND_ASSET_INVALID','배경 파일과 템플릿 호환성을 확인해 주세요.') from None
+            record.background_context=desired
+        try:
+            request=DesignRequest(expected_render_revision=response.source_revision,
+                expected_source_asset_id=response.source_asset_id,expected_copy_key=response.copy_key,promotion=response.promotion)
+            _,task=self.start(owner,job,strategy,request)
+            if task is not None:
+                # Background selection must preserve per-design price/copy edits,
+                # not reset them to the strategy's original v2 copy.
+                effective=desired if record.draft.photo_mode=='cutout' else None
+                task[1].inputs={tid:replace(data,background_context=effective) for tid,data in previous.inputs.items()}
+                self.finish(owner,job,task)
+            result=self.get(owner,job,strategy)
+            if result.status!='completed' or not result.is_current:
+                raise UploadError(503,'BACKGROUND_RENDER_FAILED','배경을 적용하지 못했습니다. 이전 광고를 보존했습니다.')
+            return result
+        except BaseException as error:
+            with self.renders.locked():
+                try:
+                    record=self.uploads.get(owner,job)
+                    if record.background_context is desired:
+                        record.background_context=old_context
+                        live=record.design_sets.get(strategy)
+                        if task is not None and (live is task[1] or (live and live.source_key==task[1].source_key
+                            and live.response.revision==task[1].response.revision)):
+                            record.design_sets[strategy]=previous
+                except UploadError:pass
+            if isinstance(error,UploadError) or not isinstance(error,Exception):raise
+            raise UploadError(503,'BACKGROUND_RENDER_FAILED','배경을 적용하지 못했습니다. 이전 광고를 보존했습니다.') from None
 
     def check_ready(self, source):
         if source.status!='completed' or not source.is_current:
@@ -109,7 +169,8 @@ class DesignStore:
                 raise UploadError(503,'RENDER_BUSY','다른 광고 처리 중입니다. 잠시 후 이 전략을 다시 요청해 주세요.')
             selected=next(c for c in source.candidates if c.strategy==strategy)
             data=TemplateInput(draft.facts.store_name,draft.facts.product_name,draft.facts.price_text,
-                selected.ad_copy.headline,selected.ad_copy.body,selected.ad_copy.cta,**commercial,style_context=styles)
+                selected.ad_copy.headline,selected.ad_copy.body,selected.ad_copy.cta,**commercial,style_context=styles,
+                background_context=record.background_context if draft.photo_mode=='cutout' else None)
             try:data.validate()
             except RenderFailure as e:raise UploadError(422,e.code,'가격·할인율·통화·행사 기간을 확인해 주세요.') from None
             raw=self.renders.photo_bytes(owner,record,asset,draft)
@@ -192,7 +253,10 @@ class DesignStore:
         written=[]
         try:
             ids=[next(c.template_id for c in entry.response.candidates if c.candidate_id==edit[0])] if edit else list(entry.inputs)
-            results=self.executor(entry.inputs[ids[0]],raw,ids)
+            if all(entry.inputs[tid]==entry.inputs[ids[0]] for tid in ids):
+                results=self.executor(entry.inputs[ids[0]],raw,ids)
+            else:
+                results=[row for tid in ids for row in self.executor(entry.inputs[tid],raw,[tid])]
             if [r['template_id'] for r in results]!=ids:raise RenderFailure('RENDER_INVALID_RESULT')
             with self.renders.locked():
                 if not self.renders.slot.owns(lease):return
