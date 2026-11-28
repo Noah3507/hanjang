@@ -30,7 +30,8 @@ def inspect_runtime(settings):
         'analysis':settings.analysis_model_path.is_file() and settings.analysis_python.is_file(),
         'ranking':bool(settings.ranking_model_path and settings.ranking_model_path.is_file() and settings.ranking_python.is_file())}
     checks['models']=all(models.values()) and settings.ranking_mode=='model' if settings.release_require_models else True
-    checks['copy_config']=settings.copy_provider=='mock' or bool(settings.copy_allow_paid and settings.openai_api_key and settings.openai_api_key.get_secret_value())
+    expected_model='gpt-5.4-2026-03-05' if settings.copy_prompt_profile=='campaign' else 'gpt-5.4-mini-2026-03-17'
+    checks['copy_config']=settings.copy_provider=='mock' or bool(settings.copy_allow_paid and settings.openai_api_key and settings.openai_api_key.get_secret_value() and settings.copy_model==expected_model)
     return {'status':'ready' if all(checks.values()) else 'not_ready','check_level':'configuration_not_inference',
         'checks':checks,'models_configured':models,'copy_provider':settings.copy_provider,'ranking_mode':settings.ranking_mode}
 

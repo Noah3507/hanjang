@@ -23,7 +23,7 @@ def draft(**extras):
 
 @pytest.fixture
 def setup(tmp_path):
-    app = create_app(Settings(_env_file=None, upload_root=tmp_path/'uploads', copy_budget_path=tmp_path/'ledger.json'))
+    app = create_app(Settings(_env_file=None, upload_root=tmp_path/'uploads', copy_budget_path=tmp_path/'ledger.json',copy_prompt_profile='v6'))
     with TestClient(app) as client:
         headers = {'X-Hanjang-Session': client.post('/api/v1/sessions').json()['session_token']}
         stream = BytesIO(); Image.new('RGB', (300, 300), 'orange').save(stream, 'PNG')

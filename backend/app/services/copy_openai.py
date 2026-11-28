@@ -15,11 +15,14 @@ class OpenAICopyProvider:
     def __init__(self, model, api_key, allow_paid, budget, client=None, *, prompt_profile=None):
         self.model, self.api_key, self.allow_paid = model, api_key, allow_paid
         self.budget, self.client = budget, client
-        if prompt_profile not in (None,'v6','v7','v8','v8.1'):raise ValueError('Unknown prompt profile')
+        if prompt_profile not in (None,'v6','v7','v8','v8.1','campaign'):raise ValueError('Unknown prompt profile')
         self.prompt_profile = prompt_profile
 
     @property
     def instructions(self):
+        if self.prompt_profile=='campaign':
+            from app.services.copy_intensive import EDITORIAL
+            return EDITORIAL
         if self.prompt_profile=='v8.1':
             from app.services.copy_prompt_v8_1 import BASE_INSTRUCTIONS
             return BASE_INSTRUCTIONS
@@ -32,6 +35,9 @@ class OpenAICopyProvider:
         return SYSTEM_PROMPT
 
     def instructions_for(self,payload):
+        if self.prompt_profile=='campaign':
+            from app.services.copy_campaign import instructions_for
+            return instructions_for(payload)
         if self.prompt_profile=='v8.1':
             from app.services.copy_prompt_v8_1 import instructions_for
             return instructions_for(payload)
@@ -39,6 +45,9 @@ class OpenAICopyProvider:
 
     @property
     def prompt_version(self):
+        if self.prompt_profile=='campaign':
+            from app.services.copy_campaign import VERSION
+            return VERSION
         if self.prompt_profile=='v8.1':
             from app.services.copy_prompt_v8_1 import VERSION
             return VERSION
@@ -52,6 +61,8 @@ class OpenAICopyProvider:
         return PROMPT_VERSION
 
     def generate(self, payload: CopyPayload) -> ProviderResult:
+        if self.prompt_profile=='campaign':
+            raise CopyFailure('COPY_PROVIDER_CONFIG_INVALID')  # Use the bounded factory recipe.
         if not self.allow_paid:
             raise CopyFailure('COPY_PAID_DISABLED')
         if not self.api_key:

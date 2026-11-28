@@ -19,6 +19,8 @@ class CopyPayload(TypedDict):
     visual_hints: list[VisualHint]
     address: NotRequired[str]
     ad_goal: NotRequired[str]
+    displayed_facts_by_strategy: NotRequired[dict[str, list[str]]]
+    template_copy_limits: NotRequired[dict]
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,7 @@ class ProviderUsage:
 class ProviderResult:
     text: str
     usage: ProviderUsage = field(default_factory=ProviderUsage)
+    warnings: tuple[str,...] = ()
 
 
 class CopyFailure(Exception):

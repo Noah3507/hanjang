@@ -24,7 +24,7 @@ class CopyStore:
         self.lock = RLock()
         self.active = False
         # New quality profile never spends a second request to repair its output.
-        self.max_retries = 0 if getattr(provider,'prompt_profile',None) in ('v7','v8','v8.1') else max_retries
+        self.max_retries = 0 if getattr(provider,'prompt_profile',None) in ('v7','v8','v8.1','campaign') else max_retries
 
     @contextmanager
     def locked(self):
@@ -81,7 +81,7 @@ class CopyStore:
                 raise UploadError(503, 'COPY_BUSY', '다른 카피 작업이 진행 중입니다. 잠시 후 다시 시도해 주세요.')
             resolver=getattr(self.provider,'instructions_for',None)
             instructions=resolver(payload) if resolver else getattr(self.provider,'instructions',None)
-            if input_bound(payload, instructions) > 6000:
+            if input_bound(payload, instructions) > (12000 if getattr(self.provider,'prompt_profile',None)=='campaign' else 6000):
                 raise UploadError(422, 'COPY_INPUT_LIMIT', '입력과 분석 단서가 요청 한도를 초과했습니다. 상품 특징을 줄여 주세요.')
             try:
                 supported_codepoints()
@@ -133,10 +133,17 @@ class CopyStore:
                     response.status = 'failed'
                     message = ('가격·상품명 뒤의 한국어 조사를 확인해야 합니다. 입력과 사진은 유지됩니다.'
                         if error.code.startswith('COPY_PARTICLE_') else '카피를 생성하지 못했습니다. 입력과 사진은 유지됩니다.')
+                    if error.code=='COPY_BUDGET_EXCEEDED':
+                        message='누적 카피 호출 또는 비용 한도에 도달했습니다. 관리자에게 한도를 확인해 주세요. 입력과 사진은 유지됩니다.'
+                    elif error.code=='COPY_MODEL_NOT_APPROVED':
+                        message='카피 방식과 서버 모델 설정이 맞지 않습니다. 관리자에게 모델 설정을 확인해 주세요. 입력과 사진은 유지됩니다.'
+                    elif error.code=='COPY_EXPERIMENT_NO_VALID_CANDIDATES':
+                        message='생성 후보가 사실·문법 검증을 통과하지 못했습니다. 자동 재호출하지 않았으며 입력과 사진은 유지됩니다.'
                     response.error = CopyError(code=error.code, message=message, retryable=error.retryable)
                 else:
                     response.status, response.variants = 'completed', variants
-                    if response.provider=='openai' or getattr(self.provider,'prompt_profile',None) in ('v8','v8.1'):
+                    response.warnings=list(dict.fromkeys([*response.warnings,*reply.warnings]))
+                    if response.provider=='openai' or getattr(self.provider,'prompt_profile',None) in ('v8','v8.1','campaign'):
                         from app.services.copy_quality import review_ad_copy
                         response.warnings=list(dict.fromkeys([*response.warnings,*review_ad_copy(variants,draft.ad_goal,
                             profile=getattr(self.provider,'prompt_profile',None),draft=draft)]))

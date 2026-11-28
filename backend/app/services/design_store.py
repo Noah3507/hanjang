@@ -9,7 +9,7 @@ from app.schemas.rendering import RenderError
 from app.schemas.ranking import Ranking
 from app.schemas.copy import Copy
 from app.schemas.diagnostics import CandidateDiagnostics
-from app.services.template_v3 import TemplateInput, VERSION, REGISTRY, render_templates, measured_diagnostics
+from app.services.template_v3 import TemplateInput, VERSION, REGISTRY, render_templates, measured_diagnostics, template_fingerprint
 from app.services.render_execution import opaque_png, rgb, RenderFailure
 from app.services.copy_store import digest
 from app.services.copy_glyphs import supported_text
@@ -45,7 +45,7 @@ class DesignStore:
         record, photo, asset, draft, copy, _ = self.renders.snapshot(owner,job)
         source = self.renders.get(owner,job)
         styles = resolve_bundle(record,asset,draft,tuple(REGISTRY))
-        key = digest({'v2':source.model_dump(mode='json',exclude={'measurements'}), 'version':VERSION,
+        key = digest({'v2':source.model_dump(mode='json',exclude={'measurements'}), 'version':VERSION,'template_source':template_fingerprint(),
                       'asset_hash':asset.sha256,'styles':styles.snapshot(),'fonts':font_identity()})
         return record,asset,draft,copy,source,key,styles
 

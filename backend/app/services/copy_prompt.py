@@ -27,7 +27,7 @@ plain text의 일반 한글·영문·숫자·문장부호만 쓴다. HTML/개행
 def provider_payload(draft, context, profile='v6') -> CopyPayload:
     payload = {k: getattr(draft.facts, k) for k in ('store_name', 'product_name', 'price_text')}
     cues = (context or {}).get('visual_hints', [])
-    if profile in ('v7','v8','v8.1'):
+    if profile in ('v7','v8','v8.1','campaign'):
         # Preserve all analysis in its store, share Phase 3's compact evidence policy.
         cues = [max([c for c in cues if c.category==cat],key=lambda c:(c.similarity,c.candidate_id))
                 for cat in ('category','appearance','impression') if any(c.category==cat for c in cues)]
@@ -35,8 +35,14 @@ def provider_payload(draft, context, profile='v6') -> CopyPayload:
                    visual_hints=[cue.model_dump() for cue in cues])
     # Preserve the v6 default wire payload and its existing 500-character budget.
     # V7 always carries explicit intent; legacy omission means menu_promotion.
-    if profile in ('v7','v8','v8.1') or draft.ad_goal!='menu_promotion':
+    if profile in ('v7','v8','v8.1','campaign') or draft.ad_goal!='menu_promotion':
         payload['ad_goal']=draft.ad_goal
+    if profile=='campaign':
+        from app.services.copy_fact_slots import displayed_fact_slots
+        payload['displayed_facts_by_strategy']=displayed_fact_slots()
+        from app.services.copy_template_limits import load_template_limits
+        limits=load_template_limits()
+        if limits is not None:payload['template_copy_limits']=limits
     if draft.use_address_for_copy and draft.facts.address:
         payload['address'] = draft.facts.address
     # A free-text feature can accidentally repeat a contact field; fail closed.

@@ -61,7 +61,9 @@ def test_policy_change_stales_all_and_regenerates(service, monkeypatch, policy):
     app,c,h,m,b,request,old_render = rendered(service)
     c.post(b+'/ranking', headers=h, json=request)
     old_rank = c.get(b+'/ranking', headers=h).json()
-    monkeypatch.setattr(copy_module, policy, 'future-policy-for-test')
+    if policy=='PROMPT_VERSION' and hasattr(app.state.copy_store.provider,'prompt_version'):
+        monkeypatch.setattr(app.state.copy_store.provider,'prompt_version','future-policy-for-test')
+    else:monkeypatch.setattr(copy_module, policy, 'future-policy-for-test')
     assert not c.get(b+'/copy-generation',headers=h).json()['is_current']
     assert not c.get(b+'/rendering',headers=h).json()['is_current']
     assert not c.get(b+'/ranking',headers=h).json()['is_current']
@@ -82,6 +84,10 @@ def test_policy_change_stales_all_and_regenerates(service, monkeypatch, policy):
 
 def test_prompt_limit_rejects_without_truncation_or_dispatch(service):
     app,c,h,m,b,_,_ = service
+    # This regression exercises the unchanged 6000-byte legacy profile.
+    from app.services.copy_provider import build_copy_provider
+    from app.config import Settings
+    app.state.copy_store.provider=build_copy_provider(Settings(_env_file=None,copy_prompt_profile='v6'))
     d = draft(); d['facts']['store_name']='가'*80; d['facts']['product_name']='나'*80
     d['facts']['price_text']='값'*40; d['facts']['address']='집'*200; d['use_address_for_copy']=True
     d['product_features']='특'*500
