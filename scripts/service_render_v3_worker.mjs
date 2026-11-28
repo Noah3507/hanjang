@@ -19,7 +19,7 @@ try {
         const frame=document.querySelector('.photo'),img=frame.querySelector('img'),style=getComputedStyle(frame)
         const w=frame.clientWidth,h=frame.clientHeight,pw=img.naturalWidth,ph=img.naturalHeight
         const tid=document.querySelector('.ad').classList[1]
-        const circle=['price_a','price_c','emotional_d','brand_a','brand_b'].includes(tid)
+        const circle=['price_a','price_c','emotional_d','brand_a','brand_b'].includes(tid)&&!frame.classList.contains('whole-photo')
         const full=['emotional_b','visual_a','visual_c','visual_d'].includes(tid)
         const inset=circle?Math.max(10,Math.min(w,h)*.035):full?8:Math.max(12,Math.min(w,h)*.025)
         const b=info.support_in_prepared||[0,0,pw,ph],cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2
