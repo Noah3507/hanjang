@@ -87,9 +87,10 @@ class TemplateInput:
     promotion_text: str = ''
     period_text: str = ''
     style_context: StyleBundle | None = field(default=None, kw_only=True)
+    background_context: object | None = field(default=None, kw_only=True)
 
     def text_values(self):
-        return {f.name:getattr(self,f.name) for f in fields(self) if f.name != 'style_context'}
+        return {f.name:getattr(self,f.name) for f in fields(self) if f.name not in {'style_context','background_context'}}
 
     def validate(self):
         for name, value in self.text_values().items():
@@ -131,6 +132,19 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
     pages = [{'template_id': t, 'html': env.get_template(t+'.html').render(
         css=css + (data.style_context.page(t).css() if data.style_context else ''),
         data=data, photo=uri, photo_fit=photo_fit, transparent=transparent, template_id=t)} for t in ids]
+    backgrounds = {}
+    if data.background_context is not None:
+        from app.services.background_art_direction import BackgroundContext, SUPPORTED
+        if not isinstance(data.background_context, BackgroundContext):
+            raise RenderFailure('RENDER_INVALID_BACKGROUND')
+        backgrounds = data.background_context.worker_pages(ids)
+        for tid, item in backgrounds.items():
+            if tid not in SUPPORTED or item['policy'] not in {'poc','directed'}:
+                raise RenderFailure('RENDER_INVALID_BACKGROUND')
+            try:actual=sha256(base64.b64decode(item['png_base64'], validate=True)).hexdigest()
+            except (ValueError,TypeError):raise RenderFailure('RENDER_INVALID_BACKGROUND') from None
+            if actual!=item['sha256']:
+                raise RenderFailure('RENDER_INVALID_BACKGROUND')
     node = shutil.which('node')
     if not node:
         raise RenderFailure('RENDER_UNAVAILABLE')
@@ -139,7 +153,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
         start_new_session=os.name != 'nt')
     try:
-        stdout, _ = process.communicate(json.dumps({'pages': pages,'photo_info':photo_info}).encode(), timeout=timeout)
+        stdout, _ = process.communicate(json.dumps({'pages': pages,'photo_info':photo_info,'backgrounds':backgrounds}).encode(), timeout=timeout)
         result = json.loads(stdout)
         if process.returncode or result.get('error'):
             code = result.get('error')
@@ -150,7 +164,9 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         rows = result['results']
         if [r['template_id'] for r in rows] != ids:
             raise RenderFailure('RENDER_INVALID_RESULT')
-        snapshot = sha256(json.dumps({'data':asdict(data),'font_fingerprint':font_fingerprint,'template_source':template_fingerprint()}, ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
+        snapshot_data=asdict(data);snapshot_data.pop('background_context',None)
+        if data.background_context is not None:snapshot_data['background_context']=data.background_context.snapshot()
+        snapshot = sha256(json.dumps({'data':snapshot_data,'font_fingerprint':font_fingerprint,'template_source':template_fingerprint()}, ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
         for row in rows:
             if row['measurement'].get('template_id')!=row['template_id']:
                 raise RenderFailure('RENDER_INVALID_RESULT')

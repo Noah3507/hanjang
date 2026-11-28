@@ -90,6 +90,47 @@ try {
       if (measurement.invalid) {
         const error = new Error('RENDER_LAYOUT_OVERFLOW'); error.measurement = measurement; throw error
       }
+      const background=task.backgrounds?.[item.template_id]
+      if(background){
+        if(placement?.decorative_occlusions?.length)throw Error('BACKGROUND_FOREGROUND_OVERLAY')
+        measurement.background_composition=await page.evaluate(async ({bg,measurement})=>{
+          const image=new Image();image.src='data:image/png;base64,'+bg.png_base64;await image.decode()
+          const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350
+          const ctx=canvas.getContext('2d'),p=measurement.product
+          const scale=Math.max(1080/image.width,1350/image.height),sw=image.width*scale,sh=image.height*scale
+          const directed=bg.policy==='directed'
+          // Align the plate's reviewed quiet centre with the actual product.
+          const ox=directed?Math.max(0,Math.min(sw-1080,sw*.5-(p.x+p.width/2))):(sw-1080)/2
+          const oy=directed?Math.max(0,Math.min(sh-1350,sh*.42-(p.y+p.height/2))):(sh-1350)/2
+          ctx.drawImage(image,-ox,-oy,sw,sh)
+          const bands=[]
+          if(directed){
+            const boxes=measurement.text.map(t=>({top:Math.max(0,t.y-28),bottom:Math.min(1350,t.y+t.height+28)})).sort((a,b)=>a.top-b.top)
+            for(const b of boxes){const last=bands.at(-1);if(last&&b.top-last.bottom<70)last.bottom=Math.max(last.bottom,b.bottom);else bands.push({...b})}
+            // Quiet texture, not solid template-colour bands. Preserve the
+            // photographic plate's tone; foreground colours stay B-owned.
+            const soft=document.createElement('canvas');soft.width=1080;soft.height=1350
+            const softContext=soft.getContext('2d');softContext.filter='blur(14px)';softContext.drawImage(canvas,0,0)
+            // Background-only treatment, clipped out of the photo protection
+            // rectangle. Never an overlay on the product or modified typography.
+            ctx.save();ctx.beginPath();ctx.rect(0,0,1080,1350);ctx.rect(p.x-8,p.y-8,p.width+16,p.height+16);ctx.clip('evenodd')
+            for(const b of bands){
+              const layer=document.createElement('canvas');layer.width=1080;layer.height=1350
+              const lc=layer.getContext('2d');lc.drawImage(soft,0,0);lc.globalCompositeOperation='destination-in'
+              const gradient=lc.createLinearGradient(0,b.top,0,b.bottom)
+              gradient.addColorStop(0,'rgba(0,0,0,0)');gradient.addColorStop(.18,'black');gradient.addColorStop(.82,'black');gradient.addColorStop(1,'rgba(0,0,0,0)')
+              lc.fillStyle=gradient;lc.fillRect(0,0,1080,1350);ctx.drawImage(layer,0,0)
+            }
+            ctx.restore()
+          }
+          document.querySelector('.ad').style.backgroundImage=`url(${canvas.toDataURL('image/png')})`
+          document.querySelector('.ad').style.backgroundSize='100% 100%'
+          return {asset_id:bg.asset_id,sha256:bg.sha256,model:bg.model,prompt_version:bg.prompt_version,version:bg.version,policy:bg.policy,
+            source_size:[image.width,image.height],offset:[ox,oy],scale,quiet_bands:bands,
+            protected_product:p,contact_estimate:{x:p.x+p.width/2,y:p.y+p.height,confirmed:false},
+            note:'Background layer only; existing template shadow unchanged; contact plane/light are unverified'}
+        },{bg:background,measurement})
+      }
       const cdp = await context.newCDPSession(page)
       await cdp.send('DOM.enable'); await cdp.send('CSS.enable')
       const {root} = await cdp.send('DOM.getDocument')
