@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 from uuid import uuid4
+from functools import lru_cache
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from PIL import Image, ImageOps
@@ -27,6 +28,21 @@ NAMES = {'emotional': ('gallery', 'fade', 'editorial', 'door'),
 REGISTRY = {f'{strategy}_{letter}': {'strategy': strategy, 'variant': letter,
              'name': name, 'implemented': True}
             for strategy, names in NAMES.items() for letter, name in zip('abcd', names)}
+
+
+def template_fingerprint():
+    folder=ROOT/'templates/v3'
+    paths=sorted(folder.glob('*.html'))+[folder/n for n in ('price.css','collection.css','quality.css')]
+    signature=tuple((str(p),p.stat().st_mtime_ns,p.stat().st_size) for p in paths)
+    return _template_fingerprint(signature)
+
+
+@lru_cache(maxsize=8)
+def _template_fingerprint(signature):
+    digest=sha256()
+    for name,_,_ in signature:
+        path=Path(name);digest.update(path.name.encode()+b'\0'+path.read_bytes()+b'\0')
+    return digest.hexdigest()
 
 
 def measured_diagnostics(candidate_id, asset_id, strategy, measurement, png_hash, *, template_id=None):
@@ -131,7 +147,7 @@ def render_templates(data: TemplateInput, photo: bytes, template_ids=None, timeo
         rows = result['results']
         if [r['template_id'] for r in rows] != ids:
             raise RenderFailure('RENDER_INVALID_RESULT')
-        snapshot = sha256(json.dumps({'data':asdict(data),'font_fingerprint':font_fingerprint}, ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
+        snapshot = sha256(json.dumps({'data':asdict(data),'font_fingerprint':font_fingerprint,'template_source':template_fingerprint()}, ensure_ascii=False, sort_keys=True).encode()+photo).hexdigest()
         for row in rows:
             if row['measurement'].get('template_id')!=row['template_id']:
                 raise RenderFailure('RENDER_INVALID_RESULT')

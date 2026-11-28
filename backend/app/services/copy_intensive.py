@@ -1,4 +1,4 @@
-"""Explicit experiment boundary; never selected by the ordinary service factory.
+"""Bounded request executor; experiments default to their explicit approval scope.
 
 Shares the existing ledger/lock. No tools, automatic retry, image generation,
 environment changes or mutation of the operating profiles.
@@ -40,8 +40,8 @@ class ExperimentRequest:
     review_notes: str | None = None
 
 
-def request_arguments(request):
-    if request.model not in RATES or request.mode not in ('single', 'pool', 'revise', 'select'):
+def request_arguments(request, *, base_instructions=None):
+    if request.model not in RATES or request.mode not in ('single', 'pool', 'revise', 'select', 'choose'):
         raise CopyFailure('COPY_EXPERIMENT_CONFIG_INVALID')
     instructions = instructions_for(request.payload)
     if request.direction not in ('baseline', 'editorial', 'campaign'):
@@ -56,6 +56,8 @@ def request_arguments(request):
         }[request.payload['ad_goal']]
         instructions = EDITORIAL + '\n이 광고의 목적: ' + intent + '''
 소비자가 듣고 싶은 한마디를 쓰고 '선택하기 좋은 메뉴/한 그릇/메뉴판/선택지'라는 설명으로 끝내지 않는다. 고객에게 바로 말하는 짧고 생생한 구어체를 우선한다. 제목에서 상품명은 필요할 때만 placeholder로 쓴다. 전략마다 제목의 초점과 문장 리듬을 달리하고 본문과 CTA로 제목을 다시 설명하지 않는다. 제한을 통과할 문장이 아니라 실제 가게 포스터에 걸 한 줄을 고른다.'''
+    if base_instructions is not None:
+        instructions = base_instructions
     if request.reasoning not in ('none', 'low'):
         raise CopyFailure('COPY_EXPERIMENT_CONFIG_INVALID')
     data = {'product': request.payload}
@@ -66,6 +68,12 @@ def request_arguments(request):
         definitions = schema.pop('$defs', {})
         schema = {'type': 'object', '$defs': definitions, 'properties': {'sets': {'type': 'array', 'minItems': 2, 'maxItems': 2, 'items': schema}}, 'required': ['sets'], 'additionalProperties': False}
         maximum = 4096
+    elif request.mode=='choose':
+        if request.prior is None:raise CopyFailure('COPY_EXPERIMENT_PRIOR_MISSING')
+        data['prior_copy']=request.prior
+        instructions += '\n후보를 전략별로 비교하고 문구를 새로 쓰지 말고 번호만 선택한다. selected의 emotional/price/visual/brand 값은 prior_copy.sets의 0부터 시작하는 인덱스다. 자연스러운 한국어, 구체적인 소비 장면, 목적에 맞는 CTA, 근거 없는 습관·인지도·가격평가 없음, 반복 최소화를 우선한다. 전략마다 다른 세트를 선택할 수 있다.'
+        schema={'type':'object','properties':{'selected':{'type':'object','properties':{s:{'type':'integer','minimum':0,'maximum':len(request.prior['sets'])-1} for s in ('emotional','price','visual','brand')},'required':['emotional','price','visual','brand'],'additionalProperties':False}},'required':['selected'],'additionalProperties':False}
+        maximum=1024
     elif request.mode in ('revise', 'select'):
         if request.prior is None:
             raise CopyFailure('COPY_EXPERIMENT_PRIOR_MISSING')
@@ -92,14 +100,17 @@ def request_arguments(request):
 
 class IntensiveCopyExperiment:
     """Not a production provider. Caller records all responses, including failures."""
-    def __init__(self, ledger, client, *, approved=False):
-        if approved is not True:
+    def __init__(self, ledger, client, *, approved=False, budget=None, instructions_resolver=None, recipe_tag=VERSION):
+        if budget is None and approved is not True:
             raise ValueError('Explicit intensive approval required')
-        self.budget = CopyBudget(ledger, 169, 5., approved_intensive=True)
+        self.budget = budget if budget is not None else CopyBudget(ledger, 169, 5., approved_intensive=True)
+        self.experiment_scope = budget is None
         self.client = client
+        self.instructions_resolver = instructions_resolver
+        self.recipe_tag = recipe_tag
 
     def generate(self, request, capture):
-        arguments, bound = request_arguments(request)
+        arguments, bound = request_arguments(request, base_instructions=self.instructions_resolver(request.payload) if self.instructions_resolver else None)
         incoming, cached_rate, outgoing = RATES[request.model]
         ceiling = (bound * incoming + arguments['max_output_tokens'] * outgoing) / 1e6
         # Persist a sanitized request before dispatch; local logging failure must
@@ -127,19 +138,22 @@ class IntensiveCopyExperiment:
                 record = next(c for c in data['calls'] if c['id'] == call)
                 record.update(cost_ceiling_usd=cost, input_tokens=ins, cached_input_tokens=cached,
                               output_tokens=outs, usage_known=True, state='completed', model=request.model,
-                              experiment=VERSION, method=request.mode)
+                              method=request.mode,**({'experiment':VERSION} if self.experiment_scope else {'recipe':self.recipe_tag}))
             receipt = ProviderUsage(ins, outs, cost)
             if response.model != request.model or response.status != 'completed' or not response.output_text or ins > bound or outs > arguments['max_output_tokens']:
                 raise CopyFailure('COPY_EXPERIMENT_RESPONSE_INVALID')
             return ProviderResult(response.output_text, receipt)
         except Exception as error:
             code = error.code if isinstance(error, CopyFailure) else 'COPY_EXPERIMENT_PROVIDER_FAILED'
-            self.budget.failed(call, code)
-            with self.budget.locked() as data:
-                record = next(c for c in data['calls'] if c['id'] == call)
-                record['error_type'] = type(error).__name__
-                status = getattr(error, 'status_code', None)
-                if type(status) is int: record['http_status'] = status
+            try:
+                self.budget.failed(call, code)
+                with self.budget.locked() as data:
+                    record = next(c for c in data['calls'] if c['id'] == call)
+                    record['error_type'] = type(error).__name__
+                    status = getattr(error, 'status_code', None)
+                    if type(status) is int: record['http_status'] = status
+            except CopyFailure:
+                pass  # Keep the original error/receipt and conservative reservation.
             raise CopyFailure(code, usage=receipt) from None
 
     def candidates_then_select(self, request, draft, capture):

@@ -16,9 +16,9 @@ def review_ad_copy(variants, ad_goal='menu_promotion', *, profile=None, draft=No
     bodies=set()
     for variant in variants:
         cta=variant.ad_copy.cta
-        if profile in ('v8','v8.1'):
+        if profile in ('v8','v8.1','campaign'):
             warnings.extend(review_v8(variant,ad_goal,draft))
-            if profile=='v8.1':warnings.extend(review_v8_1(variant,draft))
+            if profile in ('v8.1','campaign'):warnings.extend(review_v8_1(variant,draft))
         else:
             if cta and ad_goal=='menu_promotion' and re.search(r'주문|방문|들러|오세요',cta):warnings.append('COPY_GOAL_REVIEW')
             if cta and ad_goal=='store_visit' and re.search(r'사진|정보|가격|상품\s*확인',cta):warnings.append('COPY_GOAL_REVIEW')

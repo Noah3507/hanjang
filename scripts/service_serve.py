@@ -26,7 +26,9 @@ def main():
     if args.check_only:
         print('Configuration readiness OK (model inference and paid API not performed).')
         print(f'Copy provider={settings.copy_provider}; model={settings.copy_model}; paid_enabled={settings.copy_allow_paid}; '
-              f'cumulative_requests={settings.copy_max_requests}; budget_usd={settings.copy_budget_usd:.2f}; app_retries={settings.copy_max_retries}.')
+              f'cumulative_requests={settings.copy_max_requests}; budget_usd={settings.copy_budget_usd:.2f}; '
+              f'app_retries={0 if settings.copy_prompt_profile in ("v7","v8","v8.1","campaign") else settings.copy_max_retries}; '
+              f'profile={settings.copy_prompt_profile}; usage_policy={settings.copy_usage_policy}.')
         return 0
     from app.main import create_app
     import uvicorn

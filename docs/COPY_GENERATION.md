@@ -1,5 +1,7 @@
 # S5a / 사용자 가이드 7단계: 4전략 광고 카피
 
+2026-11-28 현재 운영 기본은 v6 유지입니다. 명시적 campaign provider·B limits 연동·실제 검증 및 승격 보류 근거는 [COPY_PRODUCTION](COPY_PRODUCTION.md)을 따릅니다. 아래 S5a 기록과 구분합니다.
+
 ## 2026-11-02 조사 검증 보완
 
 `copy-v3-particles`는 가격·상품명을 `가격: [[price_text]]`, `상품: [[product_name]]`처럼 조사 없는 문형으로 우선 작성하도록 지시합니다. 원문은 수정하지 않습니다. `copy_particles.py`는 치환을 끝낸 최종 문구에서 실제 가격/상품명 경계를 검사하므로 placeholder 없는 직접 인용도 검사합니다.

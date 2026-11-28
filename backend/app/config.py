@@ -35,12 +35,13 @@ class Settings(BaseSettings):
     analysis_timeout_seconds: float = Field(default=120, gt=0, le=300)
     analysis_idle_seconds: float = Field(default=300, gt=0, le=3600)
     copy_provider: Literal['mock', 'openai'] = 'mock'
-    copy_prompt_profile: Literal['v6', 'v7', 'v8', 'v8.1'] = 'v6'
-    copy_model: str = 'gpt-5.4-mini-2026-03-17'
+    copy_prompt_profile: Literal['v6', 'v7', 'v8', 'v8.1', 'campaign'] = 'v6'
+    copy_model: str = Field(default_factory=lambda data: 'gpt-5.4-2026-03-05' if data.get('copy_prompt_profile')=='campaign' else 'gpt-5.4-mini-2026-03-17')
     copy_allow_paid: bool = False
-    copy_max_requests: int = Field(default=6, ge=0, le=10)
-    copy_budget_usd: float = Field(default=.1, ge=0, le=.1, allow_inf_nan=False)
-    copy_max_retries: int = Field(default=1, ge=0, le=1)
+    copy_usage_policy: Literal['legacy','service'] = 'legacy'
+    copy_max_requests: int = Field(default=6, ge=0, le=128)
+    copy_budget_usd: float = Field(default=.1, ge=0, le=2, allow_inf_nan=False)
+    copy_max_retries: int = Field(default_factory=lambda data: 0 if data.get('copy_prompt_profile')=='campaign' else 1, ge=0, le=1)
     openai_api_key: SecretStr | None = Field(default=None, validation_alias='OPENAI_API_KEY')
     copy_budget_path: Path = PROJECT_ROOT / 'artifacts/copy-usage/ledger.json'
     ranking_mode: Literal['model', 'mock'] = 'model'
@@ -55,6 +56,14 @@ class Settings(BaseSettings):
     presentation_mutations_per_minute: int = Field(default=30,ge=1,le=60)
     # Preserve the agreed FILE meaning, pass its parent to B's loader.
     ranking_model_path: Path | None = Field(default=PROJECT_ROOT / 'artifacts/models/ranking/bt-logistic-v1/model.safetensors', validation_alias="RANKING_MODEL_PATH")
+
+    @field_validator('copy_max_requests','copy_budget_usd')
+    @classmethod
+    def bound_copy_policy(cls,value,info):
+        if info.data.get('copy_usage_policy')!='service':
+            maximum=10 if info.field_name=='copy_max_requests' else .1
+            if value>maximum:raise ValueError('Explicit service usage policy required')
+        return value
 
     @field_validator("ranking_model_path", mode="before")
     @classmethod

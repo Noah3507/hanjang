@@ -21,7 +21,11 @@ def build_copy_provider(settings) -> CopyProvider:
     if settings.copy_provider == 'mock':
         result=MockCopyProvider()
         result.prompt_profile=getattr(settings,'copy_prompt_profile','v6')
-        if result.prompt_profile=='v8.1':
+        if result.prompt_profile=='campaign':
+            from app.services.copy_campaign import VERSION, instructions_for
+            result.prompt_version=VERSION
+            result.instructions_for=instructions_for
+        elif result.prompt_profile=='v8.1':
             from app.services.copy_prompt_v8_1 import VERSION, BASE_INSTRUCTIONS, instructions_for
             result.prompt_version=VERSION
             result.instructions=BASE_INSTRUCTIONS
@@ -36,9 +40,14 @@ def build_copy_provider(settings) -> CopyProvider:
         return result
     from app.services.copy_openai import OpenAICopyProvider
     from app.services.copy_budget import CopyBudget
-    return OpenAICopyProvider(
+    profile=getattr(settings,'copy_prompt_profile','v6')
+    if profile=='campaign':
+        from app.services.copy_campaign_provider import CampaignCopyProvider
+        provider_class=CampaignCopyProvider
+    else:provider_class=OpenAICopyProvider
+    return provider_class(
         settings.copy_model,
         settings.openai_api_key.get_secret_value() if settings.openai_api_key else None,
-        settings.copy_allow_paid, CopyBudget(settings.copy_budget_path, settings.copy_max_requests, settings.copy_budget_usd),
-        prompt_profile=getattr(settings,'copy_prompt_profile','v6'),
+        settings.copy_allow_paid, CopyBudget(settings.copy_budget_path, settings.copy_max_requests, settings.copy_budget_usd,approved_production=getattr(settings,'copy_usage_policy','legacy')=='service'),
+        prompt_profile=profile,
     )

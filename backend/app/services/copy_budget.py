@@ -6,18 +6,20 @@ import json
 import os
 from pathlib import Path
 import uuid
+import time
 from app.services.copy_contract import CopyFailure
 
 MAX_COST = (6000 * .75 + 2048 * 4.5) / 1_000_000
+_WINDOWS = os.name=='nt'
 
 class CopyBudget:
-    def __init__(self, path: Path, max_requests=6, budget_usd=.1, *, approved_phase3=False, approved_quality_experiment=False, approved_phase4=False, approved_intensive=False):
+    def __init__(self, path: Path, max_requests=6, budget_usd=.1, *, approved_phase3=False, approved_quality_experiment=False, approved_phase4=False, approved_intensive=False, approved_production=False):
         self.path = path
         # Explicit opt-in for the separately approved two-call Phase 3 experiment.
         # Existing service callers/configuration retain the ten-call ceiling.
         # Four-call Phase4 runner only. Ordinary service settings/factory never set this flag.
-        limit = 169 if approved_intensive is True else 19 if approved_phase4 is True else 15 if approved_quality_experiment is True else 12 if approved_phase3 is True else 10
-        if not 0 <= max_requests <= limit or not 0 <= budget_usd <= (5. if approved_intensive is True else .1):
+        limit = 169 if approved_intensive is True else 128 if approved_production is True else 19 if approved_phase4 is True else 15 if approved_quality_experiment is True else 12 if approved_phase3 is True else 10
+        if not 0 <= max_requests <= limit or not 0 <= budget_usd <= (5. if approved_intensive is True else 2. if approved_production is True else .1):
             raise ValueError('Budget exceeds approved limits')
         self.max_requests, self.budget_usd = max_requests, budget_usd
 
@@ -47,13 +49,21 @@ class CopyBudget:
             yield data
             temporary = self.path.with_suffix('.tmp')
             temporary.write_text(json.dumps(data), encoding='utf-8')
-            temporary.replace(self.path)
+            # Retry only an idempotent local rename on Windows sharing/access
+            # contention. Never rerun the transaction or an API dispatch.
+            for attempt in range(5):
+                try:
+                    temporary.replace(self.path)
+                    break
+                except OSError as error:
+                    if not _WINDOWS or getattr(error,'winerror',None) not in (5,32,33) or attempt==4:raise
+                    time.sleep(.05)
         except CopyFailure as error:
             failure = error
             raise
         except (OSError, ValueError, KeyError, StopIteration) as error:
             failure = error
-            raise CopyFailure('COPY_BUDGET_UNAVAILABLE') from None
+            raise CopyFailure('COPY_BUDGET_UNAVAILABLE',reason=f'ledger {type(error).__name__} errno={getattr(error,"errno",None)} winerror={getattr(error,"winerror",None)}') from None
         finally:
             try:
                 lock.unlink(missing_ok=True)

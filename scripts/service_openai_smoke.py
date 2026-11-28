@@ -25,7 +25,9 @@ def main():
     from app.services.copy_glyphs import supported_codepoints
     from app.schemas.upload import InputDraft
     from app.services.copy_contract import CopyFailure
-    settings=Settings(copy_max_retries=0)
+    # This CLI has a separate ONE-call approval contract. Do not inherit the
+    # campaign factory's two-call recipe when a user approves one smoke request.
+    settings=Settings(copy_max_retries=0,copy_prompt_profile='v6',copy_model='gpt-5.4-mini-2026-03-17')
     if settings.copy_provider!='openai' or not settings.copy_allow_paid or not settings.openai_api_key:
         print('Not executed: OpenAI provider, paid gate and server key must be explicitly configured.');return 2
     draft=InputDraft.model_validate({'facts':{'store_name':'Synthetic shop','product_name':'Synthetic product','price_text':'3,000 KRW'},'mood':'warm'})
