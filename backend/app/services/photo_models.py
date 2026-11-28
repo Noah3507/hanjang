@@ -1,5 +1,8 @@
 """Pinned, local-only rembg choices. Model provisioning is always explicit."""
 from dataclasses import dataclass
+from functools import lru_cache
+from hashlib import file_digest
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -25,3 +28,34 @@ MODELS = {
         '5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333', 224005088,
         RELEASE+'BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx', '4fab47adc4ff364be1713e97b7e66334'),
 }
+
+
+def model_file_verified(path: Path, name: str) -> bool:
+    """Local checksum check, never ONNX loading or provisioning.
+
+    The cache binds file identity/metadata and the pinned digest. Inference
+    independently verifies weights again when opening its offline session.
+    """
+    spec = MODELS.get(name)
+    path = Path(path)
+    try:
+        if spec is None or path.is_symlink() or not path.is_file():
+            return False
+        stat = path.stat()
+        if stat.st_size != spec.size:
+            return False
+        identity = (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino)
+        return _verified(str(path.resolve()), identity, spec.sha256)
+    except OSError:
+        return False
+
+
+@lru_cache(maxsize=8)
+def _verified(path, identity, expected):
+    try:
+        with Path(path).open('rb') as stream:
+            checksum = file_digest(stream, 'sha256').hexdigest()
+        stat = Path(path).stat()
+        return checksum == expected and identity == (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino)
+    except OSError:
+        return False

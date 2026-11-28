@@ -11,7 +11,7 @@ def main():
     image = Image.new('RGB', (400, 300), 'white')
     ImageDraw.Draw(image).ellipse((100, 40, 300, 260), fill='orange')
     # Loading and inference only: no quality assertion about this synthetic mask.
-    mask = LocalRembg(Path(os.environ['HANJANG_PHOTO_MODEL_PATH']))(image)
+    mask = LocalRembg(Path(os.environ['HANJANG_PHOTO_MODEL_PATH']), os.environ.get('HANJANG_PHOTO_MODEL_NAME', 'u2netp'))(image)
     if mask.size != image.size:
         raise RuntimeError('rembg output dimensions mismatch')
     raw = BytesIO(); image.save(raw, 'PNG')
