@@ -14,11 +14,13 @@ CSS = [ROOT / 'templates/v3' / name for name in ('price.css', 'collection.css', 
 # Colour roles a style may set. Keep in step with the design doc; removing or renaming one needs A's agreement.
 ROLES = {'bg', 'ink', 'ink-soft', 'accent', 'accent-ink', 'surface', 'surface-ink', 'frame', 'photo-bg', 'decor'}
 VAR = re.compile(r'var\(--([a-z-]+),([^()]+?)\)')
+# Layout variables (not colours) used inside the templates' own CSS; they have no fallback by design.
+LAYOUT = re.compile(r'var\(--stack-top\)')
 LITERAL = re.compile(r'#[0-9a-fA-F]{3,6}\b|\bwhite\b')
 
 
 def resolve(css: str) -> str:
-    """The CSS a browser applies when no variable is set."""
+    """The CSS a browser applies when no colour variable is set."""
     return VAR.sub(lambda m: m.group(2), css)
 
 
@@ -29,7 +31,7 @@ def test_every_colour_is_a_known_role_with_a_literal_fallback(path):
     assert uses, 'no colour variables found'
     assert {name for name, _ in uses} <= ROLES
     assert all(LITERAL.fullmatch(fallback.strip()) for _, fallback in uses)
-    assert 'var(' not in resolve(css)
+    assert 'var(' not in LAYOUT.sub('', resolve(css))
 
 
 @pytest.mark.parametrize('path', CSS, ids=lambda p: p.name)

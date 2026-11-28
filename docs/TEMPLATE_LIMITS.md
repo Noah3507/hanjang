@@ -16,14 +16,14 @@ B 담당. 문구 생성·검사(A)가 "이 전략의 제목은 몇 자까지 괜
 
 ## 전략별 한도 (네 템플릿 중 가장 빡빡한 값)
 
-2026-11-28 재측정, `ad-templates-v3-alpha-quality-3` + 빈 칸 처리(Fill) + Quality 2(emotional_c·price_d·brand_c) 반영. Quality 2로 전략별 값은 바뀌지 않았고 emotional_c·price_d의 템플릿별 값만 늘었어요.
+2026-11-28 재측정, 비주얼 v4 반영(제목 두 줄 대형 글자, CTA 버튼, 가격 템플릿 제목 확대). 제목 한도는 감성 28→34, 비주얼 30→40으로 늘었고 가격은 24(price_a의 46px 두 줄)로 2자 줄었어요. CTA는 버튼 안에 들어가야 해서 감성·비주얼이 15자로 줄었고, 가격은 바닥 띠의 넓은 버튼이라 30자로 늘었어요.
 
 | 전략 | 제목 soft/hard | 본문 soft/hard | CTA soft/hard | 가장 빡빡한 템플릿 |
 |---|---|---|---|---|
-| emotional | 28 / 30 | 72 / 80 | 17 / 19 | emotional_a (셋 다) |
-| price | 26 / 26 | 28 / 64 | 17 / 17 | price_b(제목·본문), price_c(CTA) |
-| visual | 30 / 32 | 44 / 88 | 18 / 20 | visual_a |
-| brand | 36 / 36 | 40 / 88 | 19 / 22 | brand_b(제목), brand_d(본문), brand_a(CTA) |
+| emotional | 34 / 36 | 72 / 80 | 15 / 15 | 제목 emotional_c, 본문 emotional_d, CTA emotional_a |
+| price | 24 / 32 | 28 / 64 | 30 / 30 | 제목 price_a, 본문 price_b, CTA price_a |
+| visual | 40 / 56 | 88 / 88 | 15 / 15 | 제목 visual_a, 본문 visual_a, CTA visual_a |
+| brand | 36 / 36 | 40 / 88 | 30 / 30 | 제목 brand_b, 본문 brand_d, CTA brand_a |
 
 템플릿별 값과 가게명·상품명 한도는 `limits.json`의 `templates`에 있어요. 예를 들어 상품명은 price_d가 26자, price_a가 35자를 넘으면 글자가 가독성 기준보다 작아져요.
 
