@@ -32,7 +32,10 @@ REGISTRY = {f'{strategy}_{letter}': {'strategy': strategy, 'variant': letter,
 
 def template_fingerprint():
     folder=ROOT/'templates/v3'
+    # Rendering behaviour can change without B's HTML/CSS or VERSION changing.
+    # Keep B's measured limits hash separate; only design/PNG snapshots use this.
     paths=sorted(folder.glob('*.html'))+[folder/n for n in ('price.css','collection.css','quality.css')]
+    paths.append(ROOT/'scripts/service_render_v3_worker.mjs')
     signature=tuple((str(p),p.stat().st_mtime_ns,p.stat().st_size) for p in paths)
     return _template_fingerprint(signature)
 
