@@ -25,6 +25,7 @@ def main():
         return 1
     if args.check_only:
         print('Configuration readiness OK (model inference and paid API not performed).')
+        print(f'Photo model={settings.photo_model_name}; matte={settings.photo_matte_mode}; local_weights_verified={result["models_configured"]["photo"]}.')
         print(f'Copy provider={settings.copy_provider}; model={settings.copy_model}; paid_enabled={settings.copy_allow_paid}; '
               f'cumulative_requests={settings.copy_max_requests}; budget_usd={settings.copy_budget_usd:.2f}; '
               f'app_retries={0 if settings.copy_prompt_profile in ("v7","v8","v8.1","campaign") else settings.copy_max_retries}; '

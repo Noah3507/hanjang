@@ -29,7 +29,12 @@ if (-not $config.resource_root -or -not [IO.Path]::IsPathRooted($config.resource
 $resourceRoot = [IO.Path]::GetFullPath($config.resource_root)
 $python = Resolve-LocalFile 'service_python' '.venv/Scripts/python.exe'
 $analysisPython = Resolve-LocalFile 'analysis_python' '.venv-analysis/Scripts/python.exe'
-$photoModel = Resolve-LocalFile 'photo_model' 'artifacts/models/rembg/u2netp.onnx'
+$photoModelName = if ($config.photo_model_name) { [string]$config.photo_model_name } else { 'u2netp' }
+$photoMatteMode = if ($config.photo_matte_mode) { [string]$config.photo_matte_mode } else { 'cleanup' }
+if ($photoModelName -notin @('u2netp','u2net','birefnet-general-lite') -or $photoMatteMode -notin @('cleanup','model-alpha')) {
+    throw 'Unsupported photo model or matte mode. No alternative was installed.'
+}
+$photoModel = Resolve-LocalFile 'photo_model' "artifacts/models/rembg/$photoModelName.onnx"
 $clipModel = Resolve-LocalFile 'clip_model' 'artifacts/models/analysis/ViT-B-32.pt'
 $rankingMode = if ($config.ranking_mode) { [string]$config.ranking_mode } else { 'model' }
 if ($rankingMode -notin @('model','mock')) { throw 'ranking_mode must be model or explicit test mock.' }
@@ -39,8 +44,9 @@ $rankingModel = if ($config.ranking_model_path) { [string]$config.ranking_model_
 if (-not [IO.Path]::IsPathRooted($rankingPython) -or -not [IO.Path]::IsPathRooted($rankingModel)) {
     throw 'ranking_python and ranking_model_path must be absolute local paths.'
 }
-if ((Get-FileHash -LiteralPath $photoModel -Algorithm SHA256).Hash -ne '309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8' -or
-    (Get-FileHash -LiteralPath $clipModel -Algorithm SHA256).Hash -ne '40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af') {
+& $python (Join-Path $PSScriptRoot 'service_check_photo_model.py') --model $photoModelName --path $photoModel
+if ($LASTEXITCODE -ne 0) { throw 'Selected photo model verification failed. Existing files were not changed.' }
+if ((Get-FileHash -LiteralPath $clipModel -Algorithm SHA256).Hash -ne '40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af') {
     throw 'Model checksum mismatch. Existing files were not changed; provision the documented exact models separately.'
 }
 if ($clipModel -match '[^\x00-\x7F]') {
@@ -69,7 +75,7 @@ if ($clipModel -match '[^\x00-\x7F]') {
     $clipModel = Join-Path $junction (Split-Path $clipModel -Leaf)
     if (-not (Test-Path -LiteralPath $clipModel -PathType Leaf)) { throw 'CLIP junction target is unavailable; repair local config.' }
 }
-$names = @('HANJANG_PHOTO_MODEL_PATH','HANJANG_ANALYSIS_MODEL_PATH','HANJANG_ANALYSIS_PYTHON','HANJANG_UPLOAD_ROOT',
+$names = @('HANJANG_PHOTO_MODEL_NAME','HANJANG_PHOTO_MATTE_MODE','HANJANG_PHOTO_MODEL_PATH','HANJANG_ANALYSIS_MODEL_PATH','HANJANG_ANALYSIS_PYTHON','HANJANG_UPLOAD_ROOT',
     'HANJANG_COPY_PROVIDER','HANJANG_COPY_ALLOW_PAID','OPENAI_API_KEY','HANJANG_CORS_ORIGINS','HF_HUB_OFFLINE','TRANSFORMERS_OFFLINE','PYTHONUTF8','PYTHONPATH',
     'HANJANG_RANKING_MODE','HANJANG_RANKING_PYTHON','RANKING_MODEL_PATH')
 $previous = @{}
@@ -77,6 +83,8 @@ foreach ($name in $names) { $previous[$name] = [Environment]::GetEnvironmentVari
 Push-Location $project
 try {
     $env:HANJANG_PHOTO_MODEL_PATH = $photoModel
+    $env:HANJANG_PHOTO_MODEL_NAME = $photoModelName
+    $env:HANJANG_PHOTO_MATTE_MODE = $photoMatteMode
     $env:HANJANG_ANALYSIS_MODEL_PATH = $clipModel
     $env:HANJANG_ANALYSIS_PYTHON = $analysisPython
     $env:HANJANG_RANKING_MODE = $rankingMode

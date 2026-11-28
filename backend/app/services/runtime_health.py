@@ -26,7 +26,8 @@ def inspect_runtime(settings):
             result=subprocess.run(['node','-e',script,str(ROOT/'frontend/node_modules/playwright')],capture_output=True,timeout=5)
             checks['chromium']=result.returncode==0 and Path(result.stdout.decode().strip()).is_file()
         except (OSError,subprocess.TimeoutExpired,UnicodeError): pass
-    models={'photo':settings.photo_model_path.is_file(),
+    from app.services.photo_models import model_file_verified
+    models={'photo':model_file_verified(settings.photo_model_path, settings.photo_model_name),
         'analysis':settings.analysis_model_path.is_file() and settings.analysis_python.is_file(),
         'ranking':bool(settings.ranking_model_path and settings.ranking_model_path.is_file() and settings.ranking_python.is_file())}
     checks['models']=all(models.values()) and settings.ranking_mode=='model' if settings.release_require_models else True
